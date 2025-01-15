@@ -5,6 +5,29 @@ public class GridDrawer : MonoBehaviour
     public int gridSize = 10; // 그리드 크기
     public float gridSpacing = 1.0f; // 그리드 간격
 
+    GameObject cube;
+
+    private void Start()
+    {
+        cube = Resources.Load<GameObject>("Prefab/Block");
+        drawGrid();
+    }
+
+    void drawGrid()
+    {
+        drawLine(Vector3.zero, new Vector3(gridSize * gridSpacing, 0.01f, 0.01f), Color.gray);
+        drawLine(Vector3.zero, new Vector3(0.01f, 0.01f, gridSize * gridSpacing), Color.gray);
+
+    }
+
+    void drawLine(Vector3 pos, Vector3 size, Color color)
+    {
+        var obj = Instantiate(cube, pos, Quaternion.identity, transform);
+        obj.transform.localScale = size;
+
+        obj.GetComponent<Renderer>().material.color = color;
+    }
+
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.gray;
