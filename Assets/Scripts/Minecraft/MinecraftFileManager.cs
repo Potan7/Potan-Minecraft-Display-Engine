@@ -4,14 +4,22 @@ using UnityEngine;
 using System.Threading;
 using System.Linq;
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 public class MinecraftFileManager : RootManager
 {
-    public Dictionary<string, byte[]> textureFiles = new Dictionary<string, byte[]>();
-    public Dictionary<string, string> jsonFiles = new Dictionary<string, string>();
+    static MinecraftFileManager instance;
+
+    Dictionary<string, byte[]> textureFiles = new Dictionary<string, byte[]>();
+    Dictionary<string, string> jsonFiles = new Dictionary<string, string>();
+
+    Dictionary<string, MinecraftModelData> importantModels = new Dictionary<string, MinecraftModelData>();
 
     string[] readFolder = { "models", "textures", "blockstates", "items" }; // 읽을 폴더
-    string[] readTexturesFolders = { "block", "item" };
+    string[] readTexturesFolders = { "block", "item" }; // textures의 읽을 폴더
+    string[] readPreReadedFiles =
+        {"block", "cube", "cube_all", "cube_all_inner_faces", "cube_column"};
 
     readonly string Appdata = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData);
     readonly string minecraftPath = ".minecraft/versions";
@@ -20,11 +28,58 @@ public class MinecraftFileManager : RootManager
     [SerializeField]
     string filePath;
 
+    protected override void Awake()
+    {
+        base.Awake();
+        instance = this;
+    }
+
     private void Start()
     {
         filePath = $"{Appdata}/{minecraftPath}/{minecraftVersion}/{minecraftVersion}.jar";
         Thread thread = new Thread(() => ReadJarFile(filePath, "assets/minecraft"));
         thread.Start();
+    }
+
+    public static JObject GetJSONData(string path)
+    {
+        if (instance.jsonFiles.ContainsKey(path))
+        {
+            return JObject.Parse(instance.jsonFiles[path]);
+        }
+        return null;
+    }
+
+    public static MinecraftModelData GetModelData(string path)
+    {
+        //Debug.Log("Get Model Data: " + path);
+
+        if (instance.importantModels.ContainsKey(path))
+        {
+            return instance.importantModels[path];
+        }
+
+        if (instance.jsonFiles.ContainsKey(path))
+        {
+            return  JsonConvert.DeserializeObject<MinecraftModelData>(instance.jsonFiles[path]);
+        }
+        return null;
+    }
+
+    public static Texture2D GetTextureFile(string path)
+    {
+        if (instance.textureFiles.ContainsKey(path))
+        {
+            Texture2D texture = new Texture2D(2, 2);
+            texture.LoadImage(instance.textureFiles[path]);
+            return texture;
+        }
+        return null;
+    }
+
+    public static string RemoveNamespace(string path)
+    {
+        return path.Replace("minecraft:", "");
     }
 
     void ReadJarFile(string path, string targetFolder)
@@ -69,9 +124,19 @@ public class MinecraftFileManager : RootManager
         Debug.Log("Finished reading JAR file");
         Debug.Log("Textures: " + textureFiles.Count);
         Debug.Log("JSON: " + jsonFiles.Count);
+
+        // readImportantModels();
+        foreach (var read in readPreReadedFiles)
+        {
+            string readPath = $"models/{read}.json";
+            if (instance.jsonFiles.ContainsKey(readPath))
+            {
+                importantModels.Add(read, GetModelData(jsonFiles[readPath]));
+            }
+        }
     }
 
-    // 최상위 폴더 이름 추출
+        // 최상위 폴더 이름 추출
     string GetTopLevelFolder(string fullPath, string targetFolder)
     {
         string relativePath = fullPath.Substring(targetFolder.Length + 1); // targetFolder 이후 경로
