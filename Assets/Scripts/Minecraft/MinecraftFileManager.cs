@@ -71,6 +71,11 @@ public class MinecraftFileManager : RootManager
         if (instance.textureFiles.ContainsKey(path))
         {
             Texture2D texture = new Texture2D(2, 2);
+            texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.alphaIsTransparency = true;
+            texture.Apply();
+
             texture.LoadImage(instance.textureFiles[path]);
             return texture;
         }

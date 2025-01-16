@@ -15,8 +15,9 @@ public class GridDrawer : MonoBehaviour
 
     void drawGrid()
     {
-        drawLine(Vector3.zero, new Vector3(gridSize * gridSpacing, 0.01f, 0.01f), Color.gray);
-        drawLine(Vector3.zero, new Vector3(0.01f, 0.01f, gridSize * gridSpacing), Color.gray);
+        drawLine(Vector3.zero, new Vector3(gridSize * gridSpacing, 0.01f, 0.01f), Color.red);
+        drawLine(Vector3.zero, new Vector3(0.01f, 0.01f, gridSize * gridSpacing), Color.blue);
+        drawLine(Vector3.zero, new Vector3(0.01f, gridSize * gridSpacing, 0.01f), Color.green);
 
     }
 

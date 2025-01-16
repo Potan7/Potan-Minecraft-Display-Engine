@@ -22,10 +22,6 @@ public class MinecraftModelData
     public JObject textures;
     public List<JObject> elements;
 
-    public float xRotation = 0;
-    public float yRotation = 0;
-    public bool uvLock;
-
     public MinecraftModelData UnpackParent()
     {
 

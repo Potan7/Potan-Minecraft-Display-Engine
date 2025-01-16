@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 public class BDObjectManager : RootManager
 {
+    public Shader BDObjShader;
     public Transform BDObjectParent;
     public BDObejctContainer BDObjectPrefab;
     public MeshRenderer BlockPrefab;

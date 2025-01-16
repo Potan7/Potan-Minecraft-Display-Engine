@@ -3,7 +3,37 @@ guid: 39ce9e8de42ef894ea9a3f93930886b6
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: DownMat
+    second: {fileID: 2100000, guid: 86e5b2946952bf741a346c36ef381964, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: EastMat
+    second: {fileID: 2100000, guid: 86e5b2946952bf741a346c36ef381964, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: NorthMat
+    second: {fileID: 2100000, guid: 86e5b2946952bf741a346c36ef381964, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: SouthMat
+    second: {fileID: 2100000, guid: 86e5b2946952bf741a346c36ef381964, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: UpMat
+    second: {fileID: 2100000, guid: 86e5b2946952bf741a346c36ef381964, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: WestMat
+    second: {fileID: 2100000, guid: 86e5b2946952bf741a346c36ef381964, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
