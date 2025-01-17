@@ -1,17 +1,21 @@
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class BlockDisplay : MonoBehaviour
 {
     public MinecraftModelData modelData;
-    public GameObject modelElementParent;
 
+    // blockstate 읽기 
     public void LoadBlockModel(string name, string state)
     {
         //Debug.Log(name + ", " + state);
 
         // 블록 스테이트를 불러와서
         JObject blockState = MinecraftFileManager.GetJSONData("blockstates/" + name + ".json");
+        //Debug.Log("BlockState : " + blockState.ToString());
+        //Debug.Log("State : " + state);
 
         // variants 형식일 경우
         if (blockState.ContainsKey("variants"))
@@ -21,54 +25,157 @@ public class BlockDisplay : MonoBehaviour
             // 블록 스테이트에 해당하는 모델을 불러옴
             if (variants.ContainsKey(state))
             {
-
-                var modelInfo = variants[state];
-                string modelLocation;
-
-                JObject modelObject;
-
-                if (modelInfo.Type == JTokenType.Array)
-                {
-                    modelObject = modelInfo[0] as JObject;
-                    modelLocation = modelInfo[0]["model"].ToString();
-                }
-                else
-                {
-                    modelObject = modelInfo as JObject;
-                    modelLocation = modelInfo["model"].ToString();
-                }
-
-                modelLocation = MinecraftFileManager.RemoveNamespace(modelLocation);
-
-                int xRot = modelObject.TryGetValue("x", out JToken xToken) ? xToken.Value<int>() : 0;
-                int yRot = modelObject.TryGetValue("y", out JToken yToken) ? yToken.Value<int>() : 0;
-                bool uvlock = modelObject.TryGetValue("uvlock", out JToken uvlockToken) ? uvlockToken.Value<bool>() : false;
-
-                // 불러온 모델을 바탕으로 생성하기
-                //Debug.Log("model location : " + modelLocation);
-                modelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
-
-                SetModelByMinecraftModel(modelData);
-
-                //Quaternion modelXRot = Quaternion.Euler(xRot, 0, 0);
-                //Quaternion modelYRot = Quaternion.Euler(0, yRot, 0);
-
-                modelElementParent.transform.Rotate(new Vector3(xRot, yRot, 0));
-
-                // 회전 후 Pivot을 꼭짓점으로 이동
-                AlignBlockDisplayToAABBCorner();
-
+                SetModel(variants[state]);
             }
             else
             {
                 Debug.LogError("State not found: " + state);
             }
         }
+        else if (blockState.ContainsKey("multipart"))
+        {
+            // multipart 형식일 경우
+            var multipart = blockState["multipart"] as JArray;
+            //Debug.Log("Multipart : " + multipart.ToString());
+
+            for (int i = 0; i < multipart.Count; i++)
+            {
+                Debug.Log("Part : " + multipart[i].ToString());
+                JObject partObject = multipart[i] as JObject;
+
+                bool check = true;
+
+                if (partObject.ContainsKey("when"))
+                {
+                    check = CheckState(partObject["when"] as JObject, state);
+                }
+
+                if (check)
+                    SetModel(partObject["apply"]);
+            }
+
+        }
+        else
+        {
+            Debug.LogError("Unknown blockstate format");
+        }
     }
 
-    void SetModelByMinecraftModel(MinecraftModelData model)
+    private bool CheckState(JObject when, string state)
     {
-        //Debug.Log(model.ToString());
+        if (when.ContainsKey("OR"))
+        {
+            var OR = when["OR"] as JArray;
+            for (int i = 0; i < OR.Count; i++)
+            {
+                if (CheckStateName(OR[i] as JObject, state))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        else if (when.ContainsKey("AND"))
+        {
+            var AND = when["AND"] as JArray;
+            for (int i = 0; i < AND.Count; i++)
+            {
+                if (CheckStateName(AND[i] as JObject, state) == false)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        else
+        {
+            return CheckStateName(when, state);
+        }
+    }
+
+    private bool CheckStateName(JObject checks, string state)
+    {
+        //Debug.Log("Item : " + checks.ToString());
+        //Debug.Log("State : " + state);
+
+        if (string.IsNullOrEmpty(state))
+        {
+            return false;
+        }
+
+        string[] stateSplit = state.Split(',');
+        Dictionary<string, string> checkState = new Dictionary<string, string>();
+        int count = stateSplit.Length;
+        for (int i = 0; i < count; i++)
+        {
+            //Debug.Log("Split : " + stateSplit[i]);
+
+            string[] split = stateSplit[i].Split('=');
+            checkState.Add(split[0], split[1]);
+        }
+
+        foreach (var item in checks)
+        {
+            string compare = checkState.TryGetValue(item.Key, out string value) ? value : "";
+            string[] itemSplit = item.Value.ToString().Split('|');
+
+            for (int i = 0; i < itemSplit.Length; i++)
+            {
+                if (itemSplit[i] == compare)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+
+    }
+
+    private void SetModel(JToken modelInfo)
+    {
+        string modelLocation;
+        JObject modelObject;
+
+        if (modelInfo.Type == JTokenType.Array)
+        {
+            modelObject = modelInfo[0] as JObject;
+            modelLocation = modelInfo[0]["model"].ToString();
+        }
+        else
+        {
+            modelObject = modelInfo as JObject;
+            modelLocation = modelInfo["model"].ToString();
+        }
+
+        modelLocation = MinecraftFileManager.RemoveNamespace(modelLocation);
+
+        int xRot = modelObject.TryGetValue("x", out JToken xToken) ? xToken.Value<int>() : 0;
+        int yRot = modelObject.TryGetValue("y", out JToken yToken) ? yToken.Value<int>() : 0;
+        bool uvlock = modelObject.TryGetValue("uvlock", out JToken uvlockToken) ? uvlockToken.Value<bool>() : false;
+
+        // 불러온 모델을 바탕으로 생성하기
+        //Debug.Log("model location : " + modelLocation);
+        modelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
+
+        GameObject modelElementParent = new GameObject("Model");
+        modelElementParent.transform.SetParent(transform);
+        modelElementParent.transform.localPosition = Vector3.zero;
+
+        SetModelByMinecraftModel(modelData, modelElementParent);
+
+        //Quaternion modelXRot = Quaternion.Euler(xRot, 0, 0);
+        //Quaternion modelYRot = Quaternion.Euler(0, yRot, 0);
+
+        modelElementParent.transform.Rotate(new Vector3(xRot, yRot, 0));
+
+        // 회전 후 Pivot을 꼭짓점으로 이동
+        AlignBlockDisplayToAABBCorner(modelElementParent);
+    }
+
+    // blockmodel로 생성하기
+    void SetModelByMinecraftModel(MinecraftModelData model, GameObject modelElementParent)
+    {
+        Debug.Log(model.ToString());
 
         if (model.elements == null)
         {
@@ -76,20 +183,16 @@ public class BlockDisplay : MonoBehaviour
 
         }
 
-        modelElementParent = new GameObject("Model");
-        modelElementParent.transform.SetParent(transform);
-        modelElementParent.transform.localPosition = Vector3.zero;
-        // Model -> Block들
-        // Block Element 따라 생성 -> Model의 pivot을 좌측 하단으로 이동
-        // defaultSize : 0.5
 
-
-        // 회전 : xRot, yRot, rotaiton
 
         // 모델 데이터를 이용해서 블록을 생성
-        foreach (var element in model.elements)
+        int count = model.elements.Count;
+        for (int i = 0; i < count; i++)
         {
+            JObject element = model.elements[i];
+            
             MeshRenderer cubeObject = Instantiate(Resources.Load<MeshRenderer>("minecraft/block"), modelElementParent.transform);
+            cubeObject.transform.localPosition = Vector3.zero;
             //cubeObject.transform.localPosition = new Vector3(0.5f, 0.5f, 0.5f);
 
             // 큐브의 위치와 크기를 설정
@@ -102,62 +205,114 @@ public class BlockDisplay : MonoBehaviour
                 element["to"][1].Value<float>(),
                 element["to"][2].Value<float>());
 
-            Vector3 size = (to - from) / 16.0f * cubeObject.transform.localScale.x;
-            Vector3 center = from / 16.0f + size / 2.0f;
+            Vector3 size = (to - from) / 32.0f;
+            Vector3 center = (from + to) / 32.0f;
 
-            //cubeObject.transform.localPosition = center;
-
+            // 큐브의 크기 적용
             cubeObject.transform.localScale = size;
+
+            // 큐브의 회전을 설정
+            SetRotation(element, cubeObject, size);
+
+            // 최종 위치 설정
             cubeObject.transform.localPosition = center;
 
             // 큐브의 텍스쳐를 설정
-            if (element.ContainsKey("faces"))
+            SetFaces(model, element, cubeObject);
+        }
+    }
+
+    private void SetRotation(JObject element, MeshRenderer cubeObject, Vector3 size)
+    {
+        if (element.ContainsKey("rotation"))
+        {
+            JObject rotation = element["rotation"] as JObject;
+
+            // origin 값 확인 및 월드 좌표 변환
+            Vector3 origin = new Vector3(
+                rotation["origin"][0].Value<float>(),
+                rotation["origin"][1].Value<float>(),
+                rotation["origin"][2].Value<float>()
+            ) / 16.0f;
+            Vector3 worldOrigin = cubeObject.transform.parent.TransformPoint(origin);
+
+            // 회전축 및 각도 설정
+            Vector3 axis = rotation["axis"].ToString() switch
             {
-                JObject faces = element["faces"] as JObject;
-                foreach (var face in faces)
-                {
+                "x" => Vector3.right,
+                "y" => Vector3.up,
+                "z" => Vector3.forward,
+                _ => Vector3.zero
+            };
+            float angle = rotation["angle"].Value<float>();
 
-                    // 각 텍스처 로드 및 설정
-                    var faceTexture = face.Value["texture"];
-                    int idx = MinecraftModelData.faceToTextureName[face.Key];
-                    //cubeObject.materials[idx].shader = BDObjManager.BDObjShader;
-                    cubeObject.materials[idx].mainTexture = CreateTexture(faceTexture.ToString(), model.textures);
-                }
-            }
+            // 회전 적용
+            cubeObject.transform.RotateAround(worldOrigin, axis, angle);
 
-            //큐브의 회전을 설정
-            if (element.ContainsKey("rotation"))
+            // 스케일 재조정 (rescale 옵션 적용)
+            if (rotation.TryGetValue("rescale", out JToken rescaleToken) && rescaleToken.Value<bool>())
             {
-                JObject rotation = element["rotation"] as JObject;
-                Vector3 origin = new Vector3(
-                    rotation["origin"][0].Value<float>(),
-                    rotation["origin"][1].Value<float>(),
-                    rotation["origin"][2].Value<float>()
-                    ) / 16.0f;
-                Vector3 axis = rotation["axis"].ToString() switch
-                {
-                    "x" => Vector3.right,
-                    "y" => Vector3.up,
-                    "z" => Vector3.forward,
-                    _ => Vector3.zero
-                };
-
-                float angle = rotation["angle"].Value<float>();
-
-                // 큐브를 중심에서 회전
-                cubeObject.transform.RotateAround(cubeObject.transform.position + origin, axis, angle);
+                float scaleFactor = Mathf.Sqrt(2.0f); // 대각선 길이 보정
+                cubeObject.transform.localScale = size * scaleFactor;
             }
         }
     }
 
-    void AlignBlockDisplayToAABBCorner()
+    private void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
+    {
+        if (element.ContainsKey("faces"))
+        {
+            JObject faces = element["faces"] as JObject;
+            foreach (var face in faces)
+            {
+                JObject faceData = face.Value as JObject;
+                // 각 텍스처 로드 및 설정
+                var faceTexture = faceData["texture"];
+                int idx = MinecraftModelData.faceToTextureName[face.Key];
+
+                Material mat = cubeObject.materials[idx];
+
+                if (faceData.ContainsKey("uv"))
+                {
+                    //Debug.Log("UV Found " + face.Key);
+                    // UV 설정
+                    JArray uvArray = faceData["uv"] as JArray;
+                    Vector4 uv = new Vector4(
+                        uvArray[0].Value<float>(), // xMin
+                        uvArray[1].Value<float>(), // yMin
+                        uvArray[2].Value<float>(), // xMax
+                        uvArray[3].Value<float>()  // yMax
+                    );
+
+                    // UV 변환
+                    float textureSize = 16.0f; // Minecraft 텍스처 기준
+                    Vector2 uvMin = new Vector2(uv.x / textureSize, uv.y / textureSize);
+                    Vector2 uvMax = new Vector2(uv.z / textureSize, uv.w / textureSize);
+                    Vector2 uvOffset = uvMin;
+                    Vector2 uvScale = uvMax - uvMin;
+
+                    mat.mainTextureOffset = uvOffset;
+                    mat.mainTextureScale = uvScale;
+                }
+
+                //cubeObject.materials[idx].shader = BDObjManager.BDObjShader;
+                mat.mainTexture = CreateTexture(faceTexture.ToString(), model.textures);
+            }
+        }
+    }
+
+    // pivot 생성
+    void AlignBlockDisplayToAABBCorner(GameObject modelElementParent)
     {
         // 1. AABB 계산
         Bounds aabb = new Bounds();
         bool isInitialized = false;
 
-        foreach (Transform child in modelElementParent.transform)
+        int count = modelElementParent.transform.childCount;
+        for (int i = 0; i < count; i++)
         {
+            Transform child = modelElementParent.transform.GetChild(i);
+
             MeshRenderer renderer = child.GetComponent<MeshRenderer>();
             if (renderer != null)
             {
@@ -181,6 +336,7 @@ public class BlockDisplay : MonoBehaviour
         modelElementParent.transform.position += offset;
     }
 
+    // 텍스쳐 생성
     Texture2D CreateTexture(string path, JObject textures)
     {
         if (path[0] == '#')
