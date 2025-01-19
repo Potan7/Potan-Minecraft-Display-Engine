@@ -14,7 +14,13 @@ public class FileManager : RootManager
     {
         FileBrowser.SetFilters(false,
             new FileBrowser.Filter("Files", ".bdengine", ".bdstudio"));
+        // 런처 경로 추가
         FileBrowser.AddQuickLink("Launcher File", Application.dataPath);
+        // 다운로드 폴더 추가
+        string download = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal));
+        download = Path.Combine(download, "Downloads");
+
+        FileBrowser.AddQuickLink("Downloads", download);
     }
 
     IEnumerator ShowLoadDialogCoroutine(Action<string[]> callback)

@@ -35,8 +35,14 @@ public class BDObejctContainer : MonoBehaviour
                 GameObject blockDisplay = new GameObject("BlockDisplay");
                 blockDisplay.transform.SetParent(transform);
                 blockDisplay.transform.localPosition = Vector3.zero;
-                blockDisplay.AddComponent<BlockDisplay>().LoadBlockModel(name, state);
-                //LoadBlockModel(name, state);
+                Bounds aabb = blockDisplay.AddComponent<BlockDisplay>().LoadBlockModel(name, state);
+
+                // 좌측 하단 좌표 계산
+                Vector3 bottomLeft = aabb.min;
+                //Debug.Log("BottomLeft: " + bottomLeft);
+
+                // blockDisplay의 위치를 좌측 하단에 맞춤
+                blockDisplay.transform.localPosition = -bottomLeft;
             }
             // 아이템 디스플레이일 때
             else

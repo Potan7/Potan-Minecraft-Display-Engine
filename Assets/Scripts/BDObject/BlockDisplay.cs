@@ -6,13 +6,16 @@ using UnityEngine;
 public class BlockDisplay : MonoBehaviour
 {
     public MinecraftModelData modelData;
+    string blockName;
+    Bounds AABBBound;
 
     // blockstate 읽기 
-    public void LoadBlockModel(string name, string state)
+    public Bounds LoadBlockModel(string name, string state)
     {
         //Debug.Log(name + ", " + state);
 
         // 블록 스테이트를 불러와서
+        blockName = name;
         JObject blockState = MinecraftFileManager.GetJSONData("blockstates/" + name + ".json");
         //Debug.Log("BlockState : " + blockState.ToString());
         //Debug.Log("State : " + state);
@@ -59,6 +62,9 @@ public class BlockDisplay : MonoBehaviour
         {
             Debug.LogError("Unknown blockstate format");
         }
+
+        SetAABBBounds();
+        return AABBBound;
     }
 
     private bool CheckState(JObject when, string state)
@@ -163,13 +169,23 @@ public class BlockDisplay : MonoBehaviour
 
         SetModelByMinecraftModel(modelData, modelElementParent);
 
-        //Quaternion modelXRot = Quaternion.Euler(xRot, 0, 0);
-        //Quaternion modelYRot = Quaternion.Euler(0, yRot, 0);
+        // X축, Y축 회전을 명확히 설정
+        Quaternion modelXRot = Quaternion.Euler(xRot, 0, 0);
+        Quaternion modelYRot = Quaternion.Euler(0, yRot, 0);
 
-        modelElementParent.transform.Rotate(new Vector3(xRot, yRot, 0));
+        //Vector3 xAxis = Vector3.right;
+        //Vector3 yAxis = Vector3.up;
+        //Vector3 center = new Vector3(0.5f, 0.5f, 0.5f);
+        //Vector3 modelCenter = modelElementParent.transform.TransformPoint(center);
 
-        // 회전 후 Pivot을 꼭짓점으로 이동
-        AlignBlockDisplayToAABBCorner(modelElementParent);
+        //Debug.Log("Before rotation: " + modelElementParent.transform.eulerAngles);
+
+        modelElementParent.transform.localRotation = modelYRot * modelXRot;
+
+        //modelElementParent.transform.RotateAround(modelCenter, yAxis, -yRot);
+        //modelElementParent.transform.RotateAround(modelCenter, xAxis, -xRot);
+
+        //Debug.Log("After rotation: " + modelElementParent.transform.eulerAngles);
     }
 
     // blockmodel로 생성하기
@@ -215,7 +231,7 @@ public class BlockDisplay : MonoBehaviour
             SetRotation(element, cubeObject, size);
 
             // 최종 위치 설정
-            cubeObject.transform.localPosition = center;
+            cubeObject.transform.localPosition = center - new Vector3(0.5f, 0.5f, 0.5f);
 
             // 큐브의 텍스쳐를 설정
             SetFaces(model, element, cubeObject);
@@ -260,80 +276,139 @@ public class BlockDisplay : MonoBehaviour
 
     private void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
     {
-        if (element.ContainsKey("faces"))
+        if (!element.ContainsKey("faces"))
         {
-            JObject faces = element["faces"] as JObject;
-            foreach (var face in faces)
-            {
-                JObject faceData = face.Value as JObject;
-                // 각 텍스처 로드 및 설정
-                var faceTexture = faceData["texture"];
-                int idx = MinecraftModelData.faceToTextureName[face.Key];
+            return;
+        }
 
-                Material mat = cubeObject.materials[idx];
+        Texture texture = null;
+        JObject faces = element["faces"] as JObject;
+        bool IsTransparented = false;
+        foreach (var face in faces)
+        {
+            JObject faceData = face.Value as JObject;
+            // 각 텍스처 로드 및 설정
+            var faceTexture = faceData["texture"];
+            int idx = MinecraftModelData.faceToTextureName[face.Key];
 
-                if (faceData.ContainsKey("uv"))
+            Texture2D blockTexture = CreateTexture(faceTexture.ToString(), model.textures);
+
+            if (!IsTransparented)
+            {            
+                bool isTransparent = CheckForTransparency(blockTexture);
+
+                if (isTransparent)
                 {
-                    //Debug.Log("UV Found " + face.Key);
-                    // UV 설정
-                    JArray uvArray = faceData["uv"] as JArray;
-                    Vector4 uv = new Vector4(
-                        uvArray[0].Value<float>(), // xMin
-                        uvArray[1].Value<float>(), // yMin
-                        uvArray[2].Value<float>(), // xMax
-                        uvArray[3].Value<float>()  // yMax
-                    );
+                    Material[] materials = new Material[cubeObject.materials.Length];
+                    int count = cubeObject.materials.Length;
+                    for (int i = 0; i < count; i++)
+                    {
+                        materials[i] = GameManager.GetManager<BDObjectManager>().BDObjTransportMaterial;
 
-                    // UV 변환
-                    float textureSize = 16.0f; // Minecraft 텍스처 기준
-                    Vector2 uvMin = new Vector2(uv.x / textureSize, uv.y / textureSize);
-                    Vector2 uvMax = new Vector2(uv.z / textureSize, uv.w / textureSize);
-                    Vector2 uvOffset = uvMin;
-                    Vector2 uvScale = uvMax - uvMin;
+                        materials[i].mainTexture = cubeObject.materials[i].mainTexture;
+                        materials[i].mainTextureOffset = cubeObject.materials[i].mainTextureOffset;
+                        materials[i].mainTextureScale = cubeObject.materials[i].mainTextureScale;
+                    }
+                    cubeObject.materials = materials;
 
-                    mat.mainTextureOffset = uvOffset;
-                    mat.mainTextureScale = uvScale;
+                    IsTransparented = true;
                 }
+            }
 
-                //cubeObject.materials[idx].shader = BDObjManager.BDObjShader;
-                mat.mainTexture = CreateTexture(faceTexture.ToString(), model.textures);
+            Material mat = cubeObject.materials[idx];
+
+            if (faceData.ContainsKey("uv"))
+            {
+                //Debug.Log("UV Found " + face.Key);
+                // UV 설정
+                JArray uvArray = faceData["uv"] as JArray;
+                Vector4 uv = new Vector4(
+                    uvArray[0].Value<float>(), // xMin
+                    uvArray[1].Value<float>(), // yMin
+                    uvArray[2].Value<float>(), // xMax
+                    uvArray[3].Value<float>()  // yMax
+                );
+
+                // UV 변환
+                float textureSize = 16.0f; // Minecraft 텍스처 기준
+                Vector2 uvMin = new Vector2(uv.x / textureSize, uv.y / textureSize);
+                Vector2 uvMax = new Vector2(uv.z / textureSize, uv.w / textureSize);
+                Vector2 uvOffset = uvMin;
+                Vector2 uvScale = uvMax - uvMin;
+
+                mat.mainTextureOffset = uvOffset;
+                mat.mainTextureScale = uvScale;
+            }
+            mat.mainTexture = blockTexture;
+
+
+            if (texture == null)
+            {
+                texture = mat.mainTexture;
+            }
+        }
+
+        // 빈공간 채우기
+        foreach (var items in MinecraftModelData.faceToTextureName)
+        {
+            if (!faces.ContainsKey(items.Key))
+            {
+                cubeObject.materials[items.Value].mainTexture = texture;
+            }
+        }
+
+        // 레드스톤 와이어 특수 처리
+        if (blockName.StartsWith("redstone_wire"))
+        {
+            Debug.Log("Redstone wire");
+            int cnt = cubeObject.materials.Length;
+            for (int i = 0; i < cnt; i++)
+            {
+                cubeObject.materials[i].color = Color.red;
             }
         }
     }
 
-    // pivot 생성
-    void AlignBlockDisplayToAABBCorner(GameObject modelElementParent)
+    void SetAABBBounds()
     {
         // 1. AABB 계산
-        Bounds aabb = new Bounds();
-        bool isInitialized = false;
+        AABBBound = new Bounds();
 
-        int count = modelElementParent.transform.childCount;
+        MeshRenderer[] renderers = GetComponentsInChildren<MeshRenderer>();
+        int count = renderers.Length;
         for (int i = 0; i < count; i++)
         {
-            Transform child = modelElementParent.transform.GetChild(i);
-
-            MeshRenderer renderer = child.GetComponent<MeshRenderer>();
-            if (renderer != null)
+            MeshRenderer renderer = renderers[i];
+            if (i == 0)
             {
-                if (!isInitialized)
-                {
-                    aabb = renderer.bounds;
-                    isInitialized = true;
-                }
-                else
-                {
-                    aabb.Encapsulate(renderer.bounds);
-                }
+                AABBBound = renderer.bounds;
+            }
+            else
+            {
+                AABBBound.Encapsulate(renderer.bounds);
             }
         }
 
-        // 2. AABB의 좌하단 뒤쪽 꼭짓점 계산
-        Vector3 corner = aabb.min;
+        //bool isInitialized = false;
+        //int count = modelElementParent.transform.childCount;
+        //for (int i = 0; i < count; i++)
+        //{
+        //    Transform child = modelElementParent.transform.GetChild(i);
 
-        // 3. Model 이동 (BlockDisplay를 Pivot으로 만듦)
-        Vector3 offset = transform.position - corner;
-        modelElementParent.transform.position += offset;
+        //    MeshRenderer renderer = child.GetComponent<MeshRenderer>();
+        //    if (renderer != null)
+        //    {
+        //        if (!isInitialized)
+        //        {
+        //            aabb = renderer.bounds;
+        //            isInitialized = true;
+        //        }
+        //        else
+        //        {
+        //            aabb.Encapsulate(renderer.bounds);
+        //        }
+        //    }
+        //}
     }
 
     // 텍스쳐 생성
@@ -353,5 +428,19 @@ public class BlockDisplay : MonoBehaviour
             return null;
         }
         return texture;
+    }
+
+    bool CheckForTransparency(Texture2D texture)
+    {
+        Color[] pixels = texture.GetPixels();
+
+        foreach (Color pixel in pixels)
+        {
+            if (pixel.a < 1.0f)
+            {
+                return true; // 투명 또는 반투명 픽셀 존재
+            }
+        }
+        return false; // 완전히 불투명
     }
 }

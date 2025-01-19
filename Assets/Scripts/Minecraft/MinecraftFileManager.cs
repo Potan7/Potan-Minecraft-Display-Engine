@@ -77,6 +77,7 @@ public class MinecraftFileManager : RootManager
             texture.Apply();
 
             texture.LoadImage(instance.textureFiles[path]);
+            
             return texture;
         }
         return null;

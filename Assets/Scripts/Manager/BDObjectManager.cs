@@ -4,10 +4,9 @@ using System.Threading.Tasks;
 
 public class BDObjectManager : RootManager
 {
-    public Shader BDObjShader;
+    public Material BDObjTransportMaterial;
     public Transform BDObjectParent;
     public BDObejctContainer BDObjectPrefab;
-    public MeshRenderer BlockPrefab;
     public List<BDObejctContainer> BDObjectList = new List<BDObejctContainer>();
 
     public bool IsLoading { get; private set; } = false;
