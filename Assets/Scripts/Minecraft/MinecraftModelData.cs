@@ -6,21 +6,22 @@ using System.Collections.Generic;
 [SerializeField]
 public class MinecraftModelData
 {
-    public static Dictionary<string, int> faceToTextureName = new Dictionary<string, int>
+    public enum FaceDirection
     {
-        { "north", 1 },
-        { "south", 5 },
-        { "west", 2 },
-        { "east", 4 },
-        { "up", 0 },
-        { "down", 3 }
-    };
+        up = 0,
+        north = 1,
+        west = 4,
+        down = 3,
+        east = 2,
+        south = 5
+    }
 
     public string parent;
     public string gui_light;
     public JObject display;
     public JObject textures;
     public List<JObject> elements;
+    public JArray texture_size;
 
     public MinecraftModelData UnpackParent()
     {

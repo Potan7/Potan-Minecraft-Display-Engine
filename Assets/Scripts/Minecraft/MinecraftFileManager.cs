@@ -14,16 +14,20 @@ public class MinecraftFileManager : RootManager
     Dictionary<string, byte[]> textureFiles = new Dictionary<string, byte[]>();
     Dictionary<string, string> jsonFiles = new Dictionary<string, string>();
 
+    // readPreReadedFiles에 있는 파일들은 미리 읽어둠
     Dictionary<string, MinecraftModelData> importantModels = new Dictionary<string, MinecraftModelData>();
 
-    string[] readFolder = { "models", "textures", "blockstates", "items" }; // 읽을 폴더
-    string[] readTexturesFolders = { "block", "item" }; // textures의 읽을 폴더
-    string[] readPreReadedFiles =
-        {"block", "cube", "cube_all", "cube_all_inner_faces", "cube_column"};
+    readonly string[] readFolder = { "models", "textures", "blockstates", "items" }; // 읽을 폴더
+    readonly string[] readTexturesFolders = 
+        { "block", "item", "entity/bed", "entity/shulker", "entity/chest", "entity/conduit" }; // textures의 읽을 폴더
+    readonly string[] readPreReadedFiles =
+        {"block", "cube", "cube_all", "cube_all_inner_faces", "cube_column"};   // 미리 로드할 파일
+
+    readonly string[] hardcodeNames = { "bed", "shulker_box", "chest", "conduit" };
 
     readonly string Appdata = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData);
-    readonly string minecraftPath = ".minecraft/versions";
-    readonly string minecraftVersion = "1.21.4";
+    const string minecraftPath = ".minecraft/versions";
+    const string minecraftVersion = "1.21.4";
 
     [SerializeField]
     string filePath;
@@ -43,6 +47,14 @@ public class MinecraftFileManager : RootManager
 
     public static JObject GetJSONData(string path)
     {
+        if (path.Contains("bed"))
+        {
+            Debug.Log("Bed: " + path);
+            var bed = Resources.Load<TextAsset>("hardcoded/" + path.Replace(".json", ""));
+            Debug.Log("Bed: " + bed.text);
+            return JObject.Parse(bed.text);
+        }
+
         if (instance.jsonFiles.ContainsKey(path))
         {
             return JObject.Parse(instance.jsonFiles[path]);
@@ -57,6 +69,14 @@ public class MinecraftFileManager : RootManager
         if (instance.importantModels.ContainsKey(path))
         {
             return instance.importantModels[path];
+        }
+
+        for (int i = 0; i < instance.hardcodeNames.Length; i++)
+        {
+            if (path.Contains(instance.hardcodeNames[i]))
+            {
+                return JsonConvert.DeserializeObject<MinecraftModelData>(Resources.Load<TextAsset>("hardcoded/" + path.Replace(".json", "")).text);
+            }
         }
 
         if (instance.jsonFiles.ContainsKey(path))

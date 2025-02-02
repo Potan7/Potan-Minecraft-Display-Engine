@@ -62,7 +62,9 @@ public class FileManager : RootManager
             Debug.Log(jsonData);
 
             var projects = JsonConvert.DeserializeObject<List<BDObject>>(jsonData);
+            Debug.Log("start add objects " + projects.Count);
             GameManager.GetManager<BDObjectManager>().AddObjects(projects);
+            Debug.Log("end add objects");
         }
     }
 

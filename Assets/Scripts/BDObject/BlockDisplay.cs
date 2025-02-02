@@ -1,12 +1,14 @@
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using static MinecraftModelData;
 
 public class BlockDisplay : MonoBehaviour
 {
     public MinecraftModelData modelData;
-    string blockName;
+    public string blockName;
     Bounds AABBBound;
 
     // blockstate 읽기 
@@ -170,34 +172,16 @@ public class BlockDisplay : MonoBehaviour
         SetModelByMinecraftModel(modelData, modelElementParent);
 
         // X축, Y축 회전을 명확히 설정
-        Quaternion modelXRot = Quaternion.Euler(xRot, 0, 0);
-        Quaternion modelYRot = Quaternion.Euler(0, yRot, 0);
-
-        //Vector3 xAxis = Vector3.right;
-        //Vector3 yAxis = Vector3.up;
-        //Vector3 center = new Vector3(0.5f, 0.5f, 0.5f);
-        //Vector3 modelCenter = modelElementParent.transform.TransformPoint(center);
-
-        //Debug.Log("Before rotation: " + modelElementParent.transform.eulerAngles);
+        Quaternion modelXRot = Quaternion.Euler(-xRot, 0, 0);
+        Quaternion modelYRot = Quaternion.Euler(0, -yRot, 0);
 
         modelElementParent.transform.localRotation = modelYRot * modelXRot;
-
-        //modelElementParent.transform.RotateAround(modelCenter, yAxis, -yRot);
-        //modelElementParent.transform.RotateAround(modelCenter, xAxis, -xRot);
-
-        //Debug.Log("After rotation: " + modelElementParent.transform.eulerAngles);
     }
 
     // blockmodel로 생성하기
     void SetModelByMinecraftModel(MinecraftModelData model, GameObject modelElementParent)
     {
         Debug.Log(model.ToString());
-
-        if (model.elements == null)
-        {
-            // 셜커상자, 침대 등등
-
-        }
 
 
 
@@ -229,7 +213,6 @@ public class BlockDisplay : MonoBehaviour
 
             // 큐브의 회전을 설정
             SetRotation(element, cubeObject, size);
-
             // 최종 위치 설정
             cubeObject.transform.localPosition = center - new Vector3(0.5f, 0.5f, 0.5f);
 
@@ -240,37 +223,39 @@ public class BlockDisplay : MonoBehaviour
 
     private void SetRotation(JObject element, MeshRenderer cubeObject, Vector3 size)
     {
-        if (element.ContainsKey("rotation"))
+        if (!element.ContainsKey("rotation"))
         {
-            JObject rotation = element["rotation"] as JObject;
+            return;
+        }
 
-            // origin 값 확인 및 월드 좌표 변환
-            Vector3 origin = new Vector3(
-                rotation["origin"][0].Value<float>(),
-                rotation["origin"][1].Value<float>(),
-                rotation["origin"][2].Value<float>()
-            ) / 16.0f;
-            Vector3 worldOrigin = cubeObject.transform.parent.TransformPoint(origin);
+        JObject rotation = element["rotation"] as JObject;
 
-            // 회전축 및 각도 설정
-            Vector3 axis = rotation["axis"].ToString() switch
-            {
-                "x" => Vector3.right,
-                "y" => Vector3.up,
-                "z" => Vector3.forward,
-                _ => Vector3.zero
-            };
-            float angle = rotation["angle"].Value<float>();
+        // origin 값 확인 및 월드 좌표 변환
+        Vector3 origin = new Vector3(
+            rotation["origin"][0].Value<float>(),
+            rotation["origin"][1].Value<float>(),
+            rotation["origin"][2].Value<float>()
+        ) / 16.0f;
+        Vector3 worldOrigin = cubeObject.transform.parent.position + origin;
 
-            // 회전 적용
-            cubeObject.transform.RotateAround(worldOrigin, axis, angle);
+        // 회전축 및 각도 설정
+        Vector3 axis = rotation["axis"].ToString() switch
+        {
+            "x" => Vector3.right,
+            "y" => Vector3.up,
+            "z" => Vector3.forward,
+            _ => Vector3.zero
+        };
+        float angle = rotation["angle"].Value<float>();
 
-            // 스케일 재조정 (rescale 옵션 적용)
-            if (rotation.TryGetValue("rescale", out JToken rescaleToken) && rescaleToken.Value<bool>())
-            {
-                float scaleFactor = Mathf.Sqrt(2.0f); // 대각선 길이 보정
-                cubeObject.transform.localScale = size * scaleFactor;
-            }
+        // 회전 적용
+        cubeObject.transform.RotateAround(worldOrigin, axis, angle);
+
+        // 스케일 재조정 (rescale 옵션 적용)
+        if (rotation.TryGetValue("rescale", out JToken rescaleToken) && rescaleToken.Value<bool>())
+        {
+            float scaleFactor = Mathf.Sqrt(2.0f); // 대각선 길이 보정
+            cubeObject.transform.localScale = size * scaleFactor;
         }
     }
 
@@ -283,64 +268,69 @@ public class BlockDisplay : MonoBehaviour
 
         Texture texture = null;
         JObject faces = element["faces"] as JObject;
-        bool IsTransparented = false;
+        //bool IsTransparented = false;
         foreach (var face in faces)
         {
             JObject faceData = face.Value as JObject;
-            // 각 텍스처 로드 및 설정
+            // 각 face의 텍스처 로드 및 설정
             var faceTexture = faceData["texture"];
-            int idx = MinecraftModelData.faceToTextureName[face.Key];
+
+            Enum.TryParse(face.Key, true, out MinecraftModelData.FaceDirection dir);
+            int idx = (int)dir;
 
             Texture2D blockTexture = CreateTexture(faceTexture.ToString(), model.textures);
-
-            if (!IsTransparented)
-            {            
-                bool isTransparent = CheckForTransparency(blockTexture);
-
-                if (isTransparent)
-                {
-                    Material[] materials = new Material[cubeObject.materials.Length];
-                    int count = cubeObject.materials.Length;
-                    for (int i = 0; i < count; i++)
-                    {
-                        materials[i] = GameManager.GetManager<BDObjectManager>().BDObjTransportMaterial;
-
-                        materials[i].mainTexture = cubeObject.materials[i].mainTexture;
-                        materials[i].mainTextureOffset = cubeObject.materials[i].mainTextureOffset;
-                        materials[i].mainTextureScale = cubeObject.materials[i].mainTextureScale;
-                    }
-                    cubeObject.materials = materials;
-
-                    IsTransparented = true;
-                }
-            }
 
             Material mat = cubeObject.materials[idx];
 
             if (faceData.ContainsKey("uv"))
             {
-                //Debug.Log("UV Found " + face.Key);
-                // UV 설정
+                // UV 설정: [xMin, yMin, xMax, yMax] (Minecraft 기준 16x16)
                 JArray uvArray = faceData["uv"] as JArray;
                 Vector4 uv = new Vector4(
-                    uvArray[0].Value<float>(), // xMin
-                    uvArray[1].Value<float>(), // yMin
-                    uvArray[2].Value<float>(), // xMax
-                    uvArray[3].Value<float>()  // yMax
+                    uvArray[0].Value<float>(),
+                    uvArray[1].Value<float>(),
+                    uvArray[2].Value<float>(),
+                    uvArray[3].Value<float>()
                 );
 
-                // UV 변환
-                float textureSize = 16.0f; // Minecraft 텍스처 기준
-                Vector2 uvMin = new Vector2(uv.x / textureSize, uv.y / textureSize);
-                Vector2 uvMax = new Vector2(uv.z / textureSize, uv.w / textureSize);
-                Vector2 uvOffset = uvMin;
-                Vector2 uvScale = uvMax - uvMin;
+                mat.SetVector("_UVFace", uv);
+
+                /*
+                float textureSize = 16.0f;
+
+
+                float minX = uv.x / textureSize;
+                float maxX = uv.z / textureSize;
+
+                // Minecraft의 v좌표는 위에서 아래로 계산하므로 반전
+                float minY = 1 - (uv.y / textureSize);
+                float maxY = 1 - (uv.w / textureSize);
+
+                // 0~16 → 0~1로 변환된 최소/최대
+                Vector2 uvOffset = new Vector2(minX, minY);
+                Vector2 uvScale = new Vector2(maxX - minX, maxY - minY);
 
                 mat.mainTextureOffset = uvOffset;
                 mat.mainTextureScale = uvScale;
+                */
             }
-            mat.mainTexture = blockTexture;
 
+            // rotation 적용: faceData의 uv 영역 내에서 회전할 각도 (0, 90, 180, 270)
+            if (faceData.ContainsKey("rotation"))
+            {
+                int rotation = faceData["rotation"].Value<int>() % 360;
+                if (rotation < 0)
+                    rotation += 360;
+                // 커스텀 쉐이더에서 uv 영역만 회전하도록 _Rotation 프로퍼티를 사용합니다.
+                mat.SetFloat("_Rotation", -rotation);
+            }
+            else
+            {
+                mat.SetFloat("_Rotation", 0);
+            }
+
+            // 최종 텍스처 적용
+            mat.mainTexture = blockTexture;
 
             if (texture == null)
             {
@@ -348,12 +338,13 @@ public class BlockDisplay : MonoBehaviour
             }
         }
 
-        // 빈공간 채우기
-        foreach (var items in MinecraftModelData.faceToTextureName)
+        // face에 명시되지 않은 면은 기본 텍스처로 채움
+        foreach (FaceDirection direction in Enum.GetValues(typeof(FaceDirection)))
         {
-            if (!faces.ContainsKey(items.Key))
+            string key = direction.ToString();
+            if (!faces.ContainsKey(key))
             {
-                cubeObject.materials[items.Value].mainTexture = texture;
+                cubeObject.materials[(int)direction].mainTexture = texture;
             }
         }
 
@@ -368,6 +359,8 @@ public class BlockDisplay : MonoBehaviour
             }
         }
     }
+
+
 
     void SetAABBBounds()
     {
@@ -432,6 +425,12 @@ public class BlockDisplay : MonoBehaviour
 
     bool CheckForTransparency(Texture2D texture)
     {
+        if (texture == null)
+        {
+            return false;
+        }
+
+
         Color[] pixels = texture.GetPixels();
 
         foreach (Color pixel in pixels)
