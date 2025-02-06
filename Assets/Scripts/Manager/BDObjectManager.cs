@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Collections;
 
 public class BDObjectManager : RootManager
 {
@@ -9,28 +9,62 @@ public class BDObjectManager : RootManager
     public BDObejctContainer BDObjectPrefab;
     public List<BDObejctContainer> BDObjectList = new List<BDObejctContainer>();
 
-    public bool IsLoading { get; private set; } = false;
+    public void AddObjects(List<BDObject> bdObjects) => StartCoroutine(AddObejctCo(bdObjects, BDObjectParent));
 
-    public async void AddObjects(List<BDObject> bdObjects)
+    //public void AddObjects(List<BDObject> bdObjects) => StartCoroutine(DebugCo(bdObjects));
+
+    IEnumerator DebugCo(List<BDObject> bdObjects)
     {
-        IsLoading = true;
-        await AddObejctAync(bdObjects);
-        IsLoading = false;
+        System.Diagnostics.Stopwatch stopwatch = new();
+        stopwatch.Start();
+
+        yield return StartCoroutine(AddObejctCo(bdObjects, BDObjectParent));
+
+        stopwatch.Stop();
+        Debug.Log($"AddObjects Time: {stopwatch.ElapsedMilliseconds}ms");
+
     }
 
-    async Task AddObejctAync(List<BDObject> bdObjects)
+    public void AddObjectUsingOld(List<BDObject> bdObjects) => AddObjectOld(bdObjects, BDObjectParent);
+
+    void AddObjectOld(List<BDObject> bdObjects, Transform parent)
     {
-        foreach (var obj in bdObjects)
+        int count = bdObjects.Count;
+        for (int i = 0; i < count; i++)
         {
-            AddObject(BDObjectParent, obj);
-            await Task.Delay(100);
+            var bdObject = bdObjects[i];
+
+            var newObj = Instantiate(BDObjectPrefab, parent).Init(bdObject);
+            BDObjectList.Add(newObj);
+            // 자식 오브젝트를 추가
+            if (bdObject.children != null)
+            {
+                AddObjectOld(bdObject.children, newObj.transform);
+            }
+            newObj.PostProcess();
         }
     }
 
-    public void AddObject(Transform parent, BDObject bdObject)
+    IEnumerator AddObejctCo(List<BDObject> bdObjects, Transform parent)
     {
-        var newObj = Instantiate(BDObjectPrefab, parent).Init(bdObject);
-        BDObjectList.Add(newObj);
+        int count = bdObjects.Count;
+        for (int i = 0; i < count; i++)
+        {
+            var bdObject = bdObjects[i];
+
+            var newObj = Instantiate(BDObjectPrefab, parent).Init(bdObject);
+            BDObjectList.Add(newObj);
+
+            // 자식 오브젝트를 추가
+            if (bdObject.children != null)
+            {
+                yield return StartCoroutine(AddObejctCo(bdObject.children, newObj.transform));
+            }
+
+            newObj.PostProcess();
+
+            yield return null;
+        }
     }
 
     public void ClearAllObject()

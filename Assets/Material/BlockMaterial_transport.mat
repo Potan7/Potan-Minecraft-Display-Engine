@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: BlockMaterial_transport
-  m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: d3cc742c925c7c240b4abc3430a9faab, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
@@ -17,7 +17,7 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 3000
+  m_CustomRenderQueue: -1
   stringTagMap:
     RenderType: Transparent
   disabledShaderPasses:
@@ -33,7 +33,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Base_Map:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: cde5c158a35d13c43bc9fb3677e64665, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -97,6 +97,7 @@ Material:
     - _BlendModePreserveSpecular: 1
     - _BlendOp: 0
     - _BumpScale: 1
+    - _CastShadows: 0
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 2
@@ -124,12 +125,15 @@ Material:
     - _SrcBlendAlpha: 1
     - _Surface: 1
     - _WorkflowMode: 1
+    - _ZTest: 4
     - _ZWrite: 0
+    - _ZWriteControl: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _UVFace: {r: 0, g: 0, b: 16, a: 16}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &4142950416825447525

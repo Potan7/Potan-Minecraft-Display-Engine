@@ -5,19 +5,14 @@ using Unity.VisualScripting;
 using UnityEngine;
 using static MinecraftModelData;
 
-public class BlockDisplay : MonoBehaviour
+public class BlockDisplay : DisplayObject
 {
-    public MinecraftModelData modelData;
-    public string blockName;
-    Bounds AABBBound;
-
-    // blockstate 읽기 
-    public Bounds LoadBlockModel(string name, string state)
+    public override DisplayObject LoadDisplayModel(string name, string state)
     {
         //Debug.Log(name + ", " + state);
 
         // 블록 스테이트를 불러와서
-        blockName = name;
+        modelName = name;
         JObject blockState = MinecraftFileManager.GetJSONData("blockstates/" + name + ".json");
         //Debug.Log("BlockState : " + blockState.ToString());
         //Debug.Log("State : " + state);
@@ -30,7 +25,7 @@ public class BlockDisplay : MonoBehaviour
             // 블록 스테이트에 해당하는 모델을 불러옴
             if (variants.ContainsKey(state))
             {
-                SetModel(variants[state]);
+                SetModelByBlockState(variants[state]);
             }
             else
             {
@@ -45,7 +40,7 @@ public class BlockDisplay : MonoBehaviour
 
             for (int i = 0; i < multipart.Count; i++)
             {
-                Debug.Log("Part : " + multipart[i].ToString());
+                //Debug.Log("Part : " + multipart[i].ToString());
                 JObject partObject = multipart[i] as JObject;
 
                 bool check = true;
@@ -56,7 +51,7 @@ public class BlockDisplay : MonoBehaviour
                 }
 
                 if (check)
-                    SetModel(partObject["apply"]);
+                    SetModelByBlockState(partObject["apply"]);
             }
 
         }
@@ -66,7 +61,8 @@ public class BlockDisplay : MonoBehaviour
         }
 
         SetAABBBounds();
-        return AABBBound;
+
+        return this;
     }
 
     private bool CheckState(JObject when, string state)
@@ -139,7 +135,7 @@ public class BlockDisplay : MonoBehaviour
 
     }
 
-    private void SetModel(JToken modelInfo)
+    void SetModelByBlockState(JToken modelInfo)
     {
         string modelLocation;
         JObject modelObject;
@@ -155,21 +151,11 @@ public class BlockDisplay : MonoBehaviour
             modelLocation = modelInfo["model"].ToString();
         }
 
-        modelLocation = MinecraftFileManager.RemoveNamespace(modelLocation);
-
         int xRot = modelObject.TryGetValue("x", out JToken xToken) ? xToken.Value<int>() : 0;
         int yRot = modelObject.TryGetValue("y", out JToken yToken) ? yToken.Value<int>() : 0;
         bool uvlock = modelObject.TryGetValue("uvlock", out JToken uvlockToken) ? uvlockToken.Value<bool>() : false;
 
-        // 불러온 모델을 바탕으로 생성하기
-        //Debug.Log("model location : " + modelLocation);
-        modelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
-
-        GameObject modelElementParent = new GameObject("Model");
-        modelElementParent.transform.SetParent(transform);
-        modelElementParent.transform.localPosition = Vector3.zero;
-
-        SetModelByMinecraftModel(modelData, modelElementParent);
+        GameObject modelElementParent = SetModel(modelLocation);
 
         // X축, Y축 회전을 명확히 설정
         Quaternion modelXRot = Quaternion.Euler(-xRot, 0, 0);
@@ -179,9 +165,9 @@ public class BlockDisplay : MonoBehaviour
     }
 
     // blockmodel로 생성하기
-    void SetModelByMinecraftModel(MinecraftModelData model, GameObject modelElementParent)
+    protected override void SetModelObject(MinecraftModelData model, GameObject modelElementParent)
     {
-        Debug.Log(model.ToString());
+        //Debug.Log(model.ToString());
 
 
 
@@ -268,17 +254,38 @@ public class BlockDisplay : MonoBehaviour
 
         Texture texture = null;
         JObject faces = element["faces"] as JObject;
-        //bool IsTransparented = false;
+        bool IsTransparented = false;
         foreach (var face in faces)
         {
             JObject faceData = face.Value as JObject;
             // 각 face의 텍스처 로드 및 설정
             var faceTexture = faceData["texture"];
 
-            Enum.TryParse(face.Key, true, out MinecraftModelData.FaceDirection dir);
+            Enum.TryParse(face.Key, true, out FaceDirection dir);
             int idx = (int)dir;
 
             Texture2D blockTexture = CreateTexture(faceTexture.ToString(), model.textures);
+
+
+            // 투명도 체크
+            if (!IsTransparented)
+            {
+                if (CheckForTransparency(blockTexture))
+                {
+                    IsTransparented = true;
+
+                    // 모든 재질 변경하기
+                    var cubeMaterials = cubeObject.materials;
+                    int cnt = cubeObject.materials.Length;
+                    Material tshader = GameManager.GetManager<BDObjectManager>().BDObjTransportMaterial;
+
+                    for (int i = 0; i < cnt; i++)
+                    {
+                        cubeMaterials[i] = tshader;
+                    }
+                    cubeObject.materials = cubeMaterials;
+                }
+            }
 
             Material mat = cubeObject.materials[idx];
 
@@ -349,7 +356,7 @@ public class BlockDisplay : MonoBehaviour
         }
 
         // 레드스톤 와이어 특수 처리
-        if (blockName.StartsWith("redstone_wire"))
+        if (modelName.StartsWith("redstone_wire"))
         {
             Debug.Log("Redstone wire");
             int cnt = cubeObject.materials.Length;
@@ -358,69 +365,6 @@ public class BlockDisplay : MonoBehaviour
                 cubeObject.materials[i].color = Color.red;
             }
         }
-    }
-
-
-
-    void SetAABBBounds()
-    {
-        // 1. AABB 계산
-        AABBBound = new Bounds();
-
-        MeshRenderer[] renderers = GetComponentsInChildren<MeshRenderer>();
-        int count = renderers.Length;
-        for (int i = 0; i < count; i++)
-        {
-            MeshRenderer renderer = renderers[i];
-            if (i == 0)
-            {
-                AABBBound = renderer.bounds;
-            }
-            else
-            {
-                AABBBound.Encapsulate(renderer.bounds);
-            }
-        }
-
-        //bool isInitialized = false;
-        //int count = modelElementParent.transform.childCount;
-        //for (int i = 0; i < count; i++)
-        //{
-        //    Transform child = modelElementParent.transform.GetChild(i);
-
-        //    MeshRenderer renderer = child.GetComponent<MeshRenderer>();
-        //    if (renderer != null)
-        //    {
-        //        if (!isInitialized)
-        //        {
-        //            aabb = renderer.bounds;
-        //            isInitialized = true;
-        //        }
-        //        else
-        //        {
-        //            aabb.Encapsulate(renderer.bounds);
-        //        }
-        //    }
-        //}
-    }
-
-    // 텍스쳐 생성
-    Texture2D CreateTexture(string path, JObject textures)
-    {
-        if (path[0] == '#')
-        {
-            return CreateTexture(textures[path.Substring(1)].ToString(), textures);
-        }
-
-        string texturePath = "textures/" + MinecraftFileManager.RemoveNamespace(path) + ".png";
-        //Debug.Log(texturePath);
-        Texture2D texture = MinecraftFileManager.GetTextureFile(texturePath);
-        if (texture == null)
-        {
-            Debug.LogError("Texture not found: " + texturePath);
-            return null;
-        }
-        return texture;
     }
 
     bool CheckForTransparency(Texture2D texture)

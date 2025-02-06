@@ -12,7 +12,7 @@ public class MinecraftFileManager : RootManager
     static MinecraftFileManager instance;
 
     Dictionary<string, byte[]> textureFiles = new Dictionary<string, byte[]>();
-    Dictionary<string, string> jsonFiles = new Dictionary<string, string>();
+    public Dictionary<string, string> jsonFiles = new Dictionary<string, string>();
 
     // readPreReadedFiles에 있는 파일들은 미리 읽어둠
     Dictionary<string, MinecraftModelData> importantModels = new Dictionary<string, MinecraftModelData>();
@@ -49,9 +49,9 @@ public class MinecraftFileManager : RootManager
     {
         if (path.Contains("bed"))
         {
-            Debug.Log("Bed: " + path);
+            //Debug.Log("Bed: " + path);
             var bed = Resources.Load<TextAsset>("hardcoded/" + path.Replace(".json", ""));
-            Debug.Log("Bed: " + bed.text);
+            //Debug.Log("Bed: " + bed.text);
             return JObject.Parse(bed.text);
         }
 
@@ -100,6 +100,7 @@ public class MinecraftFileManager : RootManager
             
             return texture;
         }
+        Debug.LogError("Texture not found: " + path);
         return null;
     }
 

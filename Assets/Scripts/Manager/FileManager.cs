@@ -12,10 +12,13 @@ public class FileManager : RootManager
 {
     private void Start()
     {
+        // .bdengine, .bdstudio 확장자만 필터링
         FileBrowser.SetFilters(false,
             new FileBrowser.Filter("Files", ".bdengine", ".bdstudio"));
+
         // 런처 경로 추가
         FileBrowser.AddQuickLink("Launcher File", Application.dataPath);
+
         // 다운로드 폴더 추가
         string download = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal));
         download = Path.Combine(download, "Downloads");
@@ -61,12 +64,32 @@ public class FileManager : RootManager
             //Debug.Log("복원된 JSON 데이터:");
             Debug.Log(jsonData);
 
-            var projects = JsonConvert.DeserializeObject<List<BDObject>>(jsonData);
-            Debug.Log("start add objects " + projects.Count);
-            GameManager.GetManager<BDObjectManager>().AddObjects(projects);
+            MakeDisplay(jsonData);
+
+            //var projects = JsonConvert.DeserializeObject<List<BDObject>>(jsonData);
+
+            //GameManager.GetManager<BDObjectManager>().AddObjectUsingOld(projects);
+
+            //System.Diagnostics.Stopwatch stopwatch = new();
+            //stopwatch.Start();
+            //GameManager.GetManager<BDObjectManager>().AddObjectUsingOld(projects);
+            //stopwatch.Stop();
+            //Debug.Log("AddObjectOld Time: " + stopwatch.ElapsedMilliseconds + "ms");
+
+            //GameManager.GetManager<BDObjectManager>().ClearAllObject();
+
+
+            //GameManager.GetManager<BDObjectManager>().AddObjects(projects);
+
             Debug.Log("end add objects");
         }
     }
+
+    public void MakeDisplay(string jsonData) => 
+        GameManager.GetManager<BDObjectManager>()
+        .AddObjectUsingOld(
+            JsonConvert.DeserializeObject<List<BDObject>>(jsonData)
+            );
 
     string DecompressGzip(byte[] gzipData)
     {

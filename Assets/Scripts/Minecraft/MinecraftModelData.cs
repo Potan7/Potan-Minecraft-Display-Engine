@@ -17,30 +17,30 @@ public class MinecraftModelData
     }
 
     public string parent;
-    public string gui_light;
-    public JObject display;
+    //public string gui_light;
+    //public JObject display;
     public JObject textures;
     public List<JObject> elements;
-    public JArray texture_size;
+    
+    //public JArray texture_size;
 
     public MinecraftModelData UnpackParent()
     {
 
-        if (string.IsNullOrEmpty(parent))
-        {
-            return this;
-        }
+        if (string.IsNullOrEmpty(parent)) return this;
+
+        if (parent == "builtin/generated") return this;
 
         MinecraftModelData parentData =
             MinecraftFileManager.GetModelData("models/" + MinecraftFileManager.RemoveNamespace(parent) + ".json")
             .UnpackParent();
 
-        if (string.IsNullOrEmpty(gui_light))
-        {
-            gui_light = parentData.gui_light;
-        }
+        //if (string.IsNullOrEmpty(gui_light))
+        //{
+        //    gui_light = parentData.gui_light;
+        //}
 
-        MergeJObject(ref display, parentData.display);
+        //MergeJObject(ref display, parentData.display);
         MergeJObject(ref textures, parentData.textures);
         MergeList(ref elements, parentData.elements);
 

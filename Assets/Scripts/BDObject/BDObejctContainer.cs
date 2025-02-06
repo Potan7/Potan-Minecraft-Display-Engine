@@ -4,6 +4,7 @@ using UnityEngine;
 public class BDObejctContainer : MonoBehaviour
 {
     public BDObject BDObject;
+    public DisplayObject displayObj;
 
     public Matrix4x4 transformation;
 
@@ -35,37 +36,29 @@ public class BDObejctContainer : MonoBehaviour
                 GameObject blockDisplay = new GameObject("BlockDisplay");
                 blockDisplay.transform.SetParent(transform);
                 blockDisplay.transform.localPosition = Vector3.zero;
-                Bounds aabb = blockDisplay.AddComponent<BlockDisplay>().LoadBlockModel(name, state);
-
-                // 좌측 하단 좌표 계산
-                Vector3 bottomLeft = aabb.min;
-                //Debug.Log("BottomLeft: " + bottomLeft);
+                displayObj = blockDisplay.AddComponent<BlockDisplay>().LoadDisplayModel(name, state);
 
                 // blockDisplay의 위치를 좌측 하단에 맞춤
-                blockDisplay.transform.localPosition = -bottomLeft;
+                blockDisplay.transform.localPosition = -displayObj.AABBBound.min;
             }
             // 아이템 디스플레이일 때
             else
             {
-                //LoadItemModel(name, state);
+                GameObject itemDisplay = new GameObject("ItemDisplay");
+                itemDisplay.transform.SetParent(transform);
+                itemDisplay.transform.localPosition = Vector3.zero;
+                displayObj = itemDisplay.AddComponent<ItemDisplay>().LoadDisplayModel(name, state);
             }
         }
 
-        // 자식 오브젝트를 추가
-        var manager = GameManager.GetManager<BDObjectManager>();
-        if (bdObject.children != null)
-        {
-            foreach (var child in BDObject.children)
-            {
-                manager.AddObject(transform, child);
-            }
-        }
+        return this;
+    }
 
+    public void PostProcess()
+    {
         // 변환 행렬을 적용
         transformation = AffineTransformation.GetMatrix(BDObject.transforms);
         AffineTransformation.ApplyMatrixToTransform(transform, transformation);
-
-        return this;
     }
 
     
