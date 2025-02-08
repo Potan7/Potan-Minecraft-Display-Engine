@@ -28,17 +28,16 @@ public class FileManager : RootManager
 
     IEnumerator ShowLoadDialogCoroutine(Action<string[]> callback)
     {
+        // 파일 브라우저를 열고 사용자가 파일을 선택하거나 취소할 때까지 대기
         yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files, true, null, null, "Select Files", "Load");
 
-        // Dialog is closed
-        // Print whether the user has selected some files or cancelled the operation (FileBrowser.Success)
-        //Debug.Log(FileBrowser.Success);
-
+        // 파일 브라우저가 파일을 불러오면 콜백 함수 호출
         if (FileBrowser.Success)
-            callback?.Invoke(FileBrowser.Result); // FileBrowser.Result is null, if FileBrowser.Success is false
+            // 만약 Success가 false라면 Result는 null이 된다.
+            callback?.Invoke(FileBrowser.Result); 
         else
         {
-            Debug.LogError("Failed to load file");
+            Debug.Log("Failed to load file");
         }
     }
 
@@ -51,44 +50,27 @@ public class FileManager : RootManager
     {
         foreach (var path in filepaths)
         {
+            // 1. 파일 읽어서 string 변환
             byte[] file = FileBrowserHelpers.ReadBytesFromFile(path);
-
             string base64Data = Encoding.UTF8.GetString(file);
+
             // 2. Base64 디코딩
             byte[] gzipData = Convert.FromBase64String(base64Data);
-
             // 3. GZip 압축 해제
             string jsonData = DecompressGzip(gzipData);
 
             // 4. JSON 데이터 출력
-            //Debug.Log("복원된 JSON 데이터:");
             Debug.Log(jsonData);
 
             MakeDisplay(jsonData);
-
-            //var projects = JsonConvert.DeserializeObject<List<BDObject>>(jsonData);
-
-            //GameManager.GetManager<BDObjectManager>().AddObjectUsingOld(projects);
-
-            //System.Diagnostics.Stopwatch stopwatch = new();
-            //stopwatch.Start();
-            //GameManager.GetManager<BDObjectManager>().AddObjectUsingOld(projects);
-            //stopwatch.Stop();
-            //Debug.Log("AddObjectOld Time: " + stopwatch.ElapsedMilliseconds + "ms");
-
-            //GameManager.GetManager<BDObjectManager>().ClearAllObject();
-
-
-            //GameManager.GetManager<BDObjectManager>().AddObjects(projects);
-
-            Debug.Log("end add objects");
         }
     }
 
+    // JSON 데이터를 BDObject로 변환해서 오브젝트 생성
     public void MakeDisplay(string jsonData) => 
         GameManager.GetManager<BDObjectManager>()
-        .AddObjectUsingOld(
-            JsonConvert.DeserializeObject<List<BDObject>>(jsonData)
+        .AddObjects(
+            JsonConvert.DeserializeObject<BDObject[]>(jsonData)
             );
 
     string DecompressGzip(byte[] gzipData)

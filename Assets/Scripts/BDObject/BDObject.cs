@@ -2,20 +2,16 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
 public class BDObject
 {
     public string name;
     public string nbt;
     public bool isBlockDisplay = false;
     public bool isItemDisplay = false;
-    public List<float> transforms;
-    public List<BDObject> children;
+    public float[] transforms = null;
+    public BDObject[] children = null;
 
     [JsonExtensionData]
     public Dictionary<string, object> ExtraData;
-
-
-
 }
 

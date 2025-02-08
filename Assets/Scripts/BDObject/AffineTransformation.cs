@@ -4,9 +4,9 @@ using System.Collections.Generic;
 public class AffineTransformation
 {
     // 행렬 전환 함수
-    public static Matrix4x4 GetMatrix(List<float> transforms)
+    public static Matrix4x4 GetMatrix(float[] transforms)
     {
-        if (transforms.Count != 16)
+        if (transforms.Length != 16)
         {
             Debug.LogError("Invalid transform data");
             return Matrix4x4.identity;

@@ -9,45 +9,49 @@ public class BDObjectManager : RootManager
     public BDObejctContainer BDObjectPrefab;
     public List<BDObejctContainer> BDObjectList = new List<BDObejctContainer>();
 
-    public void AddObjects(List<BDObject> bdObjects) => StartCoroutine(AddObejctCo(bdObjects, BDObjectParent));
+    public void AddObjectByCo(BDObject[] bdObjects) => StartCoroutine(AddObejctUsingCo(bdObjects, BDObjectParent));
 
     //public void AddObjects(List<BDObject> bdObjects) => StartCoroutine(DebugCo(bdObjects));
 
-    IEnumerator DebugCo(List<BDObject> bdObjects)
+    IEnumerator DebugCo(BDObject[] bdObjects)
     {
         System.Diagnostics.Stopwatch stopwatch = new();
         stopwatch.Start();
 
-        yield return StartCoroutine(AddObejctCo(bdObjects, BDObjectParent));
+        yield return StartCoroutine(AddObejctUsingCo(bdObjects, BDObjectParent));
 
         stopwatch.Stop();
         Debug.Log($"AddObjects Time: {stopwatch.ElapsedMilliseconds}ms");
 
     }
 
-    public void AddObjectUsingOld(List<BDObject> bdObjects) => AddObjectOld(bdObjects, BDObjectParent);
+    // Transform을 기본값으로 설정하기
+    public void AddObjects(BDObject[] bdObjects) => AddObjects(bdObjects, BDObjectParent);
 
-    void AddObjectOld(List<BDObject> bdObjects, Transform parent)
+    void AddObjects(BDObject[] bdObjects, Transform parent)
     {
-        int count = bdObjects.Count;
+        // 배열을 순회하며
+        int count = bdObjects.Length;
         for (int i = 0; i < count; i++)
         {
-            var bdObject = bdObjects[i];
-
-            var newObj = Instantiate(BDObjectPrefab, parent).Init(bdObject);
+            // 오브젝트 생성
+            var newObj = Instantiate(BDObjectPrefab, parent).Init(bdObjects[i]);
             BDObjectList.Add(newObj);
+
             // 자식 오브젝트를 추가
-            if (bdObject.children != null)
+            if (bdObjects[i].children != null)
             {
-                AddObjectOld(bdObject.children, newObj.transform);
+                AddObjects(bdObjects[i].children, newObj.transform);
             }
+
+            // 자식 생성 종료 후 후처리.
             newObj.PostProcess();
         }
     }
 
-    IEnumerator AddObejctCo(List<BDObject> bdObjects, Transform parent)
+    IEnumerator AddObejctUsingCo(BDObject[] bdObjects, Transform parent)
     {
-        int count = bdObjects.Count;
+        int count = bdObjects.Length;
         for (int i = 0; i < count; i++)
         {
             var bdObject = bdObjects[i];
@@ -58,7 +62,7 @@ public class BDObjectManager : RootManager
             // 자식 오브젝트를 추가
             if (bdObject.children != null)
             {
-                yield return StartCoroutine(AddObejctCo(bdObject.children, newObj.transform));
+                yield return StartCoroutine(AddObejctUsingCo(bdObject.children, newObj.transform));
             }
 
             newObj.PostProcess();

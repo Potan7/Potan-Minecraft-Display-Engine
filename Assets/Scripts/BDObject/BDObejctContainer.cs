@@ -10,17 +10,14 @@ public class BDObejctContainer : MonoBehaviour
 
     public BDObejctContainer Init(BDObject bdObject)
     {
+        // 정보 저장
         BDObject = bdObject;
         gameObject.name = bdObject.name;
 
         // 디스플레이라면
         if (bdObject.isBlockDisplay || bdObject.isItemDisplay)
         {
-            //var block = Resources.Load<GameObject>("Prefab/Block");
-            //var blockObj = Instantiate(block, transform);
-            //blockObj.transform.localPosition = new Vector3(0.5f, 0.5f, 0.5f);
-
-            // 이름과 상태 분리
+            // 이름과 상태 추출
             int typeStart = bdObject.name.IndexOf('[');
             if (typeStart == -1)
             {
@@ -33,6 +30,7 @@ public class BDObejctContainer : MonoBehaviour
             // 블록 디스플레이일 때
             if (bdObject.isBlockDisplay)
             {
+                // 블록 디스플레이 자식으로 생성 후 모델 로드
                 GameObject blockDisplay = new GameObject("BlockDisplay");
                 blockDisplay.transform.SetParent(transform);
                 blockDisplay.transform.localPosition = Vector3.zero;
@@ -44,6 +42,7 @@ public class BDObejctContainer : MonoBehaviour
             // 아이템 디스플레이일 때
             else
             {
+                // 아이템 디스플레이 자식으로 생성 후 모델 로드
                 GameObject itemDisplay = new GameObject("ItemDisplay");
                 itemDisplay.transform.SetParent(transform);
                 itemDisplay.transform.localPosition = Vector3.zero;
@@ -54,6 +53,7 @@ public class BDObejctContainer : MonoBehaviour
         return this;
     }
 
+    // 후처리
     public void PostProcess()
     {
         // 변환 행렬을 적용
