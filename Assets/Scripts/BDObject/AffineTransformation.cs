@@ -8,7 +8,7 @@ public class AffineTransformation
     {
         if (transforms.Length != 16)
         {
-            Debug.LogError("Invalid transform data");
+            CustomLog.LogError("Invalid transform data");
             return Matrix4x4.identity;
         }
         return new Matrix4x4(

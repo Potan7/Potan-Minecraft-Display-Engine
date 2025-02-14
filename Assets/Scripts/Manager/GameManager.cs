@@ -30,7 +30,7 @@ public class GameManager : RootManager
             return manager as T;
         }
 
-        Debug.LogError($"Manager of type {typeof(T)} not found!");
+        CustomLog.LogError($"Manager of type {typeof(T)} not found!");
         return null;
     }
 
@@ -44,7 +44,7 @@ public class GameManager : RootManager
         }
         else
         {
-            Debug.LogWarning($"Manager of type {type} is already registered.");
+            CustomLog.LogError($"Manager of type {type} is already registered.");
             Destroy(manager.gameObject);
         }
     }

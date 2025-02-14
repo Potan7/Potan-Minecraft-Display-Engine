@@ -313,7 +313,11 @@ MonoBehaviour:
   BDObjTransportMaterial: {fileID: 2100000, guid: 376723b8be6a77d4dafb0437ee29173d, type: 2}
   BDObjectParent: {fileID: 1893827789}
   BDObjectPrefab: {fileID: 3325262981676524368, guid: 92b0cb02693e70e4883b2def08d6a5ab, type: 3}
-  BDObjectList: []
+  blockDisplay: {fileID: 6500339055809259415, guid: 6c37a9196b574ac4091baaf5902aa15f, type: 3}
+  itemDisplay: {fileID: 3365223955933096385, guid: cad84c51b3a7f604fae693e2750ad47c, type: 3}
+  cubePrefab: {fileID: -7511558181221131132, guid: 39ce9e8de42ef894ea9a3f93930886b6, type: 3}
+  itemPrefab: {fileID: 7713049700123038392, guid: 67070e5c2dcccfb42ae268e55ae9b033, type: 3}
+  blockPrefab: {fileID: 9111335049543586871, guid: b9f6dc4d5503c7349bcf9564751d82da, type: 3}
 --- !u!114 &257885227
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -533,9 +537,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pivot: {fileID: 280487879}
-  rotationSpeed: 5
+  rotationSpeed: 6
   panSpeed: 1
-  zoomSpeed: 260
+  zoomSpeed: 350
   minDistance: 0.1
   maxDistance: 100
 --- !u!1 &354887333
@@ -1128,54 +1132,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 712337238}
   m_CullTransparentMesh: 1
---- !u!1 &780487267
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 780487269}
-  - component: {fileID: 780487268}
-  m_Layer: 0
-  m_Name: GameObject
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &780487268
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 780487267}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ec99532bdd8a4544b9f360683523e92e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  textureName: potato
-  texture: {fileID: 2800000, guid: 66eb6110114531f4ca1d63048e7ccfdb, type: 3}
-  pixelSize: 0.1
-  depth: 0.2
---- !u!4 &780487269
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 780487267}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.792039, y: 5.6303005, z: -2.1344934}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1710,6 +1666,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gridSize: 10
   gridSpacing: 1
+  cube: {fileID: 7242429936119742207, guid: 0ce65f1606dde36418311e539f7ccca3, type: 3}
 --- !u!4 &1651067627
 Transform:
   m_ObjectHideFlags: 0
@@ -1907,4 +1864,3 @@ SceneRoots:
   - {fileID: 608059139}
   - {fileID: 184131177}
   - {fileID: 144071054}
-  - {fileID: 780487269}

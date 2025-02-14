@@ -7,7 +7,14 @@ public class BDObjectManager : RootManager
     public Material BDObjTransportMaterial;
     public Transform BDObjectParent;
     public BDObejctContainer BDObjectPrefab;
-    public List<BDObejctContainer> BDObjectList = new List<BDObejctContainer>();
+    //public List<BDObejctContainer> BDObjectList = new List<BDObejctContainer>();
+
+    public BlockDisplay blockDisplay;
+    public ItemDisplay itemDisplay;
+
+    public MeshRenderer cubePrefab;
+    public ItemModelGenerator itemPrefab;
+    public BlockModelGenerator blockPrefab;
 
     public void AddObjectByCo(BDObject[] bdObjects) => StartCoroutine(AddObejctUsingCo(bdObjects, BDObjectParent));
 
@@ -21,7 +28,7 @@ public class BDObjectManager : RootManager
         yield return StartCoroutine(AddObejctUsingCo(bdObjects, BDObjectParent));
 
         stopwatch.Stop();
-        Debug.Log($"AddObjects Time: {stopwatch.ElapsedMilliseconds}ms");
+        CustomLog.Log($"AddObjects Time: {stopwatch.ElapsedMilliseconds}ms");
 
     }
 
@@ -35,8 +42,9 @@ public class BDObjectManager : RootManager
         for (int i = 0; i < count; i++)
         {
             // 오브젝트 생성
-            var newObj = Instantiate(BDObjectPrefab, parent).Init(bdObjects[i]);
-            BDObjectList.Add(newObj);
+            var newObj = Instantiate(BDObjectPrefab, parent);
+            newObj.Init(bdObjects[i], this);
+            //BDObjectList.Add(newObj);
 
             // 자식 오브젝트를 추가
             if (bdObjects[i].children != null)
@@ -56,8 +64,9 @@ public class BDObjectManager : RootManager
         {
             var bdObject = bdObjects[i];
 
-            var newObj = Instantiate(BDObjectPrefab, parent).Init(bdObject);
-            BDObjectList.Add(newObj);
+            var newObj = Instantiate(BDObjectPrefab, parent);
+            newObj.Init(bdObject, this);
+            //BDObjectList.Add(newObj);
 
             // 자식 오브젝트를 추가
             if (bdObject.children != null)
@@ -73,10 +82,10 @@ public class BDObjectManager : RootManager
 
     public void ClearAllObject()
     {
-        foreach (var obj in BDObjectList)
+        int count = BDObjectParent.childCount;
+        for (int i = 0; i < count; i++)
         {
-            Destroy(obj.gameObject);
+            Destroy(BDObjectParent.GetChild(i).gameObject);
         }
-        BDObjectList.Clear();
     }
 }

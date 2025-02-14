@@ -8,7 +8,7 @@ public class BDObejctContainer : MonoBehaviour
 
     public Matrix4x4 transformation;
 
-    public BDObejctContainer Init(BDObject bdObject)
+    public void Init(BDObject bdObject, BDObjectManager manager)
     {
         // 정보 저장
         BDObject = bdObject;
@@ -31,26 +31,28 @@ public class BDObejctContainer : MonoBehaviour
             if (bdObject.isBlockDisplay)
             {
                 // 블록 디스플레이 자식으로 생성 후 모델 로드
-                GameObject blockDisplay = new GameObject("BlockDisplay");
-                blockDisplay.transform.SetParent(transform);
-                blockDisplay.transform.localPosition = Vector3.zero;
-                displayObj = blockDisplay.AddComponent<BlockDisplay>().LoadDisplayModel(name, state);
+                //GameObject blockDisplay = new GameObject("BlockDisplay");
+                //blockDisplay.transform.SetParent(transform);
+                //blockDisplay.transform.localPosition = Vector3.zero;
+                //displayObj = blockDisplay.AddComponent<BlockDisplay>().LoadDisplayModel(name, state);
+                displayObj = Instantiate(manager.blockDisplay, transform);
+                displayObj.LoadDisplayModel(name, state);
 
                 // blockDisplay의 위치를 좌측 하단에 맞춤
-                blockDisplay.transform.localPosition = -displayObj.AABBBound.min;
+                displayObj.transform.localPosition = -displayObj.AABBBound.min/2;
             }
             // 아이템 디스플레이일 때
             else
             {
                 // 아이템 디스플레이 자식으로 생성 후 모델 로드
-                GameObject itemDisplay = new GameObject("ItemDisplay");
-                itemDisplay.transform.SetParent(transform);
-                itemDisplay.transform.localPosition = Vector3.zero;
-                displayObj = itemDisplay.AddComponent<ItemDisplay>().LoadDisplayModel(name, state);
+                //GameObject itemDisplay = new GameObject("ItemDisplay");
+                //itemDisplay.transform.SetParent(transform);
+                //itemDisplay.transform.localPosition = Vector3.zero;
+                //displayObj = itemDisplay.AddComponent<ItemDisplay>();
+                displayObj = Instantiate(manager.itemDisplay, transform);
+                displayObj.LoadDisplayModel(name, state);
             }
         }
-
-        return this;
     }
 
     // 후처리

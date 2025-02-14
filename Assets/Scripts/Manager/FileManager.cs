@@ -37,7 +37,7 @@ public class FileManager : RootManager
             callback?.Invoke(FileBrowser.Result); 
         else
         {
-            Debug.Log("Failed to load file");
+            CustomLog.Log("Failed to load file");
         }
     }
 
@@ -60,7 +60,7 @@ public class FileManager : RootManager
             string jsonData = DecompressGzip(gzipData);
 
             // 4. JSON 데이터 출력
-            Debug.Log(jsonData);
+            CustomLog.Log(jsonData);
 
             MakeDisplay(jsonData);
         }

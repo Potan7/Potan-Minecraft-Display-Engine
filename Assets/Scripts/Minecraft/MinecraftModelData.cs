@@ -35,12 +35,6 @@ public class MinecraftModelData
             MinecraftFileManager.GetModelData("models/" + MinecraftFileManager.RemoveNamespace(parent) + ".json")
             .UnpackParent();
 
-        //if (string.IsNullOrEmpty(gui_light))
-        //{
-        //    gui_light = parentData.gui_light;
-        //}
-
-        //MergeJObject(ref display, parentData.display);
         MergeJObject(ref textures, parentData.textures);
         MergeList(ref elements, parentData.elements);
 

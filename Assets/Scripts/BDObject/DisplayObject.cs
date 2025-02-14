@@ -5,45 +5,27 @@ public abstract class DisplayObject : MonoBehaviour
 {
     public MinecraftModelData modelData;
     public string modelName;
+
     public Bounds AABBBound { get; private set; }
 
-    public abstract DisplayObject LoadDisplayModel(string name, string state);
-
-    public GameObject SetModel(string modelLocation)
-    {
-        // 불러온 모델을 바탕으로 생성하기
-        modelLocation = MinecraftFileManager.RemoveNamespace(modelLocation);
-
-        //Debug.Log("model location : " + modelLocation);
-        modelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
-
-        GameObject modelElementParent = new GameObject("Model");
-        modelElementParent.transform.SetParent(transform);
-        modelElementParent.transform.localPosition = Vector3.zero;
-
-        SetModelObject(modelData, modelElementParent);
-        return modelElementParent;
-    }
-
-    protected abstract void SetModelObject(MinecraftModelData modelData, GameObject modelElementParent);
+    public abstract void LoadDisplayModel(string name, string state);
 
     protected void SetAABBBounds()
     {
         // 1. AABB 계산
         AABBBound = new Bounds();
-        
+
         MeshRenderer[] renderers = GetComponentsInChildren<MeshRenderer>();
         int count = renderers.Length;
         for (int i = 0; i < count; i++)
         {
-            MeshRenderer renderer = renderers[i];
             if (i == 0)
             {
-                AABBBound = renderer.bounds;
+                AABBBound = renderers[i].localBounds;
             }
             else
             {
-                AABBBound.Encapsulate(renderer.bounds);
+                AABBBound.Encapsulate(renderers[i].localBounds);
             }
         }
     }
@@ -57,13 +39,35 @@ public abstract class DisplayObject : MonoBehaviour
         }
 
         string texturePath = "textures/" + MinecraftFileManager.RemoveNamespace(path) + ".png";
-        //Debug.Log(texturePath);
+        //CustomLog.Log(texturePath);
         Texture2D texture = MinecraftFileManager.GetTextureFile(texturePath);
         if (texture == null)
         {
-            Debug.LogError("Texture not found: " + texturePath);
+            CustomLog.LogError("Texture not found: " + texturePath);
             return null;
         }
         return texture;
+    }
+
+    public static Texture2D MergeTextures(Texture2D baseTexture, Texture2D overlayTexture)
+    {
+        int width = Mathf.Max(baseTexture.width, overlayTexture.width);
+        int height = Mathf.Max(baseTexture.height, overlayTexture.height);
+
+        RenderTexture rt = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32);
+        RenderTexture.active = rt;
+
+        Material blendMaterial = new Material(Shader.Find("Hidden/BlendShader"));
+        Graphics.Blit(baseTexture, rt, blendMaterial);
+        Graphics.Blit(overlayTexture, rt, blendMaterial, 1);
+
+        Texture2D result = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        result.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+        result.Apply();
+
+        RenderTexture.active = null;
+        rt.Release();
+
+        return result;
     }
 }

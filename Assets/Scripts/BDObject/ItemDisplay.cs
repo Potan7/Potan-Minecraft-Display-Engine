@@ -1,34 +1,41 @@
-using Mono.Cecil.Cil;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class ItemDisplay : DisplayObject
 {
-    public override DisplayObject LoadDisplayModel(string name, string state)
+    public ItemModelGenerator itemModel;
+    JObject currentItemState;
+
+    public override void LoadDisplayModel(string name, string state)
     {
         // items 폴더의 정보를 가져와서
         modelName = name;
-        JObject itemState = MinecraftFileManager.GetJSONData("items/" + name + ".json");
+        JObject ItemState = MinecraftFileManager.GetJSONData("items/" + name + ".json");
 
-        if (!itemState.ContainsKey("model"))
+        if (!ItemState.ContainsKey("model"))
         {
-            Debug.LogError("Model not found: " + name);
-            return this;
+            CustomLog.LogError("Model not found: " + name);
+            return;
         }
 
         // 모델 정보를 가져옴
-        JObject model = itemState.GetValue("model") as JObject;
+        currentItemState = ItemState.GetValue("model") as JObject;
 
+        CheckModelType(currentItemState);
+    }
+
+    private void CheckModelType(JObject model)
+    {
+        CustomLog.Log(model["type"] + " : " + model);
         switch (model["type"].ToString())
         {
             case "minecraft:model":
-                TypeModel(model);
+                TypeModel(model["model"].ToString());
                 break;
             case "minecraft:condition":
-                TypeCondition(model);
+                CheckModelType(model["on_false"] as JObject);
                 break;
             case "minecraft:select":
                 TypeSelect(model);
@@ -36,158 +43,161 @@ public class ItemDisplay : DisplayObject
             case "minecraft:special":
                 TypeSpecial(model);
                 break;
+            case "minecraft:composite":
+                JArray parts = model["models"] as JArray;
+                int cnt = parts.Count();
+                for (int i = 0; i < cnt; i++)
+                {
+                    CheckModelType(parts[i] as JObject);
+                }
+                break;
+            case "minecraft:range_dispatch":
+
+                CheckModelType(model["entries"][0]["model"] as JObject);
+                break;
             default:
-                TypeOther(model);
+                CustomLog.LogError("Unknown model type: " + model["type"]);
                 break;
         }
-        return this;
     }
 
-    void TypeModel(JObject itemState)
+    void TypeModel(string model)
     {
-        Debug.Log("model: " + itemState["model"]);
-        string model = itemState["model"].ToString();
+        //string model = itemState["model"].ToString();
         if (model.StartsWith("minecraft:block/"))
         {
-            var bd = gameObject.AddComponent<BlockDisplay>();
-            bd.modelName = model;
+            var bd = Instantiate(GameManager.GetManager<BDObjectManager>().blockPrefab, transform);
             bd.SetModel(model);
         }
         else
         {
-            SetModel(model);
+            SetItemModel(model);
         }
-    }
-
-    void TypeCondition(JObject itemState)
-    {
-
     }
 
     void TypeSelect(JObject itemState)
     {
-
-    }
-
-    void TypeSpecial(JObject itemState)
-    {
-
-    }
-
-    void TypeOther(JObject itemState)
-    {
-        // Range, Empty, bundle, composite
-    }
-
-    protected override void SetModelObject(MinecraftModelData modelData, GameObject modelElementParent)
-    {
-        //Debug.Log("SetModelObject: " + modelData.ToString());
-
-        Texture2D texture = CreateTexture(modelData.textures["layer0"].ToString(), modelData.textures);
-
-
-
-        Generate3DModel(texture, 0.1f);
-    }
-
-    void Generate3DModel(Texture2D spriteTexture, float thickness = 0.1f)
-    {
-        if (spriteTexture == null) return;
-
-        List<Vector3> vertices = new List<Vector3>();
-        List<int> triangles = new List<int>();
-        List<Vector2> uvs = new List<Vector2>();
-
-        int width = spriteTexture.width;
-        int height = spriteTexture.height;
-
-        for (int y = 0; y < height; y++)
+        // gui일 때의 모델을 찾아서 생성
+        JArray cases = itemState["cases"] as JArray;
+        foreach (var item in cases)
         {
-            for (int x = 0; x < width; x++)
+            JObject caseItem = item as JObject;
+            if (!caseItem.ContainsKey("when"))
             {
-                Color pixelColor = spriteTexture.GetPixel(x, y);
+                CheckModelType(caseItem["model"] as JObject);
+                return;
+            }
 
-                if (pixelColor.a > 0.1f) // 투명도가 낮은 픽셀만 3D 변환
+            if (caseItem["when"] is JArray)
+            {
+                int cnt = caseItem["when"].Count();
+                for (int i = 0; i < cnt; i++)
                 {
-                    int vertexIndex = vertices.Count;
-
-                    // 앞면 (XY 평면)
-                    vertices.Add(new Vector3(x, y, 0)); // 좌상
-                    vertices.Add(new Vector3(x + 1, y, 0)); // 우상
-                    vertices.Add(new Vector3(x + 1, y - 1, 0)); // 우하
-                    vertices.Add(new Vector3(x, y - 1, 0)); // 좌하
-
-                    triangles.AddRange(new int[] { vertexIndex, vertexIndex + 1, vertexIndex + 2, vertexIndex, vertexIndex + 2, vertexIndex + 3 });
-
-                    uvs.Add(new Vector2((float)x / width, (float)y / height));
-                    uvs.Add(new Vector2((float)(x + 1) / width, (float)y / height));
-                    uvs.Add(new Vector2((float)(x + 1) / width, (float)(y - 1) / height));
-                    uvs.Add(new Vector2((float)x / width, (float)(y - 1) / height));
-
-                    // 뒷면 (Z축 방향으로 두께 추가)
-                    int backIndex = vertices.Count;
-                    vertices.Add(new Vector3(x, y, -thickness)); // 좌상
-                    vertices.Add(new Vector3(x + 1, y, -thickness)); // 우상
-                    vertices.Add(new Vector3(x + 1, y - 1, -thickness)); // 우하
-                    vertices.Add(new Vector3(x, y - 1, -thickness)); // 좌하
-
-                    triangles.AddRange(new int[] { backIndex, backIndex + 2, backIndex + 1, backIndex, backIndex + 3, backIndex + 2 });
-
-                    uvs.AddRange(uvs.GetRange(vertexIndex, 4)); // 동일한 UV 맵 적용
-
-                    // 옆면 생성 (두께 적용, 색상은 주변 픽셀 색 기반)
-                    CreateSideFaces(vertices, triangles, x, y, thickness, pixelColor);
+                    string when = caseItem["when"][i].ToString();
+                    if (when == "gui")
+                    {
+                        CheckModelType(caseItem["model"] as JObject);
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                string when = caseItem["when"].ToString();
+                if (when == "gui")
+                {
+                    CheckModelType(caseItem["model"] as JObject);
+                    return;
                 }
             }
         }
 
-        Mesh mesh = new Mesh
-        {
-            vertices = vertices.ToArray(),
-            triangles = triangles.ToArray(),
-            uv = uvs.ToArray()
-        };
-        mesh.RecalculateNormals();
-
-        GetComponent<MeshFilter>().mesh = mesh;
-        GetComponent<MeshRenderer>().material = new Material(Shader.Find("Standard"))
-        {
-            mainTexture = spriteTexture
-        };
+        CheckModelType(itemState["fallback"] as JObject);
     }
 
-    void CreateSideFaces(List<Vector3> vertices, List<int> triangles, int x, int y, float thickness, Color pixelColor)
+    void TypeSpecial(JObject itemState)
     {
-        // 왼쪽
-        vertices.Add(new Vector3(x, y, 0));
-        vertices.Add(new Vector3(x, y, -thickness));
-        vertices.Add(new Vector3(x, y - 1, -thickness));
-        vertices.Add(new Vector3(x, y - 1, 0));
+        JObject specialModel = itemState["model"] as JObject;
+        string baseModel = itemState["base"].ToString();
+        //Debug.Log("Base: " + baseModel);
 
-        triangles.AddRange(new int[] { vertices.Count - 4, vertices.Count - 3, vertices.Count - 2, vertices.Count - 4, vertices.Count - 2, vertices.Count - 1 });
+        switch (specialModel["type"].ToString())
+        {
+            case "minecraft:bed":
+            case "minecraft:chest":
+            case "minecraft:shulker_box":
+                TypeModel(baseModel.Replace("item/", "block/"));
+                break;
 
-        // 오른쪽
-        vertices.Add(new Vector3(x + 1, y, 0));
-        vertices.Add(new Vector3(x + 1, y, -thickness));
-        vertices.Add(new Vector3(x + 1, y - 1, -thickness));
-        vertices.Add(new Vector3(x + 1, y - 1, 0));
+        }
 
-        triangles.AddRange(new int[] { vertices.Count - 4, vertices.Count - 2, vertices.Count - 3, vertices.Count - 4, vertices.Count - 1, vertices.Count - 2 });
+        /*
+         * 배너, 전달체, 도자기, 방패 : 모델 없음, 블록 디스플레이 쪽도 모델 없음
+         * 침대, 상자, 셜커 상자 : 블록으로 넘기기
+         * 머리 : 모델 없음, 블록 디스플레이 쪽도 모델 없음 (플레이어 머리는 profile 처리 해야함)
+         * 표지판, 매달린 표지판 : 모델 없음, 블록 디스플레이 쪽도 모델 없음 근데 BDEngine도 지원을 안함(???)
+         */
+    }
 
-        // 위쪽
-        vertices.Add(new Vector3(x, y, 0));
-        vertices.Add(new Vector3(x, y, -thickness));
-        vertices.Add(new Vector3(x + 1, y, -thickness));
-        vertices.Add(new Vector3(x + 1, y, 0));
 
-        triangles.AddRange(new int[] { vertices.Count - 4, vertices.Count - 3, vertices.Count - 2, vertices.Count - 4, vertices.Count - 2, vertices.Count - 1 });
+    protected void SetItemModel(string modelLocation)
+    {
+        // 불러온 모델을 바탕으로 생성하기
+        modelLocation = MinecraftFileManager.RemoveNamespace(modelLocation);
 
-        // 아래쪽
-        vertices.Add(new Vector3(x, y - 1, 0));
-        vertices.Add(new Vector3(x, y - 1, -thickness));
-        vertices.Add(new Vector3(x + 1, y - 1, -thickness));
-        vertices.Add(new Vector3(x + 1, y - 1, 0));
+        modelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
 
-        triangles.AddRange(new int[] { vertices.Count - 4, vertices.Count - 2, vertices.Count - 3, vertices.Count - 4, vertices.Count - 1, vertices.Count - 2 });
+        CustomLog.Log("Model Data: " + modelData);
+        Texture2D texture = CreateTexture(modelData.textures["layer0"].ToString(), modelData.textures);
+        Texture2D texture2 = null;
+
+        if (modelData.textures.ContainsKey("layer1"))
+        {
+            texture2 = CreateTexture(modelData.textures["layer1"].ToString(), modelData.textures);
+        }
+
+        if (currentItemState.TryGetValue("tints", out JToken value))
+        {
+            SetTint(texture, value[0] as JObject);
+
+            if (texture2 != null)
+            {
+                SetTint(texture2, value[1] as JObject);
+            }
+        }
+
+        itemModel = Instantiate(GameManager.GetManager<BDObjectManager>().itemPrefab, transform);
+        itemModel.Init(texture, texture2);
+    }
+
+    void SetTint(Texture2D texture, JObject tint)
+    {
+        Debug.Log("Tint: " + tint);
+        if (tint["type"].ToString() == "minecraft:constant")
+        {
+            // 정수 변환
+            int packedValue = int.Parse(tint["value"].ToString());
+
+            // 정확한 RGB 값 추출 (비트 마스크 적용)
+            float r = ((packedValue >> 16) & 0xFF) / 255f;
+            float g = ((packedValue >> 8) & 0xFF) / 255f;
+            float b = (packedValue & 0xFF) / 255f;
+
+            Color color = new Color(r, g, b, 1.0f);
+            CustomLog.Log("Color: " + color);
+
+            // 텍스처에 색상 적용
+            Color[] pixels = texture.GetPixels();
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                if (pixels[i].a == 0) continue;
+                pixels[i] = Color.Lerp(pixels[i], color, 0.9f);
+            }
+            texture.SetPixels(pixels);
+            texture.Apply();
+        }
+
+
+
     }
 }

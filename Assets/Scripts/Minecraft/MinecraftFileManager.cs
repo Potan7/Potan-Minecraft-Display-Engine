@@ -41,17 +41,19 @@ public class MinecraftFileManager : RootManager
     private void Start()
     {
         filePath = $"{Appdata}/{minecraftPath}/{minecraftVersion}/{minecraftVersion}.jar";
-        Thread thread = new Thread(() => ReadJarFile(filePath, "assets/minecraft"));
-        thread.Start();
+        ReadJarFile(filePath, "assets/minecraft");
+        //Thread thread = new Thread(() => ReadJarFile(filePath, "assets/minecraft"));
+        //thread.Start();
     }
+
+    #region Static 함수들
 
     public static JObject GetJSONData(string path)
     {
-        if (path.Contains("bed"))
+        if (path.Contains("bed") && !path.Contains("items"))
         {
-            //Debug.Log("Bed: " + path);
+            //CustomLog.Log("Bed: " + path);
             var bed = Resources.Load<TextAsset>("hardcoded/" + path.Replace(".json", ""));
-            //Debug.Log("Bed: " + bed.text);
             return JObject.Parse(bed.text);
         }
 
@@ -64,7 +66,7 @@ public class MinecraftFileManager : RootManager
 
     public static MinecraftModelData GetModelData(string path)
     {
-        //Debug.Log("Get Model Data: " + path);
+        //CustomLog.Log("Get Model Data: " + path);
 
         if (instance.importantModels.ContainsKey(path))
         {
@@ -100,21 +102,19 @@ public class MinecraftFileManager : RootManager
             
             return texture;
         }
-        Debug.LogError("Texture not found: " + path);
+        CustomLog.LogError("Texture not found: " + path);
         return null;
     }
 
-    public static string RemoveNamespace(string path)
-    {
-        return path.Replace("minecraft:", "");
-    }
+    public static string RemoveNamespace(string path) => path.Replace("minecraft:", "");
+    #endregion
 
     void ReadJarFile(string path, string targetFolder)
     {
-        Debug.Log($"Reading JAR file: {path}");
+        CustomLog.Log($"Reading JAR file: {path}");
         if (!File.Exists(path))
         {
-            Debug.LogError("File not found: " + path);
+            CustomLog.LogError("File not found: " + path);
             return;
         }
 
@@ -133,7 +133,7 @@ public class MinecraftFileManager : RootManager
                     if (!IsReadFolder(entry.FullName)) continue; // 무시할 폴더 확인
                     if (entry.FullName.EndsWith(".png"))
                     {
-                        //Debug.Log($"Found texture file: {entry.FullName}");
+                        //CustomLog.Log($"Found texture file: {entry.FullName}");
                         SavePNGFile(entry, entry.FullName);
                     }
                 }
@@ -143,14 +143,14 @@ public class MinecraftFileManager : RootManager
                     if (entry.FullName.EndsWith(".json"))
                     {
                         SaveJson(entry, entry.FullName);
-                        //Debug.Log($"Found JSON file: {entry.FullName}");
+                        //CustomLog.Log($"Found JSON file: {entry.FullName}");
                     }
                 }
             }
 
-        Debug.Log("Finished reading JAR file");
-        Debug.Log("Textures: " + textureFiles.Count);
-        Debug.Log("JSON: " + jsonFiles.Count);
+        CustomLog.Log("Finished reading JAR file");
+        CustomLog.Log("Textures: " + textureFiles.Count);
+        CustomLog.Log("JSON: " + jsonFiles.Count);
 
         // readImportantModels();
         foreach (var read in readPreReadedFiles)
@@ -193,7 +193,7 @@ public class MinecraftFileManager : RootManager
 
         string json = reader.ReadToEnd();
         jsonFiles.Add(path, json);
-        //Debug.Log("JSON: " + path);
+        //CustomLog.Log("JSON: " + path);
     }
 
     void SavePNGFile(ZipArchiveEntry entry, string path)
@@ -205,6 +205,6 @@ public class MinecraftFileManager : RootManager
 
         stream.CopyTo(memoryStream);
         textureFiles.Add(path, memoryStream.ToArray());
-        //Debug.Log("PNG: " + path);
+        //CustomLog.Log("PNG: " + path);
     }
 }

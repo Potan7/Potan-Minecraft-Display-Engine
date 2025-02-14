@@ -12,12 +12,14 @@ public class SystemManager : RootManager
             {
                 string clipboard = GUIUtility.systemCopyBuffer;
 
+                CustomLog.Log("Clipboard: " + clipboard);
+
                 GameManager.GetManager<FileManager>().MakeDisplay(clipboard);
             }
             catch (System.Exception e)
             {
-                Debug.Log("Clipboard is not BDEFile");
-                Debug.LogError(e);
+                CustomLog.Log("Clipboard is not BDEFile");
+                CustomLog.LogError(e);
             }
 
         }
