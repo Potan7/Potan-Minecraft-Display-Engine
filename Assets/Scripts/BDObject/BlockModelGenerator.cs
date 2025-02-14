@@ -79,7 +79,7 @@ public class BlockModelGenerator : MonoBehaviour
         }
     }
 
-    private void SetRotation(JObject element, MeshRenderer cubeObject, Vector3 size)
+    protected void SetRotation(JObject element, MeshRenderer cubeObject, Vector3 size)
     {
         if (!element.ContainsKey("rotation"))
         {
@@ -117,18 +117,15 @@ public class BlockModelGenerator : MonoBehaviour
         }
     }
 
-    private void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
+    protected void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
     {
-        if (!element.ContainsKey("faces"))
-        {
-            return;
-        }
+        if (!element.ContainsKey("faces")) return;
 
         Texture texture = null;
         JObject faces = element["faces"] as JObject;
         bool IsTransparented = false;
 
-        if (modelName.Contains("bed"))
+        if (modelName.Contains("bed") || modelName.Contains("head"))
             IsTransparented = true;
 
         foreach (var face in faces)
@@ -140,7 +137,7 @@ public class BlockModelGenerator : MonoBehaviour
             Enum.TryParse(face.Key, true, out MinecraftModelData.FaceDirection dir);
             int idx = (int)dir;
 
-            Texture2D blockTexture = DisplayObject.CreateTexture(faceTexture.ToString(), model.textures);
+            Texture2D blockTexture = CreateTexture(faceTexture.ToString(), model.textures);
 
 
             // 투명도 체크
@@ -223,6 +220,9 @@ public class BlockModelGenerator : MonoBehaviour
             }
         }
     }
+
+    protected virtual Texture2D CreateTexture(string path, JObject textures) 
+        => DisplayObject.CreateTexture(path, textures); 
 
     // 투명한 부분이 있는지 확인
     bool CheckForTransparency(Texture2D texture)

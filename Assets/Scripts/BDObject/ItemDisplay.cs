@@ -128,12 +128,16 @@ public class ItemDisplay : DisplayObject
             case "minecraft:shulker_box":
                 TypeModel(baseModel.Replace("item/", "block/"));
                 break;
+            case "minecraft:head":
+                var head = Instantiate(GameManager.GetManager<BDObjectManager>().headPrefab, transform);
+                head.GenerateHead(specialModel["kind"].ToString());
+                break;
 
         }
 
         /*
          * 배너, 전달체, 도자기, 방패 : 모델 없음, 블록 디스플레이 쪽도 모델 없음
-         * 침대, 상자, 셜커 상자 : 블록으로 넘기기
+         * 침대, 상자, 셜커 상자 : 블록으로 넘기기 (Done)
          * 머리 : 모델 없음, 블록 디스플레이 쪽도 모델 없음 (플레이어 머리는 profile 처리 해야함)
          * 표지판, 매달린 표지판 : 모델 없음, 블록 디스플레이 쪽도 모델 없음 근데 BDEngine도 지원을 안함(???)
          */

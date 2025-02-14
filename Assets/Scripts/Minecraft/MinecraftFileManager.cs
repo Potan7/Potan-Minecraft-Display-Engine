@@ -19,11 +19,12 @@ public class MinecraftFileManager : RootManager
 
     readonly string[] readFolder = { "models", "textures", "blockstates", "items" }; // 읽을 폴더
     readonly string[] readTexturesFolders = 
-        { "block", "item", "entity/bed", "entity/shulker", "entity/chest", "entity/conduit" }; // textures의 읽을 폴더
+        { "block", "item", "entity/bed", "entity/shulker", "entity/chest", "entity/conduit", 
+        "entity/creeper", "entity/zombie/zombie", "entity/skeleton/", "entity/piglin", "entity/player/wide/steve", "entity/enderdragon/dragon"}; // textures의 읽을 내용
     readonly string[] readPreReadedFiles =
         {"block", "cube", "cube_all", "cube_all_inner_faces", "cube_column"};   // 미리 로드할 파일
 
-    readonly string[] hardcodeNames = { "bed", "shulker_box", "chest", "conduit" };
+    readonly string[] hardcodeNames = { "bed", "shulker_box", "chest", "conduit", "head" };
 
     readonly string Appdata = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData);
     const string minecraftPath = ".minecraft/versions";
@@ -163,7 +164,7 @@ public class MinecraftFileManager : RootManager
         }
     }
 
-        // 최상위 폴더 이름 추출
+    // 최상위 폴더 이름 추출
     string GetTopLevelFolder(string fullPath, string targetFolder)
     {
         string relativePath = fullPath.Substring(targetFolder.Length + 1); // targetFolder 이후 경로
@@ -176,7 +177,7 @@ public class MinecraftFileManager : RootManager
     {
         foreach (string readFolders in readTexturesFolders)
         {
-            if (fullPath.Contains($"textures/{readFolders}/"))
+            if (fullPath.Contains($"textures/{readFolders}"))
             {
                 return true;
             }

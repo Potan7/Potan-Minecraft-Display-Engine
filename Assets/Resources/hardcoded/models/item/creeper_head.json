@@ -1,0 +1,21 @@
+{
+	"credit": "Made with Blockbench",
+	"textures": {
+		"entity": "creeper"
+	},
+	"elements": [
+		{
+			"from": [4, 0, 4],
+			"to": [12, 8, 12],
+			"faces": {
+				"north": {"uv": [2, 4, 4, 8], "texture": "#entity"},
+				"east": {"uv": [4, 4, 6, 8], "texture": "#entity"},
+				"south": {"uv": [4, 0, 6, 4], "texture": "#entity"},
+				"west": {"uv": [0, 4, 2, 8], "texture": "#entity"},
+				"up": {"uv": [2, 0, 4, 4], "texture": "#entity"},
+				"down": {"uv": [4, 0, 6, 4], "texture": "#entity"}
+			}
+		}
+	],
+	"display": {}
+}

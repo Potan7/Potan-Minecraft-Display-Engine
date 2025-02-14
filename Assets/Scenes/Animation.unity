@@ -318,6 +318,7 @@ MonoBehaviour:
   cubePrefab: {fileID: -7511558181221131132, guid: 39ce9e8de42ef894ea9a3f93930886b6, type: 3}
   itemPrefab: {fileID: 7713049700123038392, guid: 67070e5c2dcccfb42ae268e55ae9b033, type: 3}
   blockPrefab: {fileID: 9111335049543586871, guid: b9f6dc4d5503c7349bcf9564751d82da, type: 3}
+  headPrefab: {fileID: 8305422446642277749, guid: 88189d21db670fd4d9633fa6d83c7cea, type: 3}
 --- !u!114 &257885227
 MonoBehaviour:
   m_ObjectHideFlags: 0

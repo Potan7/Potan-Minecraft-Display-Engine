@@ -9,11 +9,11 @@ public class MinecraftModelData
     public enum FaceDirection
     {
         up = 0,
-        north = 1,
+        north = 5,
         west = 4,
         down = 3,
         east = 2,
-        south = 5
+        south = 1
     }
 
     public string parent;

@@ -9,12 +9,14 @@ public class BDObjectManager : RootManager
     public BDObejctContainer BDObjectPrefab;
     //public List<BDObejctContainer> BDObjectList = new List<BDObejctContainer>();
 
+    [Header("Prefabs")]
     public BlockDisplay blockDisplay;
     public ItemDisplay itemDisplay;
 
     public MeshRenderer cubePrefab;
     public ItemModelGenerator itemPrefab;
     public BlockModelGenerator blockPrefab;
+    public HeadGenerator headPrefab;
 
     public void AddObjectByCo(BDObject[] bdObjects) => StartCoroutine(AddObejctUsingCo(bdObjects, BDObjectParent));
 
