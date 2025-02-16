@@ -6,27 +6,31 @@ using System.Linq;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using System;
+using System.Diagnostics;
 
 public class MinecraftFileManager : RootManager
 {
     static MinecraftFileManager instance;
 
     Dictionary<string, byte[]> textureFiles = new Dictionary<string, byte[]>();
+    HashSet<string> isTextureAnimated = new HashSet<string>();
     public Dictionary<string, string> jsonFiles = new Dictionary<string, string>();
 
     // readPreReadedFiles에 있는 파일들은 미리 읽어둠
     Dictionary<string, MinecraftModelData> importantModels = new Dictionary<string, MinecraftModelData>();
 
-    readonly string[] readFolder = { "models", "textures", "blockstates", "items" }; // 읽을 폴더
-    readonly string[] readTexturesFolders = 
-        { "block", "item", "entity/bed", "entity/shulker", "entity/chest", "entity/conduit", 
-        "entity/creeper", "entity/zombie/zombie", "entity/skeleton/", "entity/piglin", "entity/player/wide/steve", "entity/enderdragon/dragon"}; // textures의 읽을 내용
-    readonly string[] readPreReadedFiles =
-        {"block", "cube", "cube_all", "cube_all_inner_faces", "cube_column"};   // 미리 로드할 파일
+    //readonly string[] readFolder = { "models", "textures", "blockstates", "items" }; // 읽을 폴더
+    //readonly string[] readTexturesFolders = 
+    //    { "block", "item", "entity/bed", "entity/shulker", "entity/chest", "entity/conduit", 
+    //    "entity/creeper", "entity/zombie/zombie", "entity/skeleton/", "entity/piglin", "entity/player/wide/steve", "entity/enderdragon/dragon"}; // textures의 읽을 내용
+    //readonly string[] readPreReadedFiles =
+    //    {"block", "cube", "cube_all", "cube_all_inner_faces", "cube_column"};   // 미리 로드할 파일
 
     readonly string[] hardcodeNames = { "bed", "shulker_box", "chest", "conduit", "head" };
 
-    readonly string Appdata = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData);
+    readonly string Appdata = Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData);
+
     const string minecraftPath = ".minecraft/versions";
     const string minecraftVersion = "1.21.4";
 
@@ -42,7 +46,7 @@ public class MinecraftFileManager : RootManager
     private void Start()
     {
         filePath = $"{Appdata}/{minecraftPath}/{minecraftVersion}/{minecraftVersion}.jar";
-        ReadJarFile(filePath, "assets/minecraft");
+        new Thread(() => ReadJarFile(filePath, "assets/minecraft")).Start();
         //Thread thread = new Thread(() => ReadJarFile(filePath, "assets/minecraft"));
         //thread.Start();
     }
@@ -107,11 +111,33 @@ public class MinecraftFileManager : RootManager
         return null;
     }
 
+    public static bool IsTextureAnimated(string path)
+    {
+        return instance.isTextureAnimated.Contains(path + ".mcmeta");
+    }
+
     public static string RemoveNamespace(string path) => path.Replace("minecraft:", "");
     #endregion
 
+    #region 파일 로드
     void ReadJarFile(string path, string targetFolder)
     {
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+
+        ReadOnlySpan<string> readTexturesFolders = new[]
+        {
+        "textures/block", "textures/item", "textures/entity/bed", "textures/entity/shulker",
+        "textures/entity/chest", "textures/entity/conduit", "textures/entity/creeper",
+        "textures/entity/zombie/zombie", "textures/entity/skeleton/", "textures/entity/piglin",
+        "textures/entity/player/wide/steve", "textures/entity/enderdragon/dragon"
+        };
+
+        ReadOnlySpan<string> readFolder = new[] { "models", "textures", "blockstates", "items" };
+
+        ReadOnlySpan<string> readPreReadedFiles = new[]
+        {"block", "cube", "cube_all", "cube_all_inner_faces", "cube_column"};   // 미리 로드할 파일
+
         CustomLog.Log($"Reading JAR file: {path}");
         if (!File.Exists(path))
         {
@@ -131,14 +157,21 @@ public class MinecraftFileManager : RootManager
                 if (folderName == "textures")
                 {
                     // textures 폴더 처리
-                    if (!IsReadFolder(entry.FullName)) continue; // 무시할 폴더 확인
+                    if (!IsReadFolder(entry.FullName, readTexturesFolders)) continue; // 무시할 폴더 확인
                     if (entry.FullName.EndsWith(".png"))
                     {
                         //CustomLog.Log($"Found texture file: {entry.FullName}");
                         SavePNGFile(entry, entry.FullName);
                     }
+                    else if (entry.FullName.EndsWith(".mcmeta"))
+                    {
+                        isTextureAnimated.Add(entry.FullName.Replace("assets/minecraft/", ""));
+                        //CustomLog.Log("Animated texture: " + entry.FullName.Replace("assets/minecraft/", ""));
+                    }
+                    continue;
                 }
-                else if (readFolder.Contains(folderName))
+
+                if (readFolder.IndexOf(folderName) > -1)
                 {
                     // 다른 폴더 처리
                     if (entry.FullName.EndsWith(".json"))
@@ -162,6 +195,9 @@ public class MinecraftFileManager : RootManager
                 importantModels.Add(read, GetModelData(jsonFiles[readPath]));
             }
         }
+
+        sw.Stop();
+        CustomLog.Log($"Reading JAR file took {sw.ElapsedMilliseconds}ms");
     }
 
     // 최상위 폴더 이름 추출
@@ -173,11 +209,11 @@ public class MinecraftFileManager : RootManager
     }
 
     // 읽어야할 폴더인지 확인
-    bool IsReadFolder(string fullPath)
+    bool IsReadFolder(string fullPath, ReadOnlySpan<string> readTexturesFolders)
     {
         foreach (string readFolders in readTexturesFolders)
         {
-            if (fullPath.Contains($"textures/{readFolders}"))
+            if (fullPath.Contains(readFolders))
             {
                 return true;
             }
@@ -208,4 +244,5 @@ public class MinecraftFileManager : RootManager
         textureFiles.Add(path, memoryStream.ToArray());
         //CustomLog.Log("PNG: " + path);
     }
+    #endregion
 }

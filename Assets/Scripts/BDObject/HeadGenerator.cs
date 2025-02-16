@@ -82,9 +82,14 @@ public class HeadGenerator : BlockModelGenerator
         }
     }
 
-    protected override Texture2D CreateTexture(string path, JObject textures)
+    protected override Texture2D CreateTexture(string path)
     {
         return headTexture;
+    }
+
+    protected override bool CheckForTransparency(Texture2D texture)
+    {
+        return false;
     }
 
     Texture2D SetPlayerTexture()

@@ -7,6 +7,7 @@ using System;
 using System.IO.Compression;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 public class FileManager : RootManager
 {
@@ -48,10 +49,15 @@ public class FileManager : RootManager
 
     void AfterLoadFile(string[] filepaths)
     {
-        foreach (var path in filepaths)
+        Stopwatch stopwatch = new();
+
+        stopwatch.Start();
+
+
+        for (int i = 0; i < filepaths.Length; i++)
         {
             // 1. 파일 읽어서 string 변환
-            byte[] file = FileBrowserHelpers.ReadBytesFromFile(path);
+            byte[] file = FileBrowserHelpers.ReadBytesFromFile(filepaths[i]);
             string base64Data = Encoding.UTF8.GetString(file);
 
             // 2. Base64 디코딩
@@ -64,6 +70,10 @@ public class FileManager : RootManager
 
             MakeDisplay(jsonData);
         }
+        stopwatch.Stop();
+
+        CustomLog.Log($"Import Time: {stopwatch.ElapsedMilliseconds}ms");
+        CustomLog.Log($"BDObject Count: {GameManager.GetManager<BDObjectManager>().BDObjectCount}");
     }
 
     // JSON 데이터를 BDObject로 변환해서 오브젝트 생성

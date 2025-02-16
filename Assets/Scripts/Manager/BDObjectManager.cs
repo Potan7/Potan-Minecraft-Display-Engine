@@ -1,12 +1,15 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
+using System.Diagnostics;
 
 public class BDObjectManager : RootManager
 {
     public Material BDObjTransportMaterial;
     public Transform BDObjectParent;
     public BDObejctContainer BDObjectPrefab;
+
+    public int BDObjectCount = 0;
     //public List<BDObejctContainer> BDObjectList = new List<BDObejctContainer>();
 
     [Header("Prefabs")]
@@ -47,6 +50,7 @@ public class BDObjectManager : RootManager
             var newObj = Instantiate(BDObjectPrefab, parent);
             newObj.Init(bdObjects[i], this);
             //BDObjectList.Add(newObj);
+            BDObjectCount++;
 
             // 자식 오브젝트를 추가
             if (bdObjects[i].children != null)
@@ -84,10 +88,7 @@ public class BDObjectManager : RootManager
 
     public void ClearAllObject()
     {
-        int count = BDObjectParent.childCount;
-        for (int i = 0; i < count; i++)
-        {
-            Destroy(BDObjectParent.GetChild(i).gameObject);
-        }
+        Destroy(BDObjectParent.gameObject);
+        BDObjectParent = new GameObject("BDObjectParent").transform;
     }
 }

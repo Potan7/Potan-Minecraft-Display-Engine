@@ -18,40 +18,45 @@ public class BlockDisplay : DisplayObject
         //CustomLog.Log("State : " + state);
 
         // variants 형식일 경우
-        if (blockState.ContainsKey("variants"))
+        if (blockState.TryGetValue("variants", out JToken variant))
         {
-            JObject variants = blockState["variants"] as JObject;
             //CustomLog.Log("Variants : " + variants.ToString());
+
             // 블록 스테이트에 해당하는 모델을 불러옴
-            if (variants.ContainsKey(state))
-            {
-                modelElementParent.SetModelByBlockState(variants[state]);
-            }
-            else
-            {
-                CustomLog.LogError("State not found: " + state);
-            }
+            modelElementParent.SetModelByBlockState((variant as JObject)[state]);
         }
-        else if (blockState.ContainsKey("multipart"))
+        else if (blockState.TryGetValue("multipart", out JToken multi))
         {
             // multipart 형식일 경우
-            var multipart = blockState["multipart"] as JArray;
+            var multipart = multi as JArray;
             //CustomLog.Log("Multipart : " + multipart.ToString());
 
-            for (int i = 0; i < multipart.Count; i++)
+            int cnt = multipart.Count;
+            bool needNewOne = false;
+            for (int i = 0; i < cnt; i++)
             {
                 //CustomLog.Log("Part : " + multipart[i].ToString());
                 JObject partObject = multipart[i] as JObject;
 
                 bool check = true;
-
-                if (partObject.ContainsKey("when"))
+                if (partObject.TryGetValue("when", out JToken value))
                 {
-                    check = CheckState(partObject["when"] as JObject, state);
+                    check = CheckState(value as JObject, state);
                 }
 
                 if (check)
-                    modelElementParent.SetModelByBlockState(partObject["apply"]);
+                {
+                    if (!needNewOne)
+                    { 
+                        modelElementParent.SetModelByBlockState(partObject["apply"]);
+                        needNewOne = true;
+                    }
+                    else
+                    {
+                        BlockModelGenerator newModel = Instantiate(modelElementParent, transform);
+                        newModel.SetModelByBlockState(partObject["apply"]);
+                    }
+                }
             }
 
         }
@@ -70,9 +75,9 @@ public class BlockDisplay : DisplayObject
 
     private bool CheckState(JObject when, string state)
     {
-        if (when.ContainsKey("OR"))
+        if (when.TryGetValue("OR", out JToken ORValue))
         {
-            var OR = when["OR"] as JArray;
+            var OR = ORValue as JArray;
             for (int i = 0; i < OR.Count; i++)
             {
                 if (CheckStateName(OR[i] as JObject, state))
@@ -82,12 +87,12 @@ public class BlockDisplay : DisplayObject
             }
             return false;
         }
-        else if (when.ContainsKey("AND"))
+        else if (when.TryGetValue("AND", out JToken ANDValue))
         {
-            var AND = when["AND"] as JArray;
+            var AND = ANDValue as JArray;
             for (int i = 0; i < AND.Count; i++)
             {
-                if (CheckStateName(AND[i] as JObject, state) == false)
+                if (!CheckStateName(AND[i] as JObject, state))
                 {
                     return false;
                 }
@@ -111,31 +116,34 @@ public class BlockDisplay : DisplayObject
         }
 
         string[] stateSplit = state.Split(',');
-        Dictionary<string, string> checkState = new Dictionary<string, string>();
-        int count = stateSplit.Length;
-        for (int i = 0; i < count; i++)
-        {
-            //CustomLog.Log("Split : " + stateSplit[i]);
-
-            string[] split = stateSplit[i].Split('=');
-            checkState.Add(split[0], split[1]);
-        }
+        int stateCount = stateSplit.Length;
 
         foreach (var item in checks)
         {
-            string compare = checkState.TryGetValue(item.Key, out string value) ? value : "";
-            string[] itemSplit = item.Value.ToString().Split('|');
+            bool matched = false;
 
-            for (int i = 0; i < itemSplit.Length; i++)
+            for (int i = 0; i < stateCount; i++)
             {
-                if (itemSplit[i] == compare)
+                string[] split = stateSplit[i].Split('=');
+                if (split[0] == item.Key)   // 키가 같은지 확인
                 {
-                    return true;
+                    string[] itemSplit = item.Value.ToString().Split('|');
+                    for (int j = 0; j < itemSplit.Length; j++)
+                    {
+                        if (itemSplit[j] == split[1])
+                        {
+                            matched = true;
+                            break;
+                        }
+                    }
+                    break; // 키가 같다면 이 부분은 끝남.
                 }
             }
-        }
-        return false;
 
+            if (!matched)
+                return false;
+        }
+        return true;
     }
 
 }

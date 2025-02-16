@@ -30,24 +30,26 @@ public abstract class DisplayObject : MonoBehaviour
         }
     }
 
-    // 텍스쳐 생성
-    public static Texture2D CreateTexture(string path, JObject textures)
+    public static string GetTexturePath(string path, JObject textures)
     {
         if (path[0] == '#')
         {
-            return CreateTexture(textures[path.Substring(1)].ToString(), textures);
+            return GetTexturePath(textures[path.Substring(1)].ToString(), textures);
         }
-
-        string texturePath = "textures/" + MinecraftFileManager.RemoveNamespace(path) + ".png";
-        //CustomLog.Log(texturePath);
-        Texture2D texture = MinecraftFileManager.GetTextureFile(texturePath);
-        if (texture == null)
-        {
-            CustomLog.LogError("Texture not found: " + texturePath);
-            return null;
-        }
-        return texture;
+        return "textures/" + MinecraftFileManager.RemoveNamespace(path) + ".png";
     }
+
+    // 텍스쳐 생성
+    //public static Texture2D CreateTexture(string path)
+    //{
+    //    Texture2D texture = MinecraftFileManager.GetTextureFile(path);
+    //    if (texture == null)
+    //    {
+    //        CustomLog.LogError("Texture not found: " + path);
+    //        return null;
+    //    }
+    //    return texture;
+    //}
 
     public static Texture2D MergeTextures(Texture2D baseTexture, Texture2D overlayTexture)
     {

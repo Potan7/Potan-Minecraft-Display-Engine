@@ -17,6 +17,7 @@ public class BlockModelGenerator : MonoBehaviour
         {
             modelObject = modelInfo[0] as JObject;
             modelLocation = modelInfo[0]["model"].ToString();
+            //CustomLog.Log("Model : " + modelLocation);
         }
         else
         {
@@ -119,15 +120,22 @@ public class BlockModelGenerator : MonoBehaviour
 
     protected void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
     {
-        if (!element.ContainsKey("faces")) return;
+        if (!element.TryGetValue("faces", out JToken facesToken)) return;
+        JObject faces = facesToken as JObject;
 
         Texture texture = null;
-        JObject faces = element["faces"] as JObject;
+        bool isTextureAnimated = false;
+
         bool IsTransparented = false;
 
-        if (modelName.Contains("bed") || modelName.Contains("head"))
-            IsTransparented = true;
+        ReadOnlySpan<string> NoTransparent = new[] { "bed", "fire" };
+        for (int i = 0; i < NoTransparent.Length; i++)
+        {
+            if (modelName.Contains(NoTransparent[i]))
+                IsTransparented = true;
+        }
 
+        // 각 면을 채우기
         foreach (var face in faces)
         {
             JObject faceData = face.Value as JObject;
@@ -137,8 +145,9 @@ public class BlockModelGenerator : MonoBehaviour
             Enum.TryParse(face.Key, true, out MinecraftModelData.FaceDirection dir);
             int idx = (int)dir;
 
-            Texture2D blockTexture = CreateTexture(faceTexture.ToString(), model.textures);
-
+            string texturePath = DisplayObject.GetTexturePath(faceTexture.ToString(), model.textures);
+            Texture2D blockTexture = CreateTexture(texturePath);
+            bool IsAnimated = MinecraftFileManager.IsTextureAnimated(texturePath);
 
             // 투명도 체크
             if (!IsTransparented)
@@ -162,7 +171,13 @@ public class BlockModelGenerator : MonoBehaviour
 
             Material mat = cubeObject.materials[idx];
 
-            if (faceData.ContainsKey("uv"))
+            if (IsAnimated)
+            {
+                float uvY = 16.0f * (16.0f / blockTexture.height);
+                Vector4 uv = new Vector4(0, 0, 16, uvY);
+                mat.SetVector("_UVFace", uv);
+            }
+            else if (faceData.ContainsKey("uv"))
             {
                 // UV 설정: [xMin, yMin, xMax, yMax] (Minecraft 기준 16x16)
                 JArray uvArray = faceData["uv"] as JArray;
@@ -196,10 +211,27 @@ public class BlockModelGenerator : MonoBehaviour
             if (texture == null)
             {
                 texture = mat.mainTexture;
+                isTextureAnimated = IsAnimated;
             }
         }
 
         // face에 명시되지 않은 면은 기본 텍스처로 채움
+        const int faceCount = 6;
+        for (int i = 0; i < faceCount; i++)
+        {
+            if (cubeObject.materials[i].mainTexture == null)
+            {
+                cubeObject.materials[i].mainTexture = texture;
+
+                if (isTextureAnimated)
+                {
+                    float uvY = 16.0f * (16.0f / texture.height);
+                    Vector4 uv = new Vector4(0, 0, 16, uvY);
+                    cubeObject.materials[i].SetVector("_UVFace", uv);
+                }
+            }
+        }
+        /*
         foreach (MinecraftModelData.FaceDirection direction in Enum.GetValues(typeof(MinecraftModelData.FaceDirection)))
         {
             string key = direction.ToString();
@@ -208,6 +240,7 @@ public class BlockModelGenerator : MonoBehaviour
                 cubeObject.materials[(int)direction].mainTexture = texture;
             }
         }
+        */
 
         // 레드스톤 와이어 특수 처리
         if (modelName.StartsWith("redstone_wire"))
@@ -221,11 +254,13 @@ public class BlockModelGenerator : MonoBehaviour
         }
     }
 
-    protected virtual Texture2D CreateTexture(string path, JObject textures) 
-        => DisplayObject.CreateTexture(path, textures); 
+    protected virtual Texture2D CreateTexture(string path)
+    {
+        return MinecraftFileManager.GetTextureFile(path);
+    }
 
     // 투명한 부분이 있는지 확인
-    bool CheckForTransparency(Texture2D texture)
+    protected virtual bool CheckForTransparency(Texture2D texture)
     {
         if (texture == null)
         {

@@ -1,5 +1,6 @@
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -28,7 +29,7 @@ public class ItemDisplay : DisplayObject
 
     private void CheckModelType(JObject model)
     {
-        CustomLog.Log(model["type"] + " : " + model);
+        //CustomLog.Log(model["type"] + " : " + model);
         switch (model["type"].ToString())
         {
             case "minecraft:model":
@@ -152,12 +153,14 @@ public class ItemDisplay : DisplayObject
         modelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
 
         CustomLog.Log("Model Data: " + modelData);
-        Texture2D texture = CreateTexture(modelData.textures["layer0"].ToString(), modelData.textures);
+        string layer0 = GetTexturePath(modelData.textures["layer0"].ToString(), modelData.textures);
+        Texture2D texture = MinecraftFileManager.GetTextureFile(layer0);
         Texture2D texture2 = null;
 
         if (modelData.textures.ContainsKey("layer1"))
         {
-            texture2 = CreateTexture(modelData.textures["layer1"].ToString(), modelData.textures);
+            string layer1 = GetTexturePath(modelData.textures["layer1"].ToString(), modelData.textures);
+            texture2 = MinecraftFileManager.GetTextureFile(layer1);
         }
 
         if (currentItemState.TryGetValue("tints", out JToken value))
