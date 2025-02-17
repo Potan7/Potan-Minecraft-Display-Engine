@@ -34,14 +34,16 @@ public class SystemManager : RootManager
             {
                 string clipboard = GUIUtility.systemCopyBuffer;
 
-                CustomLog.Log("Clipboard: " + clipboard);
+                //CustomLog.Log("Clipboard: " + clipboard);
 
                 GameManager.GetManager<FileManager>().MakeDisplay(clipboard);
             }
             catch (System.Exception e)
             {
                 CustomLog.Log("Clipboard is not BDEFile");
-                CustomLog.LogError(e);
+#if UNITY_EDITOR
+                Debug.LogError(e);
+#endif
             }
 
         }

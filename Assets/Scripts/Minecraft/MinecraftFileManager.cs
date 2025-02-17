@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Minecraft
 {
@@ -45,7 +46,7 @@ namespace Minecraft
             instance = this;
         }
 
-        private void Start()
+        private async void Start()
         {
             filePath = $"{Appdata}/{minecraftPath}/{minecraftVersion}/{minecraftVersion}.jar";
 
@@ -53,14 +54,10 @@ namespace Minecraft
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            Thread th = new Thread(() => ReadJarFile(filePath, "assets/minecraft"));
-            th.Start();
-
-            th.Join();
+            await ReadJarFile(filePath, $"assets/minecraft");
 
             CustomLog.Log("Finished reading JAR file");
-            CustomLog.Log("Textures: " + textureFiles.Count);
-            CustomLog.Log("JSON: " + jsonFiles.Count);
+            //CustomLog.Log("Textures: " + textureFiles.Count + ", JSON: " + jsonFiles.Count);
 
             sw.Stop();
             CustomLog.Log($"Reading JAR file took {sw.ElapsedMilliseconds}ms");
@@ -124,7 +121,7 @@ namespace Minecraft
                 Texture2D texture = new Texture2D(2, 2);
                 texture.filterMode = FilterMode.Point;
                 texture.wrapMode = TextureWrapMode.Clamp;
-                texture.alphaIsTransparency = true;
+                //texture.alphaIsTransparency = true;
                 texture.Apply();
 
                 texture.LoadImage(instance.textureFiles[path]);
@@ -144,23 +141,21 @@ namespace Minecraft
         #endregion
 
         #region 파일 로드
-        void ReadJarFile(string path, string targetFolder)
+        async Task ReadJarFile(string path, string targetFolder)
         {
-
-
-            ReadOnlySpan<string> readTexturesFolders = new[]
+            string[] readTexturesFolders =
             {
-        "textures/block", "textures/item", "textures/entity/bed", "textures/entity/shulker",
-        "textures/entity/chest", "textures/entity/conduit", "textures/entity/creeper",
-        "textures/entity/zombie/zombie", "textures/entity/skeleton/", "textures/entity/piglin",
-        "textures/entity/player/wide/steve", "textures/entity/enderdragon/dragon",
-        "textures/entity/shield", "textures/entity/conduit/base", "textures/entity/decorated_pot/decorated_pot",
-        "textures/entity/banner_base"
-        };
+                "textures/block", "textures/item", "textures/entity/bed", "textures/entity/shulker",
+                "textures/entity/chest", "textures/entity/conduit", "textures/entity/creeper",
+                "textures/entity/zombie/zombie", "textures/entity/skeleton/", "textures/entity/piglin",
+                "textures/entity/player/wide/steve", "textures/entity/enderdragon/dragon",
+                "textures/entity/shield", "textures/entity/conduit/base", "textures/entity/decorated_pot/decorated_pot",
+                "textures/entity/banner_base"
+            };
 
-            ReadOnlySpan<string> readFolder = new[] { "models", "textures", "blockstates", "items" };
+            string[] readFolder = { "models", "textures", "blockstates", "items" };
 
-            ReadOnlySpan<string> readPreReadedFiles = new[]
+            string[] readPreReadedFiles =
             {"block", "cube", "cube_all", "cube_all_inner_faces", "cube_column"};   // 미리 로드할 파일
 
             if (!File.Exists(path))
@@ -170,41 +165,54 @@ namespace Minecraft
             }
 
             using (ZipArchive jarArchive = ZipFile.OpenRead(path))
+            {
+                List<Task> tasks = new List<Task>(); // Store tasks for async processing
+
                 foreach (var entry in jarArchive.Entries)
                 {
                     if (!entry.FullName.StartsWith(targetFolder) || string.IsNullOrEmpty(entry.Name))
                         continue;
 
-                    // 파일 필터링
                     string folderName = GetTopLevelFolder(entry.FullName, targetFolder);
 
-                    if (folderName == "textures")
+                    byte[] fileData;
+                    using (var stream = entry.Open()) // Read the file data first
+                    using (var memoryStream = new MemoryStream())
                     {
-                        // textures 폴더 처리
-                        if (!IsReadFolder(entry.FullName, readTexturesFolders)) continue; // 무시할 폴더 확인
-                        if (entry.FullName.EndsWith(".png"))
-                        {
-                            //CustomLog.Log($"Found texture file: {entry.FullName}");
-                            SavePNGFile(entry, entry.FullName);
-                        }
-                        else if (entry.FullName.EndsWith(".mcmeta"))
-                        {
-                            isTextureAnimated.Add(entry.FullName.Replace("assets/minecraft/", ""));
-                            //CustomLog.Log("Animated texture: " + entry.FullName.Replace("assets/minecraft/", ""));
-                        }
-                        continue;
+                        stream.CopyTo(memoryStream);
+                        fileData = memoryStream.ToArray();
                     }
 
-                    if (readFolder.IndexOf(folderName) > -1)
+                    // Process each file asynchronously
+                    tasks.Add(Task.Run(() =>
                     {
-                        // 다른 폴더 처리
-                        if (entry.FullName.EndsWith(".json"))
+                        if (folderName == "textures")
                         {
-                            SaveJson(entry, entry.FullName);
-                            //CustomLog.Log($"Found JSON file: {entry.FullName}");
+                            if (!IsReadFolder(entry.FullName, readTexturesFolders))
+                                return;
+
+                            if (entry.FullName.EndsWith(".png"))
+                                SavePNGData(entry.FullName, fileData);
+                            else if (entry.FullName.EndsWith(".mcmeta"))
+                            {
+                                lock (isTextureAnimated)
+                                {
+                                    isTextureAnimated.Add(entry.FullName.Replace("assets/minecraft/", ""));
+                                }
+                            }
+                            return;
                         }
-                    }
+
+                        if (Array.IndexOf(readFolder, folderName) > -1)
+                        {
+                            if (entry.FullName.EndsWith(".json"))
+                                SaveJsonData(entry.FullName, fileData);
+                        }
+                    }));
                 }
+
+                await Task.WhenAll(tasks); // Wait for all async tasks to finish
+            }
 
             // readImportantModels();
             foreach (var read in readPreReadedFiles)
@@ -239,28 +247,35 @@ namespace Minecraft
             return false;
         }
 
-        void SaveJson(ZipArchiveEntry entry, string path)
+        void SaveJsonData(string path, byte[] fileData)
         {
-            using Stream stream = entry.Open();
-            using StreamReader reader = new StreamReader(stream);
-
             path = path.Replace("assets/minecraft/", "");
 
-            string json = reader.ReadToEnd();
-            jsonFiles.Add(path, json);
-            //CustomLog.Log("JSON: " + path);
+            string json;
+            using (var memoryStream = new MemoryStream(fileData)) // Read from memory
+            using (var reader = new StreamReader(memoryStream))
+            {
+                json = reader.ReadToEnd();
+            }
+
+            lock (jsonFiles) // Lock because jsonFiles is a shared resource
+            {
+                jsonFiles.Add(path, json);
+            }
+
+            // CustomLog.Log("JSON: " + path);
         }
 
-        void SavePNGFile(ZipArchiveEntry entry, string path)
+        void SavePNGData(string path, byte[] fileData)
         {
-            using Stream stream = entry.Open();
-            using MemoryStream memoryStream = new MemoryStream();
-
             path = path.Replace("assets/minecraft/", "");
 
-            stream.CopyTo(memoryStream);
-            textureFiles.Add(path, memoryStream.ToArray());
-            //CustomLog.Log("PNG: " + path);
+            lock (textureFiles) // Lock because textureFiles is a shared resource
+            {
+                textureFiles.Add(path, fileData);
+            }
+
+            // CustomLog.Log("PNG: " + path);
         }
         #endregion
     }

@@ -157,7 +157,7 @@ public class ItemDisplay : DisplayObject
                 head.GenerateHead(specialModel["kind"].ToString());
                 break;
             case "minecraft:shield":
-                CustomLog.Log("Shield: " + baseModel);
+                //CustomLog.Log("Shield: " + baseModel);
                 GenerateUsingBlockModel(baseModel);
                 break;
 
@@ -179,7 +179,7 @@ public class ItemDisplay : DisplayObject
 
         modelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
 
-        CustomLog.Log("Model Data: " + modelData);
+        //CustomLog.Log("Model Data: " + modelData);
         string layer0 = GetTexturePath(modelData.textures["layer0"].ToString(), modelData.textures);
         Texture2D texture = MinecraftFileManager.GetTextureFile(layer0);
         Texture2D texture2 = null;
@@ -218,7 +218,7 @@ public class ItemDisplay : DisplayObject
             float b = (packedValue & 0xFF) / 255f;
 
             Color color = new Color(r, g, b, 1.0f);
-            CustomLog.Log("Color: " + color);
+           // CustomLog.Log("Color: " + color);
 
             // 텍스처에 색상 적용
             Color[] pixels = texture.GetPixels();

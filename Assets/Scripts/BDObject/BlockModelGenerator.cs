@@ -47,7 +47,7 @@ public class BlockModelGenerator : MonoBehaviour
         modelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
         BDObjectManager bdManager = GameManager.GetManager<BDObjectManager>();
 
-        Debug.Log("Model Data: " + modelData);
+        //Debug.Log("Model Data: " + modelData);
 
         // 모델 데이터를 이용해서 블록을 생성
         int count = modelData.elements.Count;
@@ -250,7 +250,7 @@ public class BlockModelGenerator : MonoBehaviour
         // 레드스톤 와이어 특수 처리
         if (modelName.Contains("redstone_wire"))
         {
-            CustomLog.Log("Redstone wire");
+            //CustomLog.Log("Redstone wire");
             int cnt = cubeObject.materials.Length;
             for (int i = 0; i < cnt; i++)
             {

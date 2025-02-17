@@ -11,7 +11,7 @@ public class LogConsole : MonoBehaviour
 
     WaitForSeconds wait;
 
-    private void Start()
+    private void Awake()
     {
         instance = this;
         wait = new WaitForSeconds(5f);
@@ -21,7 +21,7 @@ public class LogConsole : MonoBehaviour
     {
         text[index].text = message.ToString();
         text[index].color = co;
-        TextCoroutine(text[index]);
+        StartCoroutine(TextCoroutine(text[index]));
 
         index = (index + 1) % text.Length;
     }
