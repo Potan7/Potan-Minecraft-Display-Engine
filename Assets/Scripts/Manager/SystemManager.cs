@@ -1,7 +1,29 @@
+//using B83.Win32;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SystemManager : RootManager
 {
+    public string[] filesDropped;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        //UnityDragAndDropHook.InstallHook();
+        //UnityDragAndDropHook.OnDroppedFiles += OnFiles;
+    }
+
+    //private void OnDestroy()
+    //{
+    //    UnityDragAndDropHook.UninstallHook();
+    //}
+
+    //public void OnFiles(List<string> aPathNames, POINT aDropPoint)
+    //{
+    //    GameManager.GetManager<FileManager>().AfterLoadFile(aPathNames.ToArray());
+    //}
+
     // Update is called once per frame
     void Update()
     {

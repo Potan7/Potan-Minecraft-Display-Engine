@@ -1,11 +1,11 @@
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
+using Minecraft;
 
 public class BlockDisplay : DisplayObject
 {
     public BlockModelGenerator modelElementParent;
+
 
     public override void LoadDisplayModel(string name, string state)
     {
@@ -13,6 +13,7 @@ public class BlockDisplay : DisplayObject
 
         // 블록 스테이트를 불러와서
         modelName = name;
+        modelElementParent.modelName = name;
         JObject blockState = MinecraftFileManager.GetJSONData("blockstates/" + name + ".json");
         //CustomLog.Log("BlockState : " + blockState.ToString());
         //CustomLog.Log("State : " + state);
@@ -54,6 +55,7 @@ public class BlockDisplay : DisplayObject
                     else
                     {
                         BlockModelGenerator newModel = Instantiate(modelElementParent, transform);
+                        newModel.modelName = modelElementParent.modelName;
                         newModel.SetModelByBlockState(partObject["apply"]);
                     }
                 }

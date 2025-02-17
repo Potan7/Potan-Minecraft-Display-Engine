@@ -1,8 +1,9 @@
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using UnityEngine;
+using Minecraft;
+using Minecraft.MColor;
+using System;
 
 public class ItemDisplay : DisplayObject
 {
@@ -64,16 +65,30 @@ public class ItemDisplay : DisplayObject
 
     void TypeModel(string model)
     {
+        Debug.Log("Model: " + model);
         //string model = itemState["model"].ToString();
         if (model.StartsWith("minecraft:block/"))
         {
-            var bd = Instantiate(GameManager.GetManager<BDObjectManager>().blockPrefab, transform);
-            bd.SetModel(model);
+            GenerateUsingBlockModel(model);
         }
         else
         {
             SetItemModel(model);
         }
+    }
+
+    private void GenerateUsingBlockModel(string model, Color co)
+    {
+        //CustomLog.Log("Block Model: " + model);
+        var bd = Instantiate(GameManager.GetManager<BDObjectManager>().blockPrefab, transform);
+        bd.modelName = model;
+        bd.color = co;
+        bd.SetModel(model);
+    }
+
+    void GenerateUsingBlockModel(string model)
+    {
+        GenerateUsingBlockModel(model, Color.white);
     }
 
     void TypeSelect(JObject itemState)
@@ -127,11 +142,23 @@ public class ItemDisplay : DisplayObject
             case "minecraft:bed":
             case "minecraft:chest":
             case "minecraft:shulker_box":
-                TypeModel(baseModel.Replace("item/", "block/"));
+            case "minecraft:conduit":
+            case "minecraft:decorated_pot":
+                GenerateUsingBlockModel(baseModel.Replace("item/", "block/"));
+                break;
+            case "minecraft:banner":
+                GenerateUsingBlockModel(
+                    "block/" + specialModel["type"].ToString(),
+                    MinecraftColorExtensions.ToColorEnum(specialModel["color"].ToString()).ToColor()
+                    );
                 break;
             case "minecraft:head":
                 var head = Instantiate(GameManager.GetManager<BDObjectManager>().headPrefab, transform);
                 head.GenerateHead(specialModel["kind"].ToString());
+                break;
+            case "minecraft:shield":
+                CustomLog.Log("Shield: " + baseModel);
+                GenerateUsingBlockModel(baseModel);
                 break;
 
         }

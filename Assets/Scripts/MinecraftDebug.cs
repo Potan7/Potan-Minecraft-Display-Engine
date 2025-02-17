@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using Minecraft;
 public class MinecraftDebug : MonoBehaviour
 {
     public void OnDebugButton()

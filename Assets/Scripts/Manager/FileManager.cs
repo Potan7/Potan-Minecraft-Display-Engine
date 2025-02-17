@@ -47,7 +47,7 @@ public class FileManager : RootManager
         StartCoroutine(ShowLoadDialogCoroutine(AfterLoadFile));
     }
 
-    void AfterLoadFile(string[] filepaths)
+    public void AfterLoadFile(string[] filepaths)
     {
         Stopwatch stopwatch = new();
 

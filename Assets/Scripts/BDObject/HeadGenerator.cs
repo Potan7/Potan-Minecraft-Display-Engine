@@ -4,6 +4,7 @@ using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
+using Minecraft;
 
 public class HeadGenerator : BlockModelGenerator
 {
@@ -82,6 +83,32 @@ public class HeadGenerator : BlockModelGenerator
         }
     }
 
+    static void SetPlayerSkin(Texture2D edit)
+    {
+        int interval = edit.width/2;
+
+        edit.filterMode = FilterMode.Point;
+        edit.wrapMode = TextureWrapMode.Clamp;
+
+        for (int i = 0; i < interval; i++)
+        {
+            for (int j = 0; j < interval; j++)
+            {
+                Color color = edit.GetPixel(i + interval, j+interval);
+
+                if (color.a > 0)
+                {
+                    //CustomLog.Log(color);
+                    edit.SetPixel(i, j + interval, color);
+                }
+            }
+        }
+
+        edit.Apply();
+    }
+
+
+
     protected override Texture2D CreateTexture(string path)
     {
         return headTexture;
@@ -120,24 +147,23 @@ public class HeadGenerator : BlockModelGenerator
     IEnumerator DownloadTexture(string url)
     {
         url = url.Replace("http://", "https://");
-        using (UnityWebRequest request = UnityWebRequestTexture.GetTexture(url))
+        using UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
+        yield return request.SendWebRequest();
+
+        if (request.result != UnityWebRequest.Result.Success)
         {
-            yield return request.SendWebRequest();
+            CustomLog.LogError("이미지 다운로드 실패: " + request.error);
+            StartCoroutine(DownloadTexture(url));
+        }
+        else
+        {
+            Texture2D downloadedTexture = ((DownloadHandlerTexture)request.downloadHandler).texture;
 
-            if (request.result != UnityWebRequest.Result.Success)
-            {
-                CustomLog.LogError("이미지 다운로드 실패: " + request.error);
-            }
-            else
-            {
-                Texture2D downloadedTexture = ((DownloadHandlerTexture)request.downloadHandler).texture;
+            SetPlayerSkin(downloadedTexture);
+            //downloadedTexture.Apply();
 
-                downloadedTexture.filterMode = FilterMode.Point;
-                downloadedTexture.wrapMode = TextureWrapMode.Clamp;
-                downloadedTexture.Apply();
+            headTexture = downloadedTexture;
 
-                headTexture = downloadedTexture;
-            }
         }
     }
 }

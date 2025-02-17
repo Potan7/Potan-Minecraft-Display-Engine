@@ -1,11 +1,13 @@
 using UnityEngine;
 using Newtonsoft.Json.Linq;
 using System;
+using Minecraft;
 
 public class BlockModelGenerator : MonoBehaviour
 {
     public MinecraftModelData modelData;
     public string modelName;
+    public Color color = Color.white;
 
     public void SetModelByBlockState(JToken modelInfo)
     {
@@ -44,6 +46,8 @@ public class BlockModelGenerator : MonoBehaviour
         modelLocation = MinecraftFileManager.RemoveNamespace(modelLocation);
         modelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
         BDObjectManager bdManager = GameManager.GetManager<BDObjectManager>();
+
+        Debug.Log("Model Data: " + modelData);
 
         // 모델 데이터를 이용해서 블록을 생성
         int count = modelData.elements.Count;
@@ -128,7 +132,7 @@ public class BlockModelGenerator : MonoBehaviour
 
         bool IsTransparented = false;
 
-        ReadOnlySpan<string> NoTransparent = new[] { "bed", "fire" };
+        ReadOnlySpan<string> NoTransparent = new[] { "bed", "fire", "banner" };
         for (int i = 0; i < NoTransparent.Length; i++)
         {
             if (modelName.Contains(NoTransparent[i]))
@@ -173,6 +177,7 @@ public class BlockModelGenerator : MonoBehaviour
 
             if (IsAnimated)
             {
+                // 애니메이션인 경우 첫번째 칸 선택
                 float uvY = 16.0f * (16.0f / blockTexture.height);
                 Vector4 uv = new Vector4(0, 0, 16, uvY);
                 mat.SetVector("_UVFace", uv);
@@ -243,13 +248,22 @@ public class BlockModelGenerator : MonoBehaviour
         */
 
         // 레드스톤 와이어 특수 처리
-        if (modelName.StartsWith("redstone_wire"))
+        if (modelName.Contains("redstone_wire"))
         {
             CustomLog.Log("Redstone wire");
             int cnt = cubeObject.materials.Length;
             for (int i = 0; i < cnt; i++)
             {
                 cubeObject.materials[i].color = Color.red;
+            }
+        }
+        else if (modelName.Contains("banner") && element.ContainsKey("color"))
+        {
+            
+            int cnt = cubeObject.materials.Length;
+            for (int i = 0; i < cnt; i++)
+            {
+                cubeObject.materials[i].color = color;
             }
         }
     }

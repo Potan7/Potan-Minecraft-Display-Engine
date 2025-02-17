@@ -2,112 +2,131 @@ using UnityEngine;
 
 public class BDEngineStyleCameraMovement : MonoBehaviour
 {
-    public Transform pivot;               // 카메라가 회전할 중심점
-    public float rotationSpeed = 5f;      // 회전 속도
-    public float panSpeed = 5f;           // 상하좌우 이동 속도
-    public float zoomSpeed = 10f;         // 줌 속도
-    public float minDistance = 2f;        // 중심점에서 최소 거리
-    public float maxDistance = 50f;       // 중심점에서 최대 거리
+    [Header("Camera Movement Settings")]
+    public Transform pivot;               // The pivot point for camera rotation
+    public float rotationSpeed = 5f;      // Rotation speed
+    public float panSpeed = 5f;           // Pan (move) speed
+    public float zoomSpeed = 10f;         // Zoom speed
+    public float minDistance = 2f;        // Minimum distance from the pivot
+    public float maxDistance = 50f;       // Maximum distance from the pivot
 
-    private float currentDistance;        // 현재 중심점과의 거리
-    private Vector3 lastMousePosition;    // 마우스 마지막 위치
+    private float currentDistance;        // Current distance from the pivot
+    private Vector3 lastMousePosition;    // Last recorded mouse position
 
-    private Vector3 pivotInitPos;
-    private float InitDistance;
+    private Vector3 pivotInitPos;         // Initial position of the pivot
+    private float initDistance;           // Initial camera-pivot distance
 
     void Start()
     {
-        // 초기 거리 설정
-        currentDistance = Vector3.Distance(transform.position, pivot.position);
+        if (pivot == null)
+        {
+            Debug.LogError("Pivot transform is not assigned.");
+            enabled = false;
+            return;
+        }
 
+        // Calculate the initial distance between the camera and the pivot
+        currentDistance = Vector3.Distance(transform.position, pivot.position);
         pivotInitPos = pivot.position;
-        InitDistance = currentDistance;
+        initDistance = currentDistance;
+
+        // Initialize the last mouse position
+        lastMousePosition = Input.mousePosition;
     }
 
     void Update()
     {
-        // 마우스 입력 처리
+        if (pivot == null)
+            return;
+
         HandleMouseInput();
 
         if (Input.GetKeyDown(KeyCode.F))
         {
-            // 카메라와 pivot 초기 위치로 이동
-            pivot.position = pivotInitPos;
-            currentDistance = InitDistance;
-            transform.position = pivotInitPos + new Vector3(0, 0, -currentDistance);
-            transform.LookAt(pivotInitPos);
+            ResetCamera();
         }
+
+        // Update the last mouse position at the end of Update
+        lastMousePosition = Input.mousePosition;
     }
 
     void HandleMouseInput()
     {
-        // 마우스 왼쪽 클릭: 회전
+        // Left mouse button rotates the camera around the pivot
         if (Input.GetMouseButton(0))
         {
             RotateAroundPivot();
         }
 
-        // 마우스 오른쪽 클릭: 상하좌우 이동
+        // Right mouse button pans the camera (moves both camera and pivot)
         if (Input.GetMouseButton(1))
         {
             PanCamera();
         }
 
-        // 마우스 휠: 전진/후진
+        // Use the mouse scroll wheel to zoom in/out
         ZoomCamera();
     }
 
     void RotateAroundPivot()
     {
         Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
+        if (mouseDelta.sqrMagnitude < 0.0001f)
+            return; // No significant movement
 
-        // 마우스 이동량에 따라 회전 각도 계산
-        float yaw = mouseDelta.x * rotationSpeed * Time.deltaTime;   // Y축 회전
-        float pitch = -mouseDelta.y * rotationSpeed * Time.deltaTime; // X축 회전
+        // Calculate yaw (horizontal) and pitch (vertical) angles
+        float yaw = mouseDelta.x * rotationSpeed;
+        float pitch = -mouseDelta.y * rotationSpeed;
 
-        // 중심점을 기준으로 회전
-        transform.RotateAround(pivot.position, Vector3.up, yaw);        // Y축 회전
-        transform.RotateAround(pivot.position, transform.right, pitch); // X축 회전
+        // Rotate the camera around the pivot using the global up vector for yaw
+        transform.RotateAround(pivot.position, Vector3.up, yaw);
+        // Rotate around the camera's right vector for pitch
+        transform.RotateAround(pivot.position, transform.right, pitch);
 
-        // 카메라와 중심점의 거리 유지
+        // Maintain the camera's distance from the pivot
         Vector3 direction = (transform.position - pivot.position).normalized;
         transform.position = pivot.position + direction * currentDistance;
-
-        // 카메라가 항상 중심점을 바라보도록 설정
+        // Always look at the pivot
         transform.LookAt(pivot);
     }
 
     void PanCamera()
     {
         Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
+        if (mouseDelta.sqrMagnitude < 0.0001f)
+            return; // No significant movement
 
-        // 마우스 이동량에 따라 이동량 계산
-        Vector3 right = transform.right * mouseDelta.x * panSpeed * Time.deltaTime;
-        Vector3 up = transform.up * mouseDelta.y * panSpeed * Time.deltaTime;
+        // Calculate pan movement; using Time.deltaTime helps smooth out the movement
+        Vector3 rightMovement = transform.right * mouseDelta.x * panSpeed * Time.deltaTime;
+        Vector3 upMovement = transform.up * mouseDelta.y * panSpeed * Time.deltaTime;
+        Vector3 panMovement = rightMovement + upMovement;
 
-        // 카메라 위치를 이동
-        transform.position += right + up;
-
-        // 중심점도 함께 이동
-        pivot.position += right + up;
+        // Move both the camera and the pivot together
+        transform.position += panMovement;
+        pivot.position += panMovement;
     }
 
     void ZoomCamera()
     {
         float scrollDelta = Input.GetAxis("Mouse ScrollWheel");
+        if (Mathf.Approximately(scrollDelta, 0f))
+            return;
 
-        // 거리 변경
-        currentDistance -= scrollDelta * zoomSpeed * Time.deltaTime;
+        // Adjust the current distance based on scroll input (do not multiply by deltaTime)
+        currentDistance -= scrollDelta * zoomSpeed;
         currentDistance = Mathf.Clamp(currentDistance, minDistance, maxDistance);
 
-        // 카메라 위치 업데이트
+        // Update camera position based on the new distance
         Vector3 direction = (transform.position - pivot.position).normalized;
         transform.position = pivot.position + direction * currentDistance;
     }
 
-    void LateUpdate()
+    void ResetCamera()
     {
-        // 마우스 마지막 위치 업데이트
-        lastMousePosition = Input.mousePosition;
+        // Reset pivot and distance to their initial values
+        pivot.position = pivotInitPos;
+        currentDistance = initDistance;
+        transform.position = pivotInitPos + new Vector3(0, 0, -currentDistance);
+        transform.LookAt(pivotInitPos);
     }
 }
