@@ -351,6 +351,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   BDObjTransportMaterial: {fileID: 2100000, guid: 376723b8be6a77d4dafb0437ee29173d, type: 2}
+  BDObjHeadMaterial: {fileID: 2100000, guid: fbccec779437b8642bc9151962a35f84, type: 2}
   BDObjectParent: {fileID: 1893827789}
   BDObjectPrefab: {fileID: 3325262981676524368, guid: 92b0cb02693e70e4883b2def08d6a5ab, type: 3}
   BDObjectCount: 0

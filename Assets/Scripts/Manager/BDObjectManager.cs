@@ -6,6 +6,8 @@ using System.Diagnostics;
 public class BDObjectManager : RootManager
 {
     public Material BDObjTransportMaterial;
+    public Material BDObjHeadMaterial;
+
     public Transform BDObjectParent;
     public BDObejctContainer BDObjectPrefab;
 
@@ -20,22 +22,6 @@ public class BDObjectManager : RootManager
     public ItemModelGenerator itemPrefab;
     public BlockModelGenerator blockPrefab;
     public HeadGenerator headPrefab;
-
-    public void AddObjectByCo(BDObject[] bdObjects) => StartCoroutine(AddObejctUsingCo(bdObjects, BDObjectParent));
-
-    //public void AddObjects(List<BDObject> bdObjects) => StartCoroutine(DebugCo(bdObjects));
-
-    IEnumerator DebugCo(BDObject[] bdObjects)
-    {
-        System.Diagnostics.Stopwatch stopwatch = new();
-        stopwatch.Start();
-
-        yield return StartCoroutine(AddObejctUsingCo(bdObjects, BDObjectParent));
-
-        stopwatch.Stop();
-        CustomLog.Log($"AddObjects Time: {stopwatch.ElapsedMilliseconds}ms");
-
-    }
 
     // Transform을 기본값으로 설정하기
     public void AddObjects(BDObject[] bdObjects) => AddObjects(bdObjects, BDObjectParent);
@@ -63,26 +49,15 @@ public class BDObjectManager : RootManager
         }
     }
 
-    IEnumerator AddObejctUsingCo(BDObject[] bdObjects, Transform parent)
+    public Material GetBDObjMaterial(BlockModelGenerator model)
     {
-        int count = bdObjects.Length;
-        for (int i = 0; i < count; i++)
+        if (model is HeadGenerator)
         {
-            var bdObject = bdObjects[i];
-
-            var newObj = Instantiate(BDObjectPrefab, parent);
-            newObj.Init(bdObject, this);
-            //BDObjectList.Add(newObj);
-
-            // 자식 오브젝트를 추가
-            if (bdObject.children != null)
-            {
-                yield return StartCoroutine(AddObejctUsingCo(bdObject.children, newObj.transform));
-            }
-
-            newObj.PostProcess();
-
-            yield return null;
+            return BDObjHeadMaterial;
+        }
+        else
+        {
+            return BDObjTransportMaterial;
         }
     }
 
