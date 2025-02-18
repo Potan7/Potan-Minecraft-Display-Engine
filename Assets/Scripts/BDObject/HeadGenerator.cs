@@ -26,6 +26,8 @@ public class HeadGenerator : BlockModelGenerator
 
     public void GenerateHead(string name)
     {
+        modelName = "head";
+
         headType = name switch
         {
             "player" => HeadType.PLAYER,

@@ -49,18 +49,6 @@ public class BDObjectManager : RootManager
         }
     }
 
-    public Material GetBDObjMaterial(BlockModelGenerator model)
-    {
-        if (model is HeadGenerator)
-        {
-            return BDObjHeadMaterial;
-        }
-        else
-        {
-            return BDObjTransportMaterial;
-        }
-    }
-
     public void ClearAllObject()
     {
         Destroy(BDObjectParent.gameObject);
