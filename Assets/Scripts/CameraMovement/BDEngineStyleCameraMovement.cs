@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class BDEngineStyleCameraMovement : MonoBehaviour
 {
+    public static bool CanMoveCamera { get; set; } = true;
+
     [Header("Camera Movement Settings")]
     public Transform pivot;               // The pivot point for camera rotation
     public float rotationSpeed = 5f;      // Rotation speed
@@ -36,7 +38,7 @@ public class BDEngineStyleCameraMovement : MonoBehaviour
 
     void Update()
     {
-        if (pivot == null)
+        if (pivot == null || !CanMoveCamera)
             return;
 
         HandleMouseInput();

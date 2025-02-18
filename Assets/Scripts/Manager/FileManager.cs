@@ -6,7 +6,6 @@ using System.Text;
 using System;
 using System.IO.Compression;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 public class FileManager : RootManager
@@ -29,6 +28,7 @@ public class FileManager : RootManager
 
     IEnumerator ShowLoadDialogCoroutine(Action<string[]> callback)
     {
+        BDEngineStyleCameraMovement.CanMoveCamera = false;
         // 파일 브라우저를 열고 사용자가 파일을 선택하거나 취소할 때까지 대기
         yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files, true, null, null, "Select Files", "Load");
 
@@ -40,6 +40,7 @@ public class FileManager : RootManager
         {
             CustomLog.Log("Failed to load file");
         }
+        BDEngineStyleCameraMovement.CanMoveCamera = true;
     }
 
     public void ImportFile()

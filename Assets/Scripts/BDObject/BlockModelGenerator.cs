@@ -122,7 +122,7 @@ public class BlockModelGenerator : MonoBehaviour
         }
     }
 
-    protected void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
+    protected virtual void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
     {
         if (!element.TryGetValue("faces", out JToken facesToken)) return;
         JObject faces = facesToken as JObject;

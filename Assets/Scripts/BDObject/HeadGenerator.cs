@@ -66,8 +66,10 @@ public class HeadGenerator : BlockModelGenerator
         switch (headType)
         {
             case HeadType.PLAYER:
+                SetModel("item/player_head");
+                break;
             case HeadType.ZOMBIE:
-                SetModel("item/head");
+                SetModel("item/zombie_head");
                 break;
             case HeadType.WITHERSKULL:
             case HeadType.SKULL:
@@ -83,29 +85,29 @@ public class HeadGenerator : BlockModelGenerator
         }
     }
 
-    static void SetPlayerSkin(Texture2D edit)
-    {
-        int interval = edit.width/2;
+    //static void SetPlayerSkin(Texture2D edit)
+    //{
+    //    int interval = edit.width/2;
 
-        edit.filterMode = FilterMode.Point;
-        edit.wrapMode = TextureWrapMode.Clamp;
+    //    edit.filterMode = FilterMode.Point;
+    //    edit.wrapMode = TextureWrapMode.Clamp;
 
-        for (int i = 0; i < interval; i++)
-        {
-            for (int j = 0; j < interval; j++)
-            {
-                Color color = edit.GetPixel(i + interval, j+interval);
+    //    for (int i = 0; i < interval; i++)
+    //    {
+    //        for (int j = 0; j < interval; j++)
+    //        {
+    //            Color color = edit.GetPixel(i + interval, j+interval);
 
-                if (color.a > 0)
-                {
-                    //CustomLog.Log(color);
-                    edit.SetPixel(i, j + interval, color);
-                }
-            }
-        }
+    //            if (color.a > 0)
+    //            {
+    //                //CustomLog.Log(color);
+    //                edit.SetPixel(i, j + interval, color);
+    //            }
+    //        }
+    //    }
 
-        edit.Apply();
-    }
+    //    edit.Apply();
+    //}
 
 
 
@@ -117,6 +119,21 @@ public class HeadGenerator : BlockModelGenerator
     protected override bool CheckForTransparency(Texture2D texture)
     {
         return false;
+    }
+
+    protected override void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
+    {
+        base.SetFaces(model, element, cubeObject);
+
+        if (headType == HeadType.PLAYER)
+        {
+            int cnt = cubeObject.materials.Length;
+            for (int i = 0; i < cnt; i++)
+            {
+                cubeObject.materials[i].EnableKeyword("_ALPHATEST_ON");
+                cubeObject.materials[i].SetFloat("_AlphaClip", 1.0f);
+            }
+        }
     }
 
     Texture2D SetPlayerTexture()
@@ -152,14 +169,22 @@ public class HeadGenerator : BlockModelGenerator
 
         if (request.result != UnityWebRequest.Result.Success)
         {
+#if UNITY_EDITOR
             CustomLog.LogError("이미지 다운로드 실패: " + request.error);
+#else
+            CustomLog.LogError("이미지 다운로드 실패! 재시도합니다.");
+#endif
             StartCoroutine(DownloadTexture(url));
         }
         else
         {
             Texture2D downloadedTexture = ((DownloadHandlerTexture)request.downloadHandler).texture;
 
-            SetPlayerSkin(downloadedTexture);
+            downloadedTexture.filterMode = FilterMode.Point;
+            downloadedTexture.wrapMode = TextureWrapMode.Clamp;
+            downloadedTexture.Apply();
+
+            //SetPlayerSkin(downloadedTexture);
             //downloadedTexture.Apply();
 
             headTexture = downloadedTexture;
