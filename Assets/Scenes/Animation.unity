@@ -164,7 +164,7 @@ GameObject:
   - component: {fileID: 189409087}
   - component: {fileID: 189409089}
   - component: {fileID: 189409088}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (13)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -398,6 +398,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   filesDropped: []
+  size: 20
+  color: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1 &279350885
 GameObject:
   m_ObjectHideFlags: 0
@@ -409,7 +411,7 @@ GameObject:
   - component: {fileID: 279350886}
   - component: {fileID: 279350888}
   - component: {fileID: 279350887}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (9)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -732,7 +734,7 @@ GameObject:
   - component: {fileID: 351468596}
   - component: {fileID: 351468598}
   - component: {fileID: 351468597}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1001,7 +1003,7 @@ GameObject:
   - component: {fileID: 384751871}
   - component: {fileID: 384751873}
   - component: {fileID: 384751872}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (12)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1595,7 +1597,7 @@ GameObject:
   - component: {fileID: 810254529}
   - component: {fileID: 810254528}
   - component: {fileID: 810254527}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: LogCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1671,7 +1673,7 @@ Canvas:
   m_GameObject: {fileID: 810254525}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 1
+  m_RenderMode: 0
   m_Camera: {fileID: 330585545}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
@@ -1745,7 +1747,7 @@ GameObject:
   - component: {fileID: 836830525}
   - component: {fileID: 836830527}
   - component: {fileID: 836830526}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2017,7 +2019,7 @@ GameObject:
   - component: {fileID: 949905547}
   - component: {fileID: 949905549}
   - component: {fileID: 949905548}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2153,7 +2155,7 @@ GameObject:
   - component: {fileID: 990779599}
   - component: {fileID: 990779601}
   - component: {fileID: 990779600}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2289,7 +2291,7 @@ GameObject:
   - component: {fileID: 1166388419}
   - component: {fileID: 1166388421}
   - component: {fileID: 1166388420}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2425,7 +2427,7 @@ GameObject:
   - component: {fileID: 1182405450}
   - component: {fileID: 1182405452}
   - component: {fileID: 1182405451}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (14)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2562,7 +2564,7 @@ GameObject:
   - component: {fileID: 1196896904}
   - component: {fileID: 1196896902}
   - component: {fileID: 1196896905}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: LogConsole
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2743,7 +2745,7 @@ Canvas:
   m_GameObject: {fileID: 1217997565}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 1
+  m_RenderMode: 0
   m_Camera: {fileID: 330585545}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
@@ -2789,7 +2791,7 @@ GameObject:
   - component: {fileID: 1250894814}
   - component: {fileID: 1250894816}
   - component: {fileID: 1250894815}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (10)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2925,7 +2927,7 @@ GameObject:
   - component: {fileID: 1343569399}
   - component: {fileID: 1343569401}
   - component: {fileID: 1343569400}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3140,7 +3142,7 @@ GameObject:
   - component: {fileID: 1405007213}
   - component: {fileID: 1405007215}
   - component: {fileID: 1405007214}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3276,7 +3278,7 @@ GameObject:
   - component: {fileID: 1406318515}
   - component: {fileID: 1406318517}
   - component: {fileID: 1406318516}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3412,7 +3414,7 @@ GameObject:
   - component: {fileID: 1525844281}
   - component: {fileID: 1525844283}
   - component: {fileID: 1525844282}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3548,7 +3550,7 @@ GameObject:
   - component: {fileID: 1551471425}
   - component: {fileID: 1551471427}
   - component: {fileID: 1551471426}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (11)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3684,7 +3686,7 @@ GameObject:
   - component: {fileID: 1612505978}
   - component: {fileID: 1612505980}
   - component: {fileID: 1612505979}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4139,7 +4141,7 @@ GameObject:
   - component: {fileID: 1886358952}
   - component: {fileID: 1886358954}
   - component: {fileID: 1886358953}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (8)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4306,7 +4308,7 @@ GameObject:
   - component: {fileID: 2001718489}
   - component: {fileID: 2001718491}
   - component: {fileID: 2001718490}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4442,7 +4444,7 @@ GameObject:
   - component: {fileID: 2076276004}
   - component: {fileID: 2076276006}
   - component: {fileID: 2076276005}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4578,7 +4580,7 @@ GameObject:
   - component: {fileID: 2084652554}
   - component: {fileID: 2084652556}
   - component: {fileID: 2084652555}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Log Text (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
