@@ -719,8 +719,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pivot: {fileID: 280487879}
   rotationSpeed: 0.05
-  panSpeed: 1
-  zoomSpeed: 15
+  panSpeed: -1
+  zoomSpeed: 10
   minDistance: 0.1
   maxDistance: 100
 --- !u!1 &351468595
