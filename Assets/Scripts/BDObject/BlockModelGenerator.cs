@@ -132,11 +132,14 @@ public class BlockModelGenerator : MonoBehaviour
 
         bool IsTransparented = false;
 
-        ReadOnlySpan<string> NoTransparent = new[] { "bed", "fire", "banner" };
+        ReadOnlySpan<string> NoTransparent = new[] { "bed", "banner", "head", "fire" };
         for (int i = 0; i < NoTransparent.Length; i++)
         {
             if (modelName.Contains(NoTransparent[i]))
+            {
                 IsTransparented = true;
+                break;
+            }
         }
 
         // 각 면을 채우기
@@ -163,7 +166,7 @@ public class BlockModelGenerator : MonoBehaviour
                     // 모든 재질 변경하기
                     var cubeMaterials = cubeObject.materials;
                     int cnt = cubeObject.materials.Length;
-                    Material tshader = GameManager.GetManager<BDObjectManager>().GetBDObjMaterial(this);
+                    Material tshader = GameManager.GetManager<BDObjectManager>().BDObjTransportMaterial;
 
                     for (int i = 0; i < cnt; i++)
                     {

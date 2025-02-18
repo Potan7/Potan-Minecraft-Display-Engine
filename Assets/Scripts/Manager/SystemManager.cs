@@ -7,6 +7,14 @@ public class SystemManager : RootManager
 {
     public string[] filesDropped;
 
+
+    private float deltaTime = 0f;
+
+    [SerializeField] private int size = 15;
+    [SerializeField] private Color color = Color.white;
+
+    GUIStyle style;
+
     protected override void Awake()
     {
         base.Awake();
@@ -17,25 +25,30 @@ public class SystemManager : RootManager
         //UnityDragAndDropHook.OnDroppedFiles += OnFiles;
     }
 
-    private float deltaTime = 0f;
-
-    [SerializeField] private int size = 20;
-    [SerializeField] private Color color = Color.red;
-
-    private void OnGUI()
+    private void Start()
     {
-        GUIStyle style = new GUIStyle();
+        style = new GUIStyle();
 
-        Rect rect = new Rect(10, 10, Screen.width, Screen.height);
         style.alignment = TextAnchor.UpperLeft;
         style.fontSize = size;
         style.normal.textColor = color;
+    }
+
+    private void OnGUI()
+    {
+
+
+        Rect rect = new Rect(10, 30, Screen.width, Screen.height);
 
         float ms = deltaTime * 1000f;
         float fps = 1.0f / deltaTime;
         string text = string.Format("{0:0.} FPS ({1:0.0} ms)", fps, ms);
+        
+        Rect versionRect = new Rect(10, 10, Screen.width, Screen.height);
+        string version = string.Format("Version: {0}", Application.version);
 
         GUI.Label(rect, text, style);
+        GUI.Label(versionRect, version, style);
     }
 
     //private void OnDestroy()
@@ -60,7 +73,7 @@ public class SystemManager : RootManager
             {
                 string clipboard = GUIUtility.systemCopyBuffer;
 
-                //CustomLog.Log("Clipboard: " + clipboard);
+                CustomLog.Log("Clipboard: " + clipboard);
 
                 GameManager.GetManager<FileManager>().MakeDisplay(clipboard);
             }

@@ -79,7 +79,6 @@ public class ItemDisplay : DisplayObject
 
     private void GenerateUsingBlockModel(string model, Color co)
     {
-        //CustomLog.Log("Block Model: " + model);
         var bd = Instantiate(GameManager.GetManager<BDObjectManager>().blockPrefab, transform);
         bd.modelName = model;
         bd.color = co;
@@ -151,6 +150,7 @@ public class ItemDisplay : DisplayObject
                     "block/" + specialModel["type"].ToString(),
                     MinecraftColorExtensions.ToColorEnum(specialModel["color"].ToString()).ToColor()
                     );
+
                 break;
             case "minecraft:head":
                 var head = Instantiate(GameManager.GetManager<BDObjectManager>().headPrefab, transform);

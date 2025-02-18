@@ -54,10 +54,12 @@ public class BlockDisplay : DisplayObject
                     }
                     else
                     {
-                        BlockModelGenerator newModel = Instantiate(modelElementParent, transform);
+                        BlockModelGenerator newModel = Instantiate(GameManager.GetManager<BDObjectManager>().blockPrefab, transform);
                         newModel.modelName = modelElementParent.modelName;
                         newModel.SetModelByBlockState(partObject["apply"]);
                     }
+
+                    //CustomLog.Log("Part : " + partObject["apply"].ToString());
                 }
             }
 
