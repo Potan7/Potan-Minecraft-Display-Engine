@@ -116,25 +116,25 @@ public class HeadGenerator : BlockModelGenerator
         return headTexture;
     }
 
-    protected override bool CheckForTransparency(Texture2D texture)
-    {
-        return false;
-    }
+    //protected override bool CheckForTransparency(Texture2D texture)
+    //{
+    //    return false;
+    //}
 
-    protected override void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
-    {
-        base.SetFaces(model, element, cubeObject);
+    //protected override void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
+    //{
+    //    base.SetFaces(model, element, cubeObject);
 
-        if (headType == HeadType.PLAYER)
-        {
-            int cnt = cubeObject.materials.Length;
-            for (int i = 0; i < cnt; i++)
-            {
-                cubeObject.materials[i].EnableKeyword("_ALPHATEST_ON");
-                cubeObject.materials[i].SetFloat("_AlphaClip", 1.0f);
-            }
-        }
-    }
+    //    if (headType == HeadType.PLAYER)
+    //    {
+    //        int cnt = cubeObject.materials.Length;
+    //        for (int i = 0; i < cnt; i++)
+    //        {
+    //            cubeObject.materials[i].EnableKeyword("_ALPHATEST_ON");
+    //            cubeObject.materials[i].SetFloat("_AlphaClip", 1.0f);
+    //        }
+    //    }
+    //}
 
     Texture2D SetPlayerTexture()
     {

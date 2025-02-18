@@ -163,7 +163,7 @@ public class BlockModelGenerator : MonoBehaviour
                     // 모든 재질 변경하기
                     var cubeMaterials = cubeObject.materials;
                     int cnt = cubeObject.materials.Length;
-                    Material tshader = GameManager.GetManager<BDObjectManager>().BDObjTransportMaterial;
+                    Material tshader = GameManager.GetManager<BDObjectManager>().GetBDObjMaterial(this);
 
                     for (int i = 0; i < cnt; i++)
                     {
