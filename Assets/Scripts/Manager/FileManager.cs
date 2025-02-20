@@ -7,9 +7,12 @@ using System;
 using System.IO.Compression;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 public class FileManager : RootManager
 {
+    public GameObject LoadingPanel;
+
     private void Start()
     {
         // .bdengine, .bdstudio 확장자만 필터링
@@ -26,7 +29,7 @@ public class FileManager : RootManager
         FileBrowser.AddQuickLink("Downloads", download);
     }
 
-    IEnumerator ShowLoadDialogCoroutine(Action<string[]> callback)
+    IEnumerator ShowLoadDialogCoroutine()
     {
         BDEngineStyleCameraMovement.CanMoveCamera = false;
         // 파일 브라우저를 열고 사용자가 파일을 선택하거나 취소할 때까지 대기
@@ -35,54 +38,66 @@ public class FileManager : RootManager
         // 파일 브라우저가 파일을 불러오면 콜백 함수 호출
         if (FileBrowser.Success)
             // 만약 Success가 false라면 Result는 null이 된다.
-            callback?.Invoke(FileBrowser.Result); 
+            AfterLoadFile(FileBrowser.Result); 
         else
         {
             CustomLog.Log("Failed to load file");
+            BDEngineStyleCameraMovement.CanMoveCamera = true;
         }
-        BDEngineStyleCameraMovement.CanMoveCamera = true;
+        
     }
 
     public void ImportFile()
     {
-        StartCoroutine(ShowLoadDialogCoroutine(AfterLoadFile));
+        StartCoroutine(ShowLoadDialogCoroutine());
     }
 
-    public void AfterLoadFile(string[] filepaths)
+    public async void AfterLoadFile(string[] filepaths)
     {
         Stopwatch stopwatch = new();
-
         stopwatch.Start();
 
+        LoadingPanel.SetActive(true);
+
+        Task[] tasks = new Task[filepaths.Length];
 
         for (int i = 0; i < filepaths.Length; i++)
         {
-            // 1. 파일 읽어서 string 변환
-            byte[] file = FileBrowserHelpers.ReadBytesFromFile(filepaths[i]);
-            string base64Data = Encoding.UTF8.GetString(file);
-
-            // 2. Base64 디코딩
-            byte[] gzipData = Convert.FromBase64String(base64Data);
-            // 3. GZip 압축 해제
-            string jsonData = DecompressGzip(gzipData);
-
-            // 4. JSON 데이터 출력
-            CustomLog.Log(jsonData);
-
-            MakeDisplay(jsonData);
+            tasks[i] = ProcessFileAsync(filepaths[i]);
         }
+        await Task.WhenAll(tasks);
         stopwatch.Stop();
 
-        CustomLog.Log($"Import Time: {stopwatch.ElapsedMilliseconds}ms");
-        CustomLog.Log($"BDObject Count: {GameManager.GetManager<BDObjectManager>().BDObjectCount}");
+        LoadingPanel.SetActive(false);
+        BDEngineStyleCameraMovement.CanMoveCamera = true;
+
+        CustomLog.Log($"BDObject Count: {GameManager.GetManager<BDObjectManager>().BDObjectCount}, Import Time: {stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    // 개별 파일 처리 비동기 함수
+    private async Task ProcessFileAsync(string filepath)
+    {
+        // 1. 파일 읽기 (비동기)
+        byte[] file = await Task.Run(() => FileBrowserHelpers.ReadBytesFromFile(filepath));
+
+        // 2. Base64 디코딩
+        byte[] gzipData = Convert.FromBase64String(Encoding.UTF8.GetString(file));
+
+        // 3. GZip 압축 해제 (비동기)
+        string jsonData = await Task.Run(() => DecompressGzip(gzipData));
+
+        // 4. JSON 데이터를 BDObject로 변환 및 오브젝트 생성
+        await MakeDisplay(jsonData);
     }
 
     // JSON 데이터를 BDObject로 변환해서 오브젝트 생성
-    public void MakeDisplay(string jsonData) => 
-        GameManager.GetManager<BDObjectManager>()
-        .AddObjects(
-            JsonConvert.DeserializeObject<BDObject[]>(jsonData)
-            );
+    public async Task MakeDisplay(string jsonData)
+    {
+        BDObject[] bDObjects = await Task.Run(() => JsonConvert.DeserializeObject<BDObject[]>(jsonData));
+
+        await GameManager.GetManager<BDObjectManager>().AddObjects(bDObjects);
+    }
+
 
     string DecompressGzip(byte[] gzipData)
     {

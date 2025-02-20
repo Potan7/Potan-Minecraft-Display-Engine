@@ -65,7 +65,7 @@ public class ItemDisplay : DisplayObject
 
     void TypeModel(string model)
     {
-        Debug.Log("Model: " + model);
+        //Debug.Log("Model: " + model);
         //string model = itemState["model"].ToString();
         if (model.StartsWith("minecraft:block/"))
         {

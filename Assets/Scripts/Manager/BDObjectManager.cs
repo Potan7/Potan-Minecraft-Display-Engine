@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 public class BDObjectManager : RootManager
 {
@@ -24,30 +25,61 @@ public class BDObjectManager : RootManager
     public HeadGenerator headPrefab;
 
     // Transform을 기본값으로 설정하기
-    public void AddObjects(BDObject[] bdObjects) => AddObjects(bdObjects, BDObjectParent);
-
-    void AddObjects(BDObject[] bdObjects, Transform parent)
+    public async Task AddObjects(BDObject[] bdObjects)
     {
-        // 배열을 순회하며
+        await AddObjectsAsync(bdObjects, BDObjectParent);
+    }
+
+    async Task AddObjectsAsync(BDObject[] bdObjects, Transform parent)
+    {
         int count = bdObjects.Length;
+
         for (int i = 0; i < count; i++)
         {
             // 오브젝트 생성
             var newObj = Instantiate(BDObjectPrefab, parent);
             newObj.Init(bdObjects[i], this);
-            //BDObjectList.Add(newObj);
             BDObjectCount++;
 
-            // 자식 오브젝트를 추가
+            // 자식 오브젝트 비동기 생성
             if (bdObjects[i].children != null)
             {
-                AddObjects(bdObjects[i].children, newObj.transform);
+                await AddObjectsAsync(bdObjects[i].children, newObj.transform);
             }
 
-            // 자식 생성 종료 후 후처리.
+            // 후처리 실행
             newObj.PostProcess();
+
+            // 매 10개마다 한 프레임 쉬기
+            if (i % 10 == 0)
+            {
+                await Task.Yield(); // 한 프레임 대기 (코루틴의 yield return null과 동일)
+            }
         }
     }
+
+    //void AddObjects(BDObject[] bdObjects, Transform parent)
+    //{
+    //    // 배열을 순회하며
+    //    int count = bdObjects.Length;
+    //    for (int i = 0; i < count; i++)
+    //    {
+    //        // 오브젝트 생성
+    //        var newObj = Instantiate(BDObjectPrefab, parent);
+    //        newObj.Init(bdObjects[i], this);
+    //        //BDObjectList.Add(newObj);
+    //        BDObjectCount++;
+
+    //        // 자식 오브젝트를 추가
+    //        if (bdObjects[i].children != null)
+    //        {
+    //            AddObjects(bdObjects[i].children, newObj.transform);
+    //        }
+
+    //        // 자식 생성 종료 후 후처리.
+    //        newObj.PostProcess();
+    //    }
+    //}
 
     public void ClearAllObject()
     {
