@@ -18,6 +18,7 @@ public class BDObjectManager : RootManager
     [Header("Prefabs")]
     public BlockDisplay blockDisplay;
     public ItemDisplay itemDisplay;
+    public TextDisplay textDisplay;
 
     public MeshRenderer cubePrefab;
     public ItemModelGenerator itemPrefab;
@@ -85,5 +86,6 @@ public class BDObjectManager : RootManager
     {
         Destroy(BDObjectParent.gameObject);
         BDObjectParent = new GameObject("BDObjectParent").transform;
+        BDObjectParent.localScale = new Vector3(1, 1, -1);
     }
 }

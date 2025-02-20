@@ -122,7 +122,7 @@ public class BlockModelGenerator : MonoBehaviour
         }
     }
 
-    protected virtual void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
+    protected void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
     {
         if (!element.TryGetValue("faces", out JToken facesToken)) return;
         JObject faces = facesToken as JObject;
@@ -130,14 +130,20 @@ public class BlockModelGenerator : MonoBehaviour
         Texture texture = null;
         bool isTextureAnimated = false;
 
-        bool IsTransparented = false;
-
-        ReadOnlySpan<string> NoTransparent = new[] { "bed", "banner", "head", "fire" };
-        for (int i = 0; i < NoTransparent.Length; i++)
+        ReadOnlySpan<string> Transparent = new[] { "glass", "honey_block", "slime_block" };
+        for (int i = 0; i < Transparent.Length; i++)
         {
-            if (modelName.Contains(NoTransparent[i]))
+            if (modelName.Contains(Transparent[i]))
             {
-                IsTransparented = true;
+                var cubeMaterials = cubeObject.materials;
+                int cnt = cubeObject.materials.Length;
+                Material tshader = GameManager.GetManager<BDObjectManager>().BDObjTransportMaterial;
+
+                for (int j = 0; j < cnt; j++)
+                {
+                    cubeMaterials[j] = tshader;
+                }
+                cubeObject.materials = cubeMaterials;
                 break;
             }
         }
@@ -156,25 +162,25 @@ public class BlockModelGenerator : MonoBehaviour
             Texture2D blockTexture = CreateTexture(texturePath);
             bool IsAnimated = MinecraftFileManager.IsTextureAnimated(texturePath);
 
-            // 투명도 체크
-            if (!IsTransparented)
-            {
-                if (CheckForTransparency(blockTexture))
-                {
-                    IsTransparented = true;
+            //// 투명도 체크
+            //if (!IsTransparented)
+            //{
+            //    if (CheckForTransparency(blockTexture))
+            //    {
+            //        IsTransparented = true;
 
-                    // 모든 재질 변경하기
-                    var cubeMaterials = cubeObject.materials;
-                    int cnt = cubeObject.materials.Length;
-                    Material tshader = GameManager.GetManager<BDObjectManager>().BDObjTransportMaterial;
+            //        // 모든 재질 변경하기
+            //        var cubeMaterials = cubeObject.materials;
+            //        int cnt = cubeObject.materials.Length;
+            //        Material tshader = GameManager.GetManager<BDObjectManager>().BDObjTransportMaterial;
 
-                    for (int i = 0; i < cnt; i++)
-                    {
-                        cubeMaterials[i] = tshader;
-                    }
-                    cubeObject.materials = cubeMaterials;
-                }
-            }
+            //        for (int i = 0; i < cnt; i++)
+            //        {
+            //            cubeMaterials[i] = tshader;
+            //        }
+            //        cubeObject.materials = cubeMaterials;
+            //    }
+            //}
 
             Material mat = cubeObject.materials[idx];
 
@@ -227,6 +233,7 @@ public class BlockModelGenerator : MonoBehaviour
         const int faceCount = 6;
         for (int i = 0; i < faceCount; i++)
         {
+            string uvVector = "_UVFace";
             if (cubeObject.materials[i].mainTexture == null)
             {
                 cubeObject.materials[i].mainTexture = texture;
@@ -235,7 +242,7 @@ public class BlockModelGenerator : MonoBehaviour
                 {
                     float uvY = 16.0f * (16.0f / texture.height);
                     Vector4 uv = new Vector4(0, 0, 16, uvY);
-                    cubeObject.materials[i].SetVector("_UVFace", uv);
+                    cubeObject.materials[i].SetVector(uvVector, uv);
                 }
             }
         }
@@ -277,23 +284,23 @@ public class BlockModelGenerator : MonoBehaviour
     }
 
     // 투명한 부분이 있는지 확인
-    protected virtual bool CheckForTransparency(Texture2D texture)
-    {
-        if (texture == null)
-        {
-            return false;
-        }
+    //protected virtual bool CheckForTransparency(Texture2D texture)
+    //{
+    //    if (texture == null)
+    //    {
+    //        return false;
+    //    }
 
 
-        Color[] pixels = texture.GetPixels();
+    //    Color[] pixels = texture.GetPixels();
 
-        foreach (Color pixel in pixels)
-        {
-            if (pixel.a < 1.0f)
-            {
-                return true; // 투명 또는 반투명 픽셀 존재
-            }
-        }
-        return false; // 완전히 불투명
-    }
+    //    foreach (Color pixel in pixels)
+    //    {
+    //        if (pixel.a < 1.0f && pixel.a > 0.1f)
+    //        {
+    //            return true; // 반투명 픽셀 존재
+    //        }
+    //    }
+    //    return false; // 완전히 불투명
+    //}
 }

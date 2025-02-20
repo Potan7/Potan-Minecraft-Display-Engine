@@ -5,7 +5,7 @@ using Minecraft;
 using Minecraft.MColor;
 using System;
 
-public class ItemDisplay : DisplayObject
+public class ItemDisplay : ModelDisPlayObject
 {
     public ItemModelGenerator itemModel;
     JObject currentItemState;
