@@ -63,7 +63,11 @@ public class HeadGenerator : BlockModelGenerator
             _ => null,
         };
 
+        GameManager.GetManager<FileManager>().WorkingGenerators.Add(this);
+
         yield return new WaitWhile(() => headTexture == null);
+
+        GameManager.GetManager<FileManager>().WorkingGenerators.Remove(this);
 
         switch (headType)
         {

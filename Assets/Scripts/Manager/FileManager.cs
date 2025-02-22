@@ -8,10 +8,11 @@ using System.IO.Compression;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 public class FileManager : RootManager
 {
-    public GameObject LoadingPanel;
+    public HashSet<HeadGenerator> WorkingGenerators = new HashSet<HeadGenerator>();
 
     private void Start()
     {
@@ -57,7 +58,7 @@ public class FileManager : RootManager
         Stopwatch stopwatch = new();
         stopwatch.Start();
 
-        LoadingPanel.SetActive(true);
+        GameManager.GetManager<UIManger>().SetLoadingPanel(true);
 
         Task[] tasks = new Task[filepaths.Length];
 
@@ -66,12 +67,21 @@ public class FileManager : RootManager
             tasks[i] = ProcessFileAsync(filepaths[i]);
         }
         await Task.WhenAll(tasks);
+        await WaitWhileAsync(() => WorkingGenerators.Count > 0);
         stopwatch.Stop();
 
-        LoadingPanel.SetActive(false);
+        GameManager.GetManager<UIManger>().SetLoadingPanel(false);
         BDEngineStyleCameraMovement.CanMoveCamera = true;
 
         CustomLog.Log($"BDObject Count: {GameManager.GetManager<BDObjectManager>().BDObjectCount}, Import Time: {stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    public async Task WaitWhileAsync(Func<bool> conditionFunc, int checkIntervalMs = 500)
+    {
+        while (conditionFunc())
+        {
+            await Task.Delay(checkIntervalMs); // 지정한 시간(ms)만큼 대기 후 다시 체크
+        }
     }
 
     // 개별 파일 처리 비동기 함수
