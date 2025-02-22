@@ -75,7 +75,7 @@ public class SystemManager : RootManager
 
                 CustomLog.Log("Clipboard: " + clipboard);
 
-                GameManager.GetManager<FileManager>().MakeDisplay(clipboard);
+                _ = GameManager.GetManager<FileManager>().MakeDisplay(clipboard);
             }
             catch (System.Exception e)
             {

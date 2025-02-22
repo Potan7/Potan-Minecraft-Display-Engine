@@ -5,7 +5,7 @@ using Minecraft;
 using Minecraft.MColor;
 using System;
 
-public class ItemDisplay : DisplayObject
+public class ItemDisplay : ModelDisPlayObject
 {
     public ItemModelGenerator itemModel;
     JObject currentItemState;
@@ -65,7 +65,7 @@ public class ItemDisplay : DisplayObject
 
     void TypeModel(string model)
     {
-        Debug.Log("Model: " + model);
+        //Debug.Log("Model: " + model);
         //string model = itemState["model"].ToString();
         if (model.StartsWith("minecraft:block/"))
         {

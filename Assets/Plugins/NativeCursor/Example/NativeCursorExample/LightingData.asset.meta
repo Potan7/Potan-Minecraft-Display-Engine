@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 22bbf71ba7fe88f4393e03bd79ec08d8
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 112000000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 220347
+  packageName: Native Cursor
+  packageVersion: 1.1.3
+  assetPath: Assets/NativeCursor/Example/NativeCursorExample/LightingData.asset
+  uploadId: 718824

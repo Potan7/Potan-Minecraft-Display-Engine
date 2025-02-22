@@ -2,7 +2,7 @@ using Newtonsoft.Json.Linq;
 using UnityEngine;
 using Minecraft;
 
-public class BlockDisplay : DisplayObject
+public class BlockDisplay : ModelDisPlayObject
 {
     public BlockModelGenerator modelElementParent;
 

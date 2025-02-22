@@ -20,6 +20,7 @@ public class BDEngineStyleCameraMovement : MonoBehaviour
 
     void Start()
     {
+
         if (pivot == null)
         {
             Debug.LogError("Pivot transform is not assigned.");

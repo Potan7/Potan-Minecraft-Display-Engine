@@ -44,8 +44,17 @@ public class GameManager : RootManager
         }
         else
         {
-            CustomLog.LogError($"Manager of type {type} is already registered.");
+            //CustomLog.LogError($"Manager of type {type} is already registered.");
             Destroy(manager.gameObject);
+        }
+    }
+
+    public void DestroyedManager(RootManager manager)
+    {
+        var type = manager.GetType();
+        if (managers.ContainsKey(type))
+        {
+            managers.Remove(type);
         }
     }
 
