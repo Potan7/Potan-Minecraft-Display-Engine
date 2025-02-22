@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public class AffineTransformation
 {
-    //  Three.js (Row-Major) 데이터를 Unity (Column-Major)로 변환하여 Matrix4x4 생성
+    //  float배열을 변환하여 Matrix4x4 생성
     public static Matrix4x4 GetMatrix(float[] transforms)
     {
         if (transforms.Length != 16)
@@ -12,7 +12,7 @@ public class AffineTransformation
             return Matrix4x4.identity;
         }
 
-        //  Row-Major → Column-Major 변환 (Three.js → Unity)
+        //  Row-Major
         return new Matrix4x4(
             new Vector4(transforms[0], transforms[4], transforms[8], transforms[12]),  // X 축
             new Vector4(transforms[1], transforms[5], transforms[9], transforms[13]),  // Y 축
@@ -23,24 +23,27 @@ public class AffineTransformation
 
     public static void ApplyMatrixToTransform(Transform target, Matrix4x4 matrix)
     {
-        // 1. Translation (localPosition) -  GetColumn(3) 사용
+        // 1. Translation (localPosition)
         Vector3 translation = matrix.GetColumn(3);
-        //translation.z = -translation.z; //  Three.js → Unity 변환
 
-        // 2. Scale (localScale) -  GetColumn(n).magnitude 사용
+        // 2. Scale (localScale)
         Vector3 scale = new Vector3(
             matrix.GetColumn(0).magnitude, // X 축 스케일
             matrix.GetColumn(1).magnitude, // Y 축 스케일
             matrix.GetColumn(2).magnitude  // Z 축 스케일
         );
 
-        // 3. Rotation (localRotation) -  GetColumn(n).normalized 사용
+        // 3. Rotation (localRotation)
         Vector3 normalizedX = matrix.GetColumn(0).normalized;
         Vector3 normalizedY = matrix.GetColumn(1).normalized;
         Vector3 normalizedZ = matrix.GetColumn(2).normalized;
 
-        //normalizedZ = -normalizedZ; //  Three.js → Unity 변환
         Quaternion rotation = Quaternion.LookRotation(normalizedZ, normalizedY);
+        //Quaternion rotation = Quaternion.FromToRotation(Vector3.right, normalizedX) *
+        //              Quaternion.FromToRotation(Vector3.up, normalizedY);
+
+        //Quaternion rotation = matrix.rotation;
+
 
         // 4. Transform에 적용
         target.localPosition = translation;

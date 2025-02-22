@@ -42,6 +42,8 @@ public class TextDisplay : DisplayObject
     public BDObject bdObject;
     public Option option;
 
+    const float margin = 0.05f;
+
     public void Init(BDObject obj)
     {
         bdObject = obj;
@@ -51,9 +53,12 @@ public class TextDisplay : DisplayObject
 
         SetText();
 
+        RectTransform rt = textMesh.GetComponent<RectTransform>();
+        rt.sizeDelta = new Vector2(textMesh.preferredWidth * 0.9f, textMesh.preferredHeight * 0.9f);
+
         // 배경 설정
-        background.transform.localScale = new Vector3(textMesh.preferredWidth + 0.01f, textMesh.preferredHeight + 0.01f, 0.1f);
-        background.transform.localPosition = new Vector3(0, textMesh.preferredHeight / 2, -0.01f);
+        background.transform.localScale = new Vector3(textMesh.preferredWidth + margin, textMesh.preferredHeight + margin, background.transform.localScale.z);
+        background.transform.localPosition = new Vector3(0, textMesh.preferredHeight, background.transform.localPosition.z);
         background.material.color = new Color(
             option.backgroundColor.r,
             option.backgroundColor.g,
@@ -81,12 +86,12 @@ public class TextDisplay : DisplayObject
 
         //Debug.Log("fontStyle: " + textMesh.fontStyle);
 
-
-
         textMesh.alignment =
             option.align == "center" ? TextAlignmentOptions.Bottom :
             option.align == "right" ? TextAlignmentOptions.BottomRight :
             TextAlignmentOptions.BottomLeft;
+
+        textMesh.transform.localPosition = new Vector3(0, textMesh.preferredHeight / 2.0f, 0);
     }
 
     string InsertCharacterBasedLineBreaks(string text, float maxWidth)

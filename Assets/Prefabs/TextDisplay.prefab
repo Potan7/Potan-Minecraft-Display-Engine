@@ -34,8 +34,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0.085}
+  m_SizeDelta: {x: 0, y: 1}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!23 &7477072985785213150
 MeshRenderer:
@@ -60,7 +60,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -4181499184834115553, guid: 36a145e64ae601a48b0f05a099ecd4bb, type: 2}
+  - {fileID: -6984407880625352360, guid: 4fd16da22cd641941a9ae95d36541a5c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -104,8 +104,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Sample textsss
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 36a145e64ae601a48b0f05a099ecd4bb, type: 2}
-  m_sharedMaterial: {fileID: -4181499184834115553, guid: 36a145e64ae601a48b0f05a099ecd4bb, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4fd16da22cd641941a9ae95d36541a5c, type: 2}
+  m_sharedMaterial: {fileID: -6984407880625352360, guid: 4fd16da22cd641941a9ae95d36541a5c, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -129,8 +129,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 2.1
-  m_fontSizeBase: 2.1
+  m_fontSize: 1.2
+  m_fontSizeBase: 1.2
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -167,7 +167,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -0.12933612, y: 0, z: -0.13766563, w: 0}
+  m_margin: {x: 0, y: 0, z: -0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   _SortingLayer: 0
@@ -189,7 +189,7 @@ GameObject:
   m_Layer: 0
   m_Name: TextDisplay
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -265,8 +265,8 @@ Transform:
   m_GameObject: {fileID: 8522025397933765592}
   serializedVersion: 2
   m_LocalRotation: {x: 1, y: 0, z: 0, w: 0}
-  m_LocalPosition: {x: 0, y: 0.108, z: -0.01}
-  m_LocalScale: {x: 1.3037486, y: 0.34579226, z: 0.1}
+  m_LocalPosition: {x: 0, y: 0.193, z: -0.0001}
+  m_LocalScale: {x: 1.3037486, y: 0.34579226, z: 0.001}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2281539772168197766}
