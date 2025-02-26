@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System;
 
-public class BDObjectManager : RootManager
+public class BDObjectManager : BaseManager
 {
     public Material BDObjTransportMaterial;
     public Material BDObjHeadMaterial;
@@ -25,10 +26,14 @@ public class BDObjectManager : RootManager
     public BlockModelGenerator blockPrefab;
     public HeadGenerator headPrefab;
 
+    public event Action<BDObject> EndAddObject;
+
     // Transform을 기본값으로 설정하기
     public async Task AddObjects(BDObject[] bdObjects)
     {
         await AddObjectsAsync(bdObjects, BDObjectParent);
+
+        EndAddObject?.Invoke(bdObjects[0]);
     }
 
     async Task AddObjectsAsync(BDObject[] bdObjects, Transform parent)

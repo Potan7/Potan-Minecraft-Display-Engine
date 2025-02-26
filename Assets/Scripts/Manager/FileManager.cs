@@ -10,18 +10,25 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-public class FileManager : RootManager
+public class FileManager : BaseManager
 {
+    public BDObjectManager BDObjManager;
     public HashSet<HeadGenerator> WorkingGenerators = new HashSet<HeadGenerator>();
 
     private void Start()
     {
+        BDObjManager = GameManager.GetManager<BDObjectManager>();
+
         // .bdengine, .bdstudio 확장자만 필터링
         FileBrowser.SetFilters(false,
             new FileBrowser.Filter("Files", ".bdengine", ".bdstudio"));
 
         // 런처 경로 추가
-        FileBrowser.AddQuickLink("Launcher File", Application.dataPath);
+#if UNITY_EDITOR
+        FileBrowser.AddQuickLink("Launcher Folder", Application.dataPath);
+#else
+        FileBrowser.AddQuickLink("Launcher Folder", Application.dataPath + "/../");
+#endif
 
         // 다운로드 폴더 추가
         string download = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal));
@@ -30,16 +37,16 @@ public class FileManager : RootManager
         FileBrowser.AddQuickLink("Downloads", download);
     }
 
-    IEnumerator ShowLoadDialogCoroutine()
+    IEnumerator ShowLoadDialogCoroutine(Action<string[]> callback)
     {
         BDEngineStyleCameraMovement.CanMoveCamera = false;
         // 파일 브라우저를 열고 사용자가 파일을 선택하거나 취소할 때까지 대기
-        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files, true, null, null, "Select Files", "Load");
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.FilesAndFolders, true, null, null, "Select Files", "Load");
 
         // 파일 브라우저가 파일을 불러오면 콜백 함수 호출
         if (FileBrowser.Success)
             // 만약 Success가 false라면 Result는 null이 된다.
-            AfterLoadFile(FileBrowser.Result); 
+            callback?.Invoke(FileBrowser.Result); 
         else
         {
             CustomLog.Log("Failed to load file");
@@ -50,7 +57,12 @@ public class FileManager : RootManager
 
     public void ImportFile()
     {
-        StartCoroutine(ShowLoadDialogCoroutine());
+        StartCoroutine(ShowLoadDialogCoroutine(AfterLoadFile));
+    }
+
+    public void ImportFrame(AnimObject target, int tick)
+    {
+        StartCoroutine(ShowLoadDialogCoroutine((filepaths) => AfterLoadFrame(filepaths[0], target, tick)));
     }
 
     public async void AfterLoadFile(string[] filepaths)
@@ -64,7 +76,7 @@ public class FileManager : RootManager
 
         for (int i = 0; i < filepaths.Length; i++)
         {
-            tasks[i] = ProcessFileAsync(filepaths[i]);
+            tasks[i] = MakeDisplay(filepaths[i]);
         }
         await Task.WhenAll(tasks);
         await WaitWhileAsync(() => WorkingGenerators.Count > 0);
@@ -76,6 +88,16 @@ public class FileManager : RootManager
         CustomLog.Log($"BDObject Count: {GameManager.GetManager<BDObjectManager>().BDObjectCount}, Import Time: {stopwatch.ElapsedMilliseconds}ms");
     }
 
+    public async void AfterLoadFrame(string filepath, AnimObject target, int tick)
+    {
+        GameManager.GetManager<UIManger>().SetLoadingPanel(true);
+
+        BDObject[] bdObjects = await ProcessFileAsync(filepath);
+        target.AddFrame(bdObjects, tick);
+
+        GameManager.GetManager<UIManger>().SetLoadingPanel(false);
+    }
+
     public async Task WaitWhileAsync(Func<bool> conditionFunc, int checkIntervalMs = 500)
     {
         while (conditionFunc())
@@ -85,7 +107,7 @@ public class FileManager : RootManager
     }
 
     // 개별 파일 처리 비동기 함수
-    private async Task ProcessFileAsync(string filepath)
+    private async Task<BDObject[]> ProcessFileAsync(string filepath)
     {
         // 1. 파일 읽기 (비동기)
         byte[] file = await Task.Run(() => FileBrowserHelpers.ReadBytesFromFile(filepath));
@@ -96,18 +118,15 @@ public class FileManager : RootManager
         // 3. GZip 압축 해제 (비동기)
         string jsonData = await Task.Run(() => DecompressGzip(gzipData));
 
-        // 4. JSON 데이터를 BDObject로 변환 및 오브젝트 생성
-        await MakeDisplay(jsonData);
+        // 4. JSON 파싱
+        return await Task.Run(() => JsonConvert.DeserializeObject<BDObject[]>(jsonData));
     }
 
-    // JSON 데이터를 BDObject로 변환해서 오브젝트 생성
-    public async Task MakeDisplay(string jsonData)
+    public async Task MakeDisplay(string filepath)
     {
-        BDObject[] bDObjects = await Task.Run(() => JsonConvert.DeserializeObject<BDObject[]>(jsonData));
-
-        await GameManager.GetManager<BDObjectManager>().AddObjects(bDObjects);
+        BDObject[] bdObjects = await ProcessFileAsync(filepath);
+        await BDObjManager.AddObjects(bdObjects);
     }
-
 
     string DecompressGzip(byte[] gzipData)
     {

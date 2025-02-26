@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class BDEngineStyleCameraMovement : MonoBehaviour
 {
@@ -39,21 +40,15 @@ public class BDEngineStyleCameraMovement : MonoBehaviour
 
     void Update()
     {
+        lastMousePosition = Input.mousePosition;
+
         if (pivot == null || !CanMoveCamera)
             return;
 
         HandleMouseInput();
-
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            ResetCamera();
-        }
-
-        // Update the last mouse position at the end of Update
-        lastMousePosition = Input.mousePosition;
     }
 
-    void HandleMouseInput()
+    public void HandleMouseInput()
     {
         // Left mouse button rotates the camera around the pivot
         if (Input.GetMouseButton(0))
@@ -68,7 +63,7 @@ public class BDEngineStyleCameraMovement : MonoBehaviour
         }
 
         // Use the mouse scroll wheel to zoom in/out
-        ZoomCamera();
+        //ZoomCamera();
     }
 
     void RotateAroundPivot()
@@ -109,8 +104,10 @@ public class BDEngineStyleCameraMovement : MonoBehaviour
         pivot.position += panMovement;
     }
 
-    void ZoomCamera()
+    public void ZoomCamera(InputAction.CallbackContext callback)
     {
+        if (!CanMoveCamera)
+            return;
         float scrollDelta = Input.GetAxis("Mouse ScrollWheel");
         if (Mathf.Approximately(scrollDelta, 0f))
             return;
@@ -124,7 +121,7 @@ public class BDEngineStyleCameraMovement : MonoBehaviour
         transform.position = pivot.position + direction * currentDistance;
     }
 
-    void ResetCamera()
+    public void ResetCamera()
     {
         // Reset pivot and distance to their initial values
         pivot.position = pivotInitPos;

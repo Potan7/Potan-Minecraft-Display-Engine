@@ -23,6 +23,7 @@ public class HeadGenerator : BlockModelGenerator
 
     public HeadType headType;
     public Texture2D headTexture;
+    public string downloadUrl;
 
     public void GenerateHead(string name)
     {
@@ -170,6 +171,7 @@ public class HeadGenerator : BlockModelGenerator
     IEnumerator DownloadTexture(string url)
     {
         url = url.Replace("http://", "https://");
+        downloadUrl = url;
         using UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
         yield return request.SendWebRequest();
 

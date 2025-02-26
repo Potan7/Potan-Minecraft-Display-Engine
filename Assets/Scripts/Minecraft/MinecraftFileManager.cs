@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Minecraft
 {
 
-    public class MinecraftFileManager : RootManager
+    public class MinecraftFileManager : BaseManager
     {
         static MinecraftFileManager instance;
 

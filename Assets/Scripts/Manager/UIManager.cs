@@ -1,7 +1,7 @@
 using Riten.Native.Cursors;
 using UnityEngine;
 
-public class UIManger : RootManager
+public class UIManger : BaseManager
 {
     FileManager fileManager;
     BDObjectManager BDObjectManager;
@@ -36,9 +36,5 @@ public class UIManger : RootManager
     public void OnPressClearButton()
     {
         BDObjectManager.ClearAllObject();
-    }
-    private void OnDestroy()
-    {
-        GameManager.Instance?.DestroyedManager(this);
     }
 }

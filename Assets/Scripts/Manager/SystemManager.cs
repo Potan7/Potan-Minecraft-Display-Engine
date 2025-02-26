@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SystemManager : RootManager
+public class SystemManager : BaseManager
 {
     public string[] filesDropped;
 
