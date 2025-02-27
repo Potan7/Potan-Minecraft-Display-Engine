@@ -42,7 +42,7 @@ public class ContextMenuManager : BaseManager
         currentType = ContextMenuType.Frame;
         currentFrame = thisFrame;
 
-        frameInfo[0].text = currentFrame.startTick.ToString();
+        frameInfo[0].text = currentFrame.Tick.ToString();
         frameInfo[1].text = currentFrame.interpolation.ToString();
 
         SetContextMenu();
@@ -85,12 +85,12 @@ public class ContextMenuManager : BaseManager
     {
         if (int.TryParse(value, out int tick))
         {
-            currentFrame.SetTick(tick);
+            frameInfo[0].text = currentFrame.SetTick(tick).ToString();
 
         }
         else
         {
-            frameInfo[0].text = currentFrame.startTick.ToString();
+            frameInfo[0].text = currentFrame.Tick.ToString();
         }
     }
 

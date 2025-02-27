@@ -167,8 +167,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rect: {fileID: 6467035765175265896}
   title: {fileID: 8027856302380058809}
-  frames:
-  - {fileID: 7037197520870428462}
+  firstFrame: {fileID: 7037197520870428462}
 --- !u!1 &6758444556846725055
 GameObject:
   m_ObjectHideFlags: 0

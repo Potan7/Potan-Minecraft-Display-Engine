@@ -12,23 +12,36 @@ public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
     Color selectedColor = Color.yellow;
 
     public bool IsSelected = false;
-    public int startTick;
+    public int Tick;
     public int interpolation;
 
-    public void Init(int tick, int inter, AnimObject obj)
+    public BDObject info;
+
+    public void Init(int tick, BDObject Info, AnimObject obj)
     {
-        SetTick(tick);
-        SetInter(inter);
+        //Debug.Log("tick : " + tick);
         animObject = obj;
         initColor = outlineImage.color;
+        info = Info;
+        Tick = tick;
+        SetInter(GameManager.Instance.Setting.DefaultInterpolation);
 
-        GameManager.GetManager<AnimManager>().Timeline.OnGridChanged += () => UpdatePos(startTick);
+        UpdatePos(tick);
+        GameManager.GetManager<AnimManager>().Timeline.OnGridChanged += () => UpdatePos(Tick);
     }
 
-    public void SetTick(int tick)
+    public int SetTick(int tick)
     {
-        startTick = tick;
-        UpdatePos(tick);
+        if (animObject.ChangePos(this, Tick, tick))
+        {
+            Tick = tick;
+            UpdatePos(tick);
+            return tick;
+        }
+        else
+        {
+            return Tick;
+        }
     }
 
     private void UpdatePos(int tick)

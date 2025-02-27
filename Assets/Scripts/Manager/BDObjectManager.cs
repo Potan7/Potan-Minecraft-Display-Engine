@@ -7,6 +7,7 @@ using System;
 
 public class BDObjectManager : BaseManager
 {
+    // 디스플레이 생성용
     public Material BDObjTransportMaterial;
     public Material BDObjHeadMaterial;
 
@@ -15,6 +16,7 @@ public class BDObjectManager : BaseManager
 
     public int BDObjectCount = 0;
     //public List<BDObejctContainer> BDObjectList = new List<BDObejctContainer>();
+    public Dictionary<string, BDObejctContainer> BDObjects = new Dictionary<string, BDObejctContainer>();
 
     [Header("Prefabs")]
     public BlockDisplay blockDisplay;
@@ -26,42 +28,46 @@ public class BDObjectManager : BaseManager
     public BlockModelGenerator blockPrefab;
     public HeadGenerator headPrefab;
 
-    public event Action<BDObject> EndAddObject;
-
-    // Transform을 기본값으로 설정하기
-    public async Task AddObjects(BDObject[] bdObjects)
+    // 최상위 BDObject를 하나 받아서 전체 계층 구조를 생성하고,
+    // 해당 최상위 오브젝트만 Dictionary에 등록한다.
+    public async Task AddObject(BDObject bdObject, string fileName)
     {
-        await AddObjectsAsync(bdObjects, BDObjectParent);
+        // 최상위 BDObject를 트리 구조로 생성
+        var rootObj = await CreateObjectHierarchyAsync(bdObject, BDObjectParent);
 
-        EndAddObject?.Invoke(bdObjects[0]);
+        // 최상위 오브젝트만 Dictionary에 등록
+        BDObjects[fileName] = rootObj;
     }
 
-    async Task AddObjectsAsync(BDObject[] bdObjects, Transform parent)
+    // bdObject 하나를 받아 자신의 GameObject를 생성하고, 그 자식들도 재귀적으로 생성한다.
+    private async Task<BDObejctContainer> CreateObjectHierarchyAsync(BDObject bdObject, Transform parent, int batchSize = 10)
     {
-        int count = bdObjects.Length;
+        // BDObjectPrefab 기반으로 인스턴스 생성
+        var newObj = Instantiate(BDObjectPrefab, parent);
 
-        for (int i = 0; i < count; i++)
+        // 초기화
+        newObj.Init(bdObject, this);
+        BDObjectCount++;
+
+        // 자식 트리 생성
+        if (bdObject.children != null && bdObject.children.Length > 0)
         {
-            // 오브젝트 생성
-            var newObj = Instantiate(BDObjectPrefab, parent);
-            newObj.Init(bdObjects[i], this);
-            BDObjectCount++;
-
-            // 자식 오브젝트 비동기 생성
-            if (bdObjects[i].children != null)
+            for (int i = 0; i < bdObject.children.Length; i++)
             {
-                await AddObjectsAsync(bdObjects[i].children, newObj.transform);
-            }
+                await CreateObjectHierarchyAsync(bdObject.children[i], newObj.transform, batchSize);
 
-            // 후처리 실행
-            newObj.PostProcess();
-
-            // 매 10개마다 한 프레임 쉬기
-            if (i % 10 == 0)
-            {
-                await Task.Yield(); // 한 프레임 대기 (코루틴의 yield return null과 동일)
+                // 일정 개수마다 한 프레임씩 대기
+                if (i % batchSize == 0)
+                {
+                    await Task.Yield();
+                }
             }
         }
+
+        // 개별 후처리
+        newObj.PostProcess();
+
+        return newObj;
     }
 
     //void AddObjects(BDObject[] bdObjects, Transform parent)

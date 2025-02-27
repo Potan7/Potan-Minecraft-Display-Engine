@@ -32,9 +32,4 @@ public class UIManger : BaseManager
     {
         fileManager.ImportFile();
     }
-
-    public void OnPressClearButton()
-    {
-        BDObjectManager.ClearAllObject();
-    }
 }

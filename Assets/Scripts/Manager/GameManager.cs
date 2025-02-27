@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : BaseManager
+public class GameManager : MonoBehaviour
 {
     // 싱글톤 Static 패턴
     private static GameManager instance;
@@ -11,15 +11,15 @@ public class GameManager : BaseManager
         get
         {
             if (instance == null)
-            {
                 instance = FindAnyObjectByType<GameManager>();
-            }
             return instance;
         }
     }
 
     // 모든 매니저가 저장되는 딕셔너리
     private static Dictionary<Type, BaseManager> managers = new Dictionary<Type, BaseManager>();
+
+    public SettingManager Setting => GetManager<SettingManager>();
 
     // 매니저를 가져오는 함수
     public static T GetManager<T>() where T : BaseManager
@@ -45,22 +45,24 @@ public class GameManager : BaseManager
         }
         else
         {
-            //CustomLog.LogError($"Manager of type {type} is already registered.");
-            Destroy(manager.gameObject);
+            Debug.LogError("WARNING! FIND TWO MANAGER : " + manager.name);
         }
     }
 
-    protected override void Awake()
+    void Awake()
     {
-        if (instance == null || instance == this)
+        // 자기 자신을 즉시 등록 (검색 없이)
+        if (Instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject);
         }
-        else
+        else if (Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+
+        DontDestroyOnLoad(gameObject);
     }
 }
 

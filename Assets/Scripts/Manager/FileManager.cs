@@ -6,18 +6,19 @@ using System.Text;
 using System;
 using System.IO.Compression;
 using Newtonsoft.Json;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using static UnityEngine.GraphicsBuffer;
 
 public class FileManager : BaseManager
 {
-    public BDObjectManager BDObjManager;
+    public BDObjectManager bdObjManager;
+    public AnimObjList animObjList;
     public HashSet<HeadGenerator> WorkingGenerators = new HashSet<HeadGenerator>();
 
     private void Start()
     {
-        BDObjManager = GameManager.GetManager<BDObjectManager>();
+        bdObjManager = GameManager.GetManager<BDObjectManager>();
 
         // .bdengine, .bdstudio 확장자만 필터링
         FileBrowser.SetFilters(false,
@@ -37,97 +38,134 @@ public class FileManager : BaseManager
         FileBrowser.AddQuickLink("Downloads", download);
     }
 
-    IEnumerator ShowLoadDialogCoroutine(Action<string[]> callback)
+    IEnumerator ShowLoadDialogCoroutine(Action<List<string>> callback)
     {
-        BDEngineStyleCameraMovement.CanMoveCamera = false;
         // 파일 브라우저를 열고 사용자가 파일을 선택하거나 취소할 때까지 대기
         yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.FilesAndFolders, true, null, null, "Select Files", "Load");
 
         // 파일 브라우저가 파일을 불러오면 콜백 함수 호출
         if (FileBrowser.Success)
             // 만약 Success가 false라면 Result는 null이 된다.
-            callback?.Invoke(FileBrowser.Result); 
+        { 
+            // 폴더 분리하기
+            List<string> files = new List<string>();
+            string[] result = FileBrowser.Result;
+            for (int i = 0; i < result.Length; i++)
+            {
+                // 폴더 내 모든 파일들 리스트에 추가
+                if (Directory.Exists(result[i]))
+                {
+                    string[] folderFiles = Directory.GetFiles(result[i], "*.bdengine", SearchOption.AllDirectories);
+
+                    files.AddRange(folderFiles);
+                }
+                else
+                {
+                    // 아니라면 그냥 추가
+                    files.Add(result[i]);
+                }
+            }
+
+            callback?.Invoke(files); 
+        }
         else
         {
             CustomLog.Log("Failed to load file");
-            BDEngineStyleCameraMovement.CanMoveCamera = true;
         }
         
     }
 
+    // 파일 임포트
     public void ImportFile()
     {
         StartCoroutine(ShowLoadDialogCoroutine(AfterLoadFile));
     }
 
+    // 프레임 임포트
     public void ImportFrame(AnimObject target, int tick)
     {
         StartCoroutine(ShowLoadDialogCoroutine((filepaths) => AfterLoadFrame(filepaths[0], target, tick)));
     }
 
-    public async void AfterLoadFile(string[] filepaths)
+    // 파일 불러와서 디스플레이 생성하기
+    public async void AfterLoadFile(List<string> filepaths)
     {
-        Stopwatch stopwatch = new();
-        stopwatch.Start();
-
         GameManager.GetManager<UIManger>().SetLoadingPanel(true);
 
-        Task[] tasks = new Task[filepaths.Length];
+        //List<Task> runningTasks = new List<Task>();
 
-        for (int i = 0; i < filepaths.Length; i++)
+        // 첫번째 파일로 디스플레이 생성
+        AnimObject animObject = await MakeDisplay(filepaths[0]);
+
+        // 이후 파일부터는 프레임 추가하기
+        for (int i = 1; i < filepaths.Count; i++)
         {
-            tasks[i] = MakeDisplay(filepaths[i]);
+            BDObject[] bdObjects = await ProcessFileAsync(filepaths[i]);
+            animObject.AddFrame(bdObjects[0]);
         }
-        await Task.WhenAll(tasks);
-        await WaitWhileAsync(() => WorkingGenerators.Count > 0);
-        stopwatch.Stop();
+        while (WorkingGenerators.Count > 0) await Task.Delay(500);
+
+
+        //for (int i = 0; i < filepaths.Count; i++)
+        //{
+        //    runningTasks.Add(MakeDisplay(filepaths[i]));
+        //    // 만약 파일이 너무 많으면 나눠서 작업
+        //    if (runningTasks.Count >= batch)
+        //    {
+        //        await Task.WhenAll(runningTasks);
+        //        runningTasks.Clear();
+        //    }
+        //}
+        //if (runningTasks.Count > 0)
+        //{
+        //    await Task.WhenAll(runningTasks);
+        //}
 
         GameManager.GetManager<UIManger>().SetLoadingPanel(false);
-        BDEngineStyleCameraMovement.CanMoveCamera = true;
 
-        CustomLog.Log($"BDObject Count: {GameManager.GetManager<BDObjectManager>().BDObjectCount}, Import Time: {stopwatch.ElapsedMilliseconds}ms");
+        CustomLog.Log($"Import is Done! BDObject Count: {GameManager.GetManager<BDObjectManager>().BDObjectCount}");
     }
 
+    // 파일 불러와서 프레임 생성하기
     public async void AfterLoadFrame(string filepath, AnimObject target, int tick)
     {
         GameManager.GetManager<UIManger>().SetLoadingPanel(true);
 
         BDObject[] bdObjects = await ProcessFileAsync(filepath);
-        target.AddFrame(bdObjects, tick);
+        target.AddFrame(bdObjects[0], tick);
 
         GameManager.GetManager<UIManger>().SetLoadingPanel(false);
-    }
-
-    public async Task WaitWhileAsync(Func<bool> conditionFunc, int checkIntervalMs = 500)
-    {
-        while (conditionFunc())
-        {
-            await Task.Delay(checkIntervalMs); // 지정한 시간(ms)만큼 대기 후 다시 체크
-        }
     }
 
     // 개별 파일 처리 비동기 함수
     private async Task<BDObject[]> ProcessFileAsync(string filepath)
     {
-        // 1. 파일 읽기 (비동기)
-        byte[] file = await Task.Run(() => FileBrowserHelpers.ReadBytesFromFile(filepath));
+        return await Task.Run(() =>
+        {
+            // 파일 읽기(텍스트)
+            string base64Text = FileBrowserHelpers.ReadTextFromFile(filepath);
 
-        // 2. Base64 디코딩
-        byte[] gzipData = Convert.FromBase64String(Encoding.UTF8.GetString(file));
+            // Base64 → gzipData
+            byte[] gzipData = Convert.FromBase64String(base64Text);
 
-        // 3. GZip 압축 해제 (비동기)
-        string jsonData = await Task.Run(() => DecompressGzip(gzipData));
+            // gzip 해제 → json
+            string jsonData = DecompressGzip(gzipData);
 
-        // 4. JSON 파싱
-        return await Task.Run(() => JsonConvert.DeserializeObject<BDObject[]>(jsonData));
+            // BDObject[] 역직렬화
+            return JsonConvert.DeserializeObject<BDObject[]>(jsonData);
+        });
     }
 
-    public async Task MakeDisplay(string filepath)
+    // 디스플레이 만들기
+    public async Task<AnimObject> MakeDisplay(string filepath)
     {
         BDObject[] bdObjects = await ProcessFileAsync(filepath);
-        await BDObjManager.AddObjects(bdObjects);
+        string fileName = Path.GetFileNameWithoutExtension(filepath);
+        await bdObjManager.AddObject(bdObjects[0], fileName);
+        return animObjList.AddAnimObject(bdObjects[0], fileName);
     }
 
+    // gzipData를 string으로 변환하기
     string DecompressGzip(byte[] gzipData)
     {
         using (var compressedStream = new MemoryStream(gzipData))
