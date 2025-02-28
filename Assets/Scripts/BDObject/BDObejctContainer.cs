@@ -6,6 +6,8 @@ public class BDObejctContainer : MonoBehaviour
     public BDObject BDObject;
     public DisplayObject displayObj;
 
+    public BDObejctContainer[] children;
+
     public Matrix4x4 transformation;
 
     public void Init(BDObject bdObject, BDObjectManager manager)
@@ -66,11 +68,11 @@ public class BDObejctContainer : MonoBehaviour
     }
 
     // 후처리
-    public void PostProcess()
+    public void PostProcess(BDObejctContainer[] childArray)
     {
         // 변환 행렬을 적용
-        transformation = AffineTransformation.GetMatrix(BDObject.transforms);
-        AffineTransformation.ApplyMatrixToTransform(transform, transformation);
+        SetTransformation(BDObject.transforms);
+        children = childArray;
 
         //if (displayObj == null)
         //{
@@ -78,5 +80,9 @@ public class BDObejctContainer : MonoBehaviour
         //}
     }
 
-    
+    public void SetTransformation(float[] mat)
+    {
+        transformation = AffineTransformation.GetMatrix(mat);
+        AffineTransformation.ApplyMatrixToTransform(transform, transformation);
+    }
 }

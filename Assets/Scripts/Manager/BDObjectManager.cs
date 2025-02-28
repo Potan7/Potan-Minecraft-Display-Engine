@@ -4,6 +4,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System;
+using static Unity.VisualScripting.Metadata;
 
 public class BDObjectManager : BaseManager
 {
@@ -30,13 +31,14 @@ public class BDObjectManager : BaseManager
 
     // 최상위 BDObject를 하나 받아서 전체 계층 구조를 생성하고,
     // 해당 최상위 오브젝트만 Dictionary에 등록한다.
-    public async Task AddObject(BDObject bdObject, string fileName)
+    public async Task<BDObejctContainer> AddObject(BDObject bdObject, string fileName)
     {
         // 최상위 BDObject를 트리 구조로 생성
         var rootObj = await CreateObjectHierarchyAsync(bdObject, BDObjectParent);
 
         // 최상위 오브젝트만 Dictionary에 등록
         BDObjects[fileName] = rootObj;
+        return rootObj;
     }
 
     // bdObject 하나를 받아 자신의 GameObject를 생성하고, 그 자식들도 재귀적으로 생성한다.
@@ -49,12 +51,14 @@ public class BDObjectManager : BaseManager
         newObj.Init(bdObject, this);
         BDObjectCount++;
 
+        BDObejctContainer[] children = null;
         // 자식 트리 생성
         if (bdObject.children != null && bdObject.children.Length > 0)
         {
+            children = new BDObejctContainer[bdObject.children.Length];
             for (int i = 0; i < bdObject.children.Length; i++)
             {
-                await CreateObjectHierarchyAsync(bdObject.children[i], newObj.transform, batchSize);
+                children[i] = await CreateObjectHierarchyAsync(bdObject.children[i], newObj.transform, batchSize);
 
                 // 일정 개수마다 한 프레임씩 대기
                 if (i % batchSize == 0)
@@ -65,7 +69,7 @@ public class BDObjectManager : BaseManager
         }
 
         // 개별 후처리
-        newObj.PostProcess();
+        newObj.PostProcess(children);
 
         return newObj;
     }

@@ -19,7 +19,7 @@ public class AnimObjList : MonoBehaviour
         jump = importButton.sizeDelta.y * 1.5f;
     }
 
-    public AnimObject AddAnimObject(BDObject obj, string fileName)
+    public AnimObject AddAnimObject(BDObejctContainer obj, string fileName)
     {
         //Debug.Log("EndAddObject: " + obj.name);
 

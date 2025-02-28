@@ -151,6 +151,10 @@ public class FileManager : BaseManager
             // gzip 해제 → json
             string jsonData = DecompressGzip(gzipData);
 
+#if UNITY_EDITOR
+            Debug.Log(jsonData);
+#endif
+
             // BDObject[] 역직렬화
             return JsonConvert.DeserializeObject<BDObject[]>(jsonData);
         });
@@ -160,9 +164,10 @@ public class FileManager : BaseManager
     public async Task<AnimObject> MakeDisplay(string filepath)
     {
         BDObject[] bdObjects = await ProcessFileAsync(filepath);
+
         string fileName = Path.GetFileNameWithoutExtension(filepath);
-        await bdObjManager.AddObject(bdObjects[0], fileName);
-        return animObjList.AddAnimObject(bdObjects[0], fileName);
+        var bdobjCon = await bdObjManager.AddObject(bdObjects[0], fileName);
+        return animObjList.AddAnimObject(bdobjCon, fileName);
     }
 
     // gzipData를 string으로 변환하기
