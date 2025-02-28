@@ -32,6 +32,9 @@ public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
 
     public int SetTick(int tick)
     {
+        // 0이면 고정
+        if (Tick == 0)
+            return Tick;
         if (animObject.ChangePos(this, Tick, tick))
         {
             Tick = tick;
@@ -58,9 +61,12 @@ public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
         }
     }
 
-    public void SetInter(int inter)
+    public bool SetInter(int inter)
     {
+        if (Tick == 0)
+            return false;
         interpolation = inter;
+        return true;
     }
 
     public void OnPointerDown(PointerEventData eventData)

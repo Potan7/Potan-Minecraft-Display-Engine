@@ -35,23 +35,24 @@ public class AnimObject : MonoBehaviour
     void OnTickChanged(int tick)
     {
         // 틱에 맞는 프레임을 찾기
-        var (left, right) = GetNearestFrame(tick);
+        int left = GetLeftFrame(tick);
+        if (left < 0) return;
+        Frame leftFrame = frames.Values[left];
 
-        if (right == null)
+        if (leftFrame.interpolation == 0 || leftFrame.Tick + leftFrame.interpolation <= tick) 
         {
-            // 타임라인이 가장 오른쪽 프레임을 넘어섰거나 정확히 일치하는 프레임이 있을 때
-            SetObjectTransformation(objectContainer, left.info);
-        }
-        else if (left == null)
-        {
-            // 타임 바가 가장 왼쪽 프레임을 넘어섬
-            SetObjectTransformation(objectContainer, right.info);
+
+            // 보간 없이 적용
+            SetObjectTransformation(objectContainer, leftFrame.info);
         }
         else
         {
-            // 두 프레임 사이에 있음
-            float t = (float)(tick - left.Tick) / (right.Tick - left.Tick);
+            // 보간 On
+            float t = (float)(tick - leftFrame.Tick) / leftFrame.interpolation;
 
+            // 첫번째 프레임은 inter값이 항상 0이라 에러날 일이 없음
+            Frame before = frames.Values[left - 1];
+            SetObjectTransformationInter(objectContainer, t, before.info, leftFrame.info);
         }
 
     }
@@ -96,47 +97,40 @@ public class AnimObject : MonoBehaviour
         }
     }
 
-    // tick 과 가장 가까운 두 프레임 (tick보다 왼쪽(작으면서 가장 큰 값), tick보다 오른쪽(크면서 가장 작은 값)) 구해서 반환하기
-    (Frame, Frame) GetNearestFrame(int tick)
+    int GetLeftFrame(int tick)
     {
-        if (frames.Values[0].Tick < tick)
-            return (null, frames.Values[0]);
-        else if (MaxTick > tick)
-            return (frames.Values[frames.Count - 1], null);
 
-        int idx = frames.IndexOfKey(tick);
+        // 1. 가장 작은 프레임보다 tick이 작으면 null 반환
+        if (frames.Values[0].Tick > tick)
+            return -1;
 
-        Frame left = null;
-        Frame right = null;
+        int left = 0;
+        int right = frames.Count - 1;
+        var keys = frames.Keys;
+        int idx = -1; // 초깃값을 -1로 설정 (유효한 인덱스가 없을 경우 대비)
 
+        // 2. 이진 탐색으로 left 프레임 찾기
+        while (left <= right)
+        {
+            int mid = (left + right) / 2;
+            if (keys[mid] <= tick) // "<" 대신 "<=" 사용하여 정확히 tick일 경우 mid를 idx로 설정
+            {
+                idx = mid; // 현재 mid가 left 후보
+                left = mid + 1; // 더 큰 값 탐색
+            }
+            else
+            {
+                right = mid - 1; // 더 작은 값 탐색
+            }
+        }
+
+        // 3. leftIdx 설정 (idx가 -1인 경우도 고려)
         if (idx >= 0)
         {
-            left = frames.Values[idx];
-            right = null;
-            //if (idx < frames.Count - 1)
-            //    right = frames[idx+1];
-        }
-        else
-        {
-            // tick 키가 없다면, ~idx가 "삽입 위치"가 됨
-            int insertionIndex = ~idx;
-
-            // 왼쪽 인덱스는 insertionIndex - 1 (그럼 frames.Keys[leftIndex] < tick)
-            int leftIndex = insertionIndex - 1;
-            if (leftIndex >= 0)
-            {
-                left = frames.Values[leftIndex];
-            }
-
-            // 오른쪽 인덱스는 insertionIndex (그럼 frames.Keys[insertionIndex] > tick)
-            if (insertionIndex < frames.Count)
-            {
-                right = frames.Values[insertionIndex];
-            }
+            return idx;
         }
 
-        Debug.Log($"Tick: {tick}, Left: {left?.Tick}, Right: {right?.Tick}, idx: {~idx}");
-        return (left, right);
+        return -1;
     }
 
     // 클릭했을 때 

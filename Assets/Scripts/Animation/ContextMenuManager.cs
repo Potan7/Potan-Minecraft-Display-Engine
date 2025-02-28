@@ -98,7 +98,8 @@ public class ContextMenuManager : BaseManager
     {
         if (int.TryParse(value, out int inter))
         {
-            currentFrame.SetInter(inter);
+            if (!currentFrame.SetInter(inter))
+                frameInfo[1].text = currentFrame.interpolation.ToString();
         }
         else
         {
