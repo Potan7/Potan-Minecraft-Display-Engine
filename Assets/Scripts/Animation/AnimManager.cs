@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class AnimManager : BaseManager
 {
@@ -20,50 +18,43 @@ public class AnimManager : BaseManager
             TickChanged?.Invoke(_tick);
         }
     }
-    public static event Action<int> TickChanged;
-    Coroutine tickCoroutine;
-    WaitForSeconds wait;
 
     [SerializeField]
-    private bool _isPlaying = false;
-    public bool IsPlaying
+    private float _tickSpeed = 20.0f;
+    public float TickSpeed
     {
-        get => _isPlaying;
+        get => _tickSpeed;
         set
         {
-            _isPlaying = value;
-            if (_isPlaying)
-            {
-                tickCoroutine = StartCoroutine(TickCoroutine());
-            }
-            else
-            {
-                StopCoroutine(tickCoroutine);
-            }
+            _tickSpeed = value;
+            tickInterval = 1.0f / _tickSpeed; // 정확한 시간 간격 업데이트
         }
     }
+
+    public static event Action<int> TickChanged;
+
+    public bool IsPlaying { get; set; } = false;
 
     public Timeline Timeline;
-    
+
+    private float lastTickTime = 0f;  // 마지막 Tick 업데이트 시간
+    private float tickInterval = 1.0f / 20.0f; // 초기 Tick 간격
+
     private void Start()
     {
-        wait = new WaitForSeconds(1.0f / 20.0f);
-    }
-
-    IEnumerator TickCoroutine()
-    {
-        while (true)
-        {
-            Tick++;
-            yield return wait;
-        }
+        tickInterval = 1.0f / _tickSpeed; // 초기 TickSpeed 반영
+        lastTickTime = Time.time; // 시작 시간 기록
     }
 
     private void Update()
     {
         if (IsPlaying)
         {
-            Tick++;
+            if (Time.time - lastTickTime >= tickInterval)
+            {
+                lastTickTime = Time.time; // 현재 시간 업데이트
+                Tick++; // Tick 증가
+            }
         }
     }
 

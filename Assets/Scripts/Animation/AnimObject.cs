@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -26,12 +27,13 @@ public class AnimObject : MonoBehaviour
 
         objectContainer = bdObejct;
 
-        firstFrame.Init(0, bdObejct.BDObject, this);
+        firstFrame.Init(fileName, 0, GameManager.Instance.Setting.DefaultInterpolation, bdObejct.BDObject, this);
         frames[0] = firstFrame;
 
         AnimManager.TickChanged += OnTickChanged;
     }
 
+    #region Transform
     void OnTickChanged(int tick)
     {
         // 틱에 맞는 프레임을 찾기
@@ -133,6 +135,10 @@ public class AnimObject : MonoBehaviour
         return -1;
     }
 
+    #endregion
+
+    #region EditFrame
+
     // 클릭했을 때 
     public void OnEventTriggerClick(BaseEventData eventData)
     {
@@ -148,9 +154,11 @@ public class AnimObject : MonoBehaviour
 
     // tick 위치에 프레임 추가하기. 만약 tick에 이미 프레임이 있다면 tick을 그만큼 뒤로 미룸
     // 만약 입력으로 들어온 BDObject가 firstFrame과 다른 형태라면 거부
-    public void AddFrame(BDObject frameInfo, int tick)
+    public void AddFrame(string fileName, BDObject frameInfo, int tick, int inter = -1)
     {
-        if (!CheckBDObject(firstFrame.info, frameInfo, true))
+        Debug.Log("fileName : " + fileName + ", tick : " + tick + ", inter : " + inter);
+
+        if (!CheckBDObject(firstFrame.info, frameInfo))
         {
             return;
         }
@@ -163,10 +171,47 @@ public class AnimObject : MonoBehaviour
         }
 
         frames.Add(tick, frame);
-        frame.Init(tick, frameInfo, this);
+        frame.Init(fileName, tick, inter < 0 ? GameManager.Instance.Setting.DefaultInterpolation : inter, frameInfo, this);
     }
 
-    public void AddFrame(BDObject frameInfo) => AddFrame(frameInfo, MaxTick + GameManager.Instance.Setting.DefaultTickInterval);
+    // 이름에서 s, i 값을 추출하여 프레임 추가하기
+    public void AddFrame(BDObject frameInfo, string fileName)
+    {
+        int tick = MaxTick;
+
+        int sValue = ExtractNumber(fileName, "s", 0);
+        int iValue = ExtractNumber(fileName, "i", -1);
+
+        if (sValue > 0)
+            tick += sValue;
+        else
+            tick += GameManager.Instance.Setting.DefaultTickInterval;
+        AddFrame(fileName, frameInfo, tick, iValue);
+    }
+
+    // 프레임 삭제하기
+    public void RemoveFrame(Frame frame)
+    {
+        frames.Remove(frame.Tick);
+        Destroy(frame.gameObject);
+
+        if (frames.Count == 0)
+        {
+            RemoveAnimObj();
+        }
+        else if (frame.Tick == 0)
+        {
+            frames.Values[0].SetTick(0);
+        }
+
+    }
+
+    // 애니메이션 오브젝트 삭제하기
+    public void RemoveAnimObj()
+    {
+        AnimManager.TickChanged -= OnTickChanged;
+        manager.RemoveAnimObject(this);
+    }
 
     // 위치를 변경 가능한지 확인하고 변경 가능하면 frames 변경하고 true 반환
     public bool ChangePos(Frame frame, int firstTick, int changedTick)
@@ -177,71 +222,82 @@ public class AnimObject : MonoBehaviour
 
         frames.Remove(firstTick);
         frames.Add(changedTick, frame);
+
+        OnTickChanged(GameManager.GetManager<AnimManager>().Tick);
         return true;
     }
 
     // 두 BDObject를 비교하여 name이 다르면 false 반환, children까지 확인한다.
     // 첫번째일 경우 이름 비교 패스
-    bool CheckBDObject(BDObject a, BDObject b, bool IsFirst = false)
+    bool CheckBDObject(BDObject a, BDObject b)
     {
-        //Debug.Log(a?.ToString() + " vs " + b?.ToString());
-
-        // 1) 둘 다 null이면 "동일"로 간주
-        if (a == null && b == null)
-        {
-            //CustomLog.Log("Both objects are null → Considered equal.");
-            return true;
-        }
-
-        // 2) 한 쪽만 null이면 다름
-        if (a == null || b == null)
-        {
-            CustomLog.LogError($"One object is null -> a: {(a == null ? "null" : a.name)}, b: {(b == null ? "null" : b.name)}");
-            return false;
-        }
-
-        // 3) name이 다르면 바로 false
-        if (a.name != b.name && !IsFirst)
-        {
-            CustomLog.LogError($"Different Name -> a: {a.name}, b: {b.name}");
-            return false;
-        }
-
-        // 4) children 비교
-        if (a.children == null && b.children == null)
-        {
-            //CustomLog.Log($"Both '{a.name}' and '{b.name}' have no children → Considered equal.");
-            return true;
-        }
-
-        if (a.children == null || b.children == null)
-        {
-            CustomLog.LogError($"Children mismatch -> a: {(a.children == null ? "null" : "exists")}, b: {(b.children == null ? "null" : "exists")}");
-            return false;
-        }
-
-        // 길이가 다르면 false
-        if (a.children.Length != b.children.Length)
-        {
-            CustomLog.LogError($"Children count mismatch -> a: {a.children.Length}, b: {b.children.Length}");
-            CustomLog.LogError($"a: {string.Join(", ", a.children.Select(c => c.name))}");
-            CustomLog.LogError($"b: {string.Join(", ", b.children.Select(c => c.name))}");
-            return false;
-        }
-
-        // 각각의 자식을 재귀적으로 비교
-        for (int i = 0; i < a.children.Length; i++)
-        {
-            if (!CheckBDObject(a.children[i], b.children[i]))
-            {
-                CustomLog.LogError($"Child mismatch at index {i} → a: {a.children[i]?.name}, b: {b.children[i]?.name}");
-                return false;
-            }
-        }
-
-        // 위의 모든 검사를 통과하면 true
         return true;
     }
+    //bool CheckBDObject(BDObject a, BDObject b, bool IsFirst = false)
+    //{
+    //    //Debug.Log(a?.ToString() + " vs " + b?.ToString());
 
+    //    // 1) 둘 다 null이면 "동일"로 간주
+    //    if (a == null && b == null)
+    //    {
+    //        //CustomLog.Log("Both objects are null → Considered equal.");
+    //        return true;
+    //    }
 
+    //    // 2) 한 쪽만 null이면 다름
+    //    if (a == null || b == null)
+    //    {
+    //        CustomLog.LogError($"One object is null -> a: {(a == null ? "null" : a.name)}, b: {(b == null ? "null" : b.name)}");
+    //        return false;
+    //    }
+
+    //    // 3) name이 다르면 바로 false
+    //    if (a.name != b.name && !IsFirst)
+    //    {
+    //        CustomLog.LogError($"Different Name -> a: {a.name}, b: {b.name}");
+    //        return false;
+    //    }
+
+    //    // 4) children 비교
+    //    if (a.children == null && b.children == null)
+    //    {
+    //        //CustomLog.Log($"Both '{a.name}' and '{b.name}' have no children → Considered equal.");
+    //        return true;
+    //    }
+
+    //    if (a.children == null || b.children == null)
+    //    {
+    //        CustomLog.LogError($"Children mismatch -> a: {(a.children == null ? "null" : "exists")}, b: {(b.children == null ? "null" : "exists")}");
+    //        return false;
+    //    }
+
+    //    // 길이가 다르면 false
+    //    if (a.children.Length != b.children.Length)
+    //    {
+    //        CustomLog.LogError($"Children count mismatch -> a: {a.children.Length}, b: {b.children.Length}");
+    //        CustomLog.LogError($"a: {string.Join(", ", a.children.Select(c => c.name))}");
+    //        CustomLog.LogError($"b: {string.Join(", ", b.children.Select(c => c.name))}");
+    //        return false;
+    //    }
+
+    //    // 각각의 자식을 재귀적으로 비교
+    //    for (int i = 0; i < a.children.Length; i++)
+    //    {
+    //        if (!CheckBDObject(a.children[i], b.children[i]))
+    //        {
+    //            CustomLog.LogError($"Child mismatch at index {i} → a: {a.children[i]?.name}, b: {b.children[i]?.name}");
+    //            return false;
+    //        }
+    //    }
+
+    //    // 위의 모든 검사를 통과하면 true
+    //    return true;
+    //}
+    #endregion
+
+    public static int ExtractNumber(string input, string key, int defaultValue = 0)
+    {
+        Match match = Regex.Match(input, $@"\b{key}(\d+)\b");
+        return match.Success ? int.Parse(match.Groups[1].Value) : defaultValue;
+    }
 }

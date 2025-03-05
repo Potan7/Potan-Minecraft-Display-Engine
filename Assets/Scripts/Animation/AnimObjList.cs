@@ -31,4 +31,20 @@ public class AnimObjList : MonoBehaviour
         importButton.anchoredPosition = new Vector2(importButton.anchoredPosition.x, importButton.anchoredPosition.y - jump);
         return animObject;
     }
+
+    public void RemoveAnimObject(AnimObject obj)
+    {
+        int idx = animObjects.IndexOf(obj);
+        animObjects.RemoveAt(idx);
+
+        GameManager.GetManager<BDObjectManager>().RemoveBDObject(obj.fileName);
+
+        Destroy(obj.gameObject);
+
+        for (int i = idx; i < animObjects.Count; i++)
+        {
+            animObjects[i].rect.anchoredPosition = new Vector2(animObjects[i].rect.anchoredPosition.x, animObjects[i].rect.anchoredPosition.y + jump);
+        }
+        importButton.anchoredPosition = new Vector2(importButton.anchoredPosition.x, importButton.anchoredPosition.y + jump);
+    }
 }

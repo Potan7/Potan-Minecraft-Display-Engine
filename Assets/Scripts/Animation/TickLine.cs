@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class TickLine : MonoBehaviour
 {
     public TextMeshProUGUI text;
+    [SerializeField]
     int _tick;
     public int Tick { get => _tick; }
     public Image image;

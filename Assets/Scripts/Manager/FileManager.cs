@@ -8,7 +8,6 @@ using System.IO.Compression;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using static UnityEngine.GraphicsBuffer;
 
 public class FileManager : BaseManager
 {
@@ -101,7 +100,7 @@ public class FileManager : BaseManager
         for (int i = 1; i < filepaths.Count; i++)
         {
             BDObject[] bdObjects = await ProcessFileAsync(filepaths[i]);
-            animObject.AddFrame(bdObjects[0]);
+            animObject.AddFrame(bdObjects[0], Path.GetFileNameWithoutExtension(filepaths[i]));
         }
         while (WorkingGenerators.Count > 0) await Task.Delay(500);
 
@@ -132,7 +131,7 @@ public class FileManager : BaseManager
         GameManager.GetManager<UIManger>().SetLoadingPanel(true);
 
         BDObject[] bdObjects = await ProcessFileAsync(filepath);
-        target.AddFrame(bdObjects[0], tick);
+        target.AddFrame(Path.GetFileNameWithoutExtension(filepath), bdObjects[0], tick);
 
         GameManager.GetManager<UIManger>().SetLoadingPanel(false);
     }

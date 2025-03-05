@@ -106,4 +106,10 @@ public class ContextMenuManager : BaseManager
             frameInfo[1].text = currentFrame.interpolation.ToString();
         }
     }
+
+    public void OnFrameRemoveButton()
+    {
+        currentFrame.RemoveFrame();
+        CloseContectMenu();
+    }
 }

@@ -14,20 +14,22 @@ public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
     public bool IsSelected = false;
     public int Tick;
     public int interpolation;
+    public string fileName;
 
     public BDObject info;
 
-    public void Init(int tick, BDObject Info, AnimObject obj)
+    public void Init(string FileName, int tick, int inter, BDObject Info, AnimObject obj)
     {
         //Debug.Log("tick : " + tick);
+        fileName = FileName;
         animObject = obj;
         initColor = outlineImage.color;
         info = Info;
         Tick = tick;
-        SetInter(GameManager.Instance.Setting.DefaultInterpolation);
+        SetInter(inter);
 
-        UpdatePos(tick);
-        GameManager.GetManager<AnimManager>().Timeline.OnGridChanged += () => UpdatePos(Tick);
+        UpdatePos();
+        GameManager.GetManager<AnimManager>().Timeline.OnGridChanged += UpdatePos;
     }
 
     public int SetTick(int tick)
@@ -38,7 +40,7 @@ public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
         if (animObject.ChangePos(this, Tick, tick))
         {
             Tick = tick;
-            UpdatePos(tick);
+            UpdatePos();
             return tick;
         }
         else
@@ -47,9 +49,10 @@ public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
         }
     }
 
-    private void UpdatePos(int tick)
+    // 위치 업데이트
+    private void UpdatePos()
     {
-        var line = GameManager.GetManager<AnimManager>().Timeline.GetTickLine(tick, false);
+        var line = GameManager.GetManager<AnimManager>().Timeline.GetTickLine(Tick, false);
         if (line == null)
         {
             gameObject.SetActive(false);
@@ -63,8 +66,6 @@ public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
 
     public bool SetInter(int inter)
     {
-        if (Tick == 0)
-            return false;
         interpolation = inter;
         return true;
     }
@@ -106,5 +107,12 @@ public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
             IsSelected = false;
             outlineImage.color = initColor;
         }
+    }
+
+    // 프레임 제거
+    public void RemoveFrame()
+    {
+        GameManager.GetManager<AnimManager>().Timeline.OnGridChanged -= UpdatePos;
+        animObject.RemoveFrame(this);
     }
 }

@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
-public class Timeline : MonoBehaviour
+public class Timeline : MonoBehaviour, IPointerDownHandler
 {
     public TickLine gridPrefab;
     public List<TickLine> grid;
@@ -11,6 +12,10 @@ public class Timeline : MonoBehaviour
 
     public int GridCount = 100;
     public event Action OnGridChanged;
+
+    public bool IsClicking = false;
+
+    AnimManager animManager;
 
     private void Start()
     {
@@ -21,7 +26,9 @@ public class Timeline : MonoBehaviour
         }
         AnimManager.TickChanged += OnAnimManagerTickChanged;
 
-        OnAnimManagerTickChanged(GameManager.GetManager<AnimManager>().Tick);
+        animManager = GameManager.GetManager<AnimManager>();
+        OnAnimManagerTickChanged(animManager.Tick);
+
     }
 
     private void OnAnimManagerTickChanged(int Tick)
@@ -96,7 +103,6 @@ public class Timeline : MonoBehaviour
         SetTickTexts(grid[0].Tick);
 
         OnAnimManagerTickChanged(tick);
-        OnGridChanged?.Invoke();
     }
 
     // 그리드 설정하기
@@ -120,6 +126,34 @@ public class Timeline : MonoBehaviour
         for (int i = GridCount; i < grid.Count; i++)
         {
             grid[i].gameObject.SetActive(false);
+        }
+
+        OnGridChanged?.Invoke();
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            IsClicking = true;
+        }
+    }
+
+    private void Update()
+    {
+        if (IsClicking)
+        {
+            Vector2 pos = Input.mousePosition;
+            TickLine line = GetTickLine(pos);
+            if (line != null && line.Tick != animManager.Tick)
+            {
+                animManager.Tick = line.Tick;
+            }
+
+            if (Input.GetMouseButtonUp(0))
+            {
+                IsClicking = false;
+            }
         }
     }
 }

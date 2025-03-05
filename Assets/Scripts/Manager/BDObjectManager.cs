@@ -33,6 +33,7 @@ public class BDObjectManager : BaseManager
     // 해당 최상위 오브젝트만 Dictionary에 등록한다.
     public async Task<BDObejctContainer> AddObject(BDObject bdObject, string fileName)
     {
+        BDObjectCount = 0;
         // 최상위 BDObject를 트리 구조로 생성
         var rootObj = await CreateObjectHierarchyAsync(bdObject, BDObjectParent);
 
@@ -102,5 +103,15 @@ public class BDObjectManager : BaseManager
         Destroy(BDObjectParent.gameObject);
         BDObjectParent = new GameObject("BDObjectParent").transform;
         BDObjectParent.localScale = new Vector3(1, 1, -1);
+    }
+
+    // 오브젝트 삭제하기
+    public void RemoveBDObject(string name)
+    {
+        if (BDObjects.TryGetValue(name, out var obj))
+        {
+            BDObjects.Remove(name);
+            Destroy(obj.gameObject);
+        }
     }
 }

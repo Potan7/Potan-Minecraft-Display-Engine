@@ -16,6 +16,7 @@ public class AnimPanel : MonoBehaviour
 
     public TextMeshProUGUI totalTickText;
     public TMP_InputField tickField;
+    public TMP_InputField tickSpeedField;
 
     public Image playPauseButton;
     public Sprite playSprite;
@@ -36,6 +37,14 @@ public class AnimPanel : MonoBehaviour
             tickField.text = manager.Tick.ToString();
     }
 
+    public void OnTickSpeedFieldEndEdit(string value)
+    {
+        if (float.TryParse(value, out float t))
+            manager.TickSpeed = t;
+        else
+            tickSpeedField.text = manager.TickSpeed.ToString();
+    }
+
     private void AnimManager_TickChanged(int obj)
     {
         tickField.text = obj.ToString();
@@ -44,6 +53,7 @@ public class AnimPanel : MonoBehaviour
     public void Stop()
     {
         manager.IsPlaying = false;
+        playPauseButton.sprite = playSprite;
         manager.Tick = 0;
     }
 
