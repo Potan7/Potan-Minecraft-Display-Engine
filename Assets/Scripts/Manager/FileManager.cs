@@ -49,6 +49,7 @@ public class FileManager : BaseManager
             // 폴더 분리하기
             List<string> files = new List<string>();
             string[] result = FileBrowser.Result;
+
             for (int i = 0; i < result.Length; i++)
             {
                 // 폴더 내 모든 파일들 리스트에 추가
@@ -165,8 +166,8 @@ public class FileManager : BaseManager
         BDObject[] bdObjects = await ProcessFileAsync(filepath);
 
         string fileName = Path.GetFileNameWithoutExtension(filepath);
-        var bdobjCon = await bdObjManager.AddObject(bdObjects[0], fileName);
-        return animObjList.AddAnimObject(bdobjCon, fileName);
+        await bdObjManager.AddObject(bdObjects[0], fileName);
+        return animObjList.AddAnimObject(fileName);
     }
 
     // gzipData를 string으로 변환하기

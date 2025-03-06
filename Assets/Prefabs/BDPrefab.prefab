@@ -41,7 +41,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6267945382890990551}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3313f2ae77cbf8b4e8468c6dba05e44e, type: 3}
+  m_Script: {fileID: 11500000, guid: 6b9b2caf91de801429792dcd3117b422, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   BDObject:
@@ -49,8 +49,13 @@ MonoBehaviour:
     nbt: 
     isBlockDisplay: 0
     isItemDisplay: 0
+    isTextDisplay: 0
     transforms: []
+    uuid: 
+    tags: []
     children: []
+  displayObj: {fileID: 0}
+  children: []
   transformation:
     e00: 0
     e01: 0

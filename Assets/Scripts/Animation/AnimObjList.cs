@@ -19,12 +19,12 @@ public class AnimObjList : MonoBehaviour
         jump = importButton.sizeDelta.y * 1.5f;
     }
 
-    public AnimObject AddAnimObject(BDObejctContainer obj, string fileName)
+    public AnimObject AddAnimObject(string fileName)
     {
         //Debug.Log("EndAddObject: " + obj.name);
 
         var animObject = Instantiate(animObjectPrefab, transform);
-        animObject.Init(obj, this, fileName);
+        animObject.Init(fileName, this);
         animObject.rect.anchoredPosition = importButton.anchoredPosition;
         animObjects.Add(animObject);
 

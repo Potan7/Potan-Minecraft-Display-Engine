@@ -13,24 +13,28 @@ public class AnimObject : MonoBehaviour
     public SortedList<int, Frame> frames = new SortedList<int, Frame>();
     public string fileName;
 
-    public BDObejctContainer objectContainer;
-
     public int MaxTick => frames.Values[frames.Count-1].Tick;
 
     AnimObjList manager;
 
-    public void Init(BDObejctContainer bdObejct, AnimObjList list, string FileName)
+    BDObjectContainer root;
+    Dictionary<string, BDObjectContainer> idDict;
+
+    public void Init(string FileName, AnimObjList list)
     {
         title.text = FileName;
         manager = list;
         fileName = FileName;
 
-        objectContainer = bdObejct;
+        var bdObject = GameManager.GetManager<BDObjectManager>().BDObjects[FileName];
+        root = bdObject.Item1;
+        idDict = bdObject.Item2;
 
-        firstFrame.Init(fileName, 0, GameManager.Instance.Setting.DefaultInterpolation, bdObejct.BDObject, this);
+        firstFrame.Init(fileName, 0, GameManager.Instance.Setting.DefaultInterpolation, root.BDObject, this);
         frames[0] = firstFrame;
 
         AnimManager.TickChanged += OnTickChanged;
+
     }
 
     #region Transform
@@ -45,7 +49,7 @@ public class AnimObject : MonoBehaviour
         {
 
             // 보간 없이 적용
-            SetObjectTransformation(objectContainer, leftFrame.info);
+            SetObjectTransformation(root.BDObject.ID, leftFrame.info);
         }
         else
         {
@@ -54,50 +58,72 @@ public class AnimObject : MonoBehaviour
 
             // 첫번째 프레임은 inter값이 항상 0이라 에러날 일이 없음
             Frame before = frames.Values[left - 1];
-            SetObjectTransformationInter(objectContainer, t, before.info, leftFrame.info);
+            SetObjectTransformationInter(t, before, leftFrame);
         }
 
     }
 
     // 보간 없이 그대로 적용
-    public void SetObjectTransformation(BDObejctContainer target, BDObject obj)
+    public void SetObjectTransformation(string id, BDObject obj)
     {
+        if (!idDict.TryGetValue(id, out BDObjectContainer target))
+        {
+            Debug.LogError("Target not found, name : " + id);
+            return;
+        }
+
         target.SetTransformation(obj.transforms);
 
         if (obj.children != null)
         {
-            for (int i = 0; i < obj.children.Length; i++)
+            foreach (var child in obj.children)
             {
-                SetObjectTransformation(target.children[i], obj.children[i]);
+                SetObjectTransformation(child.ID, child);
             }
         }
     }
 
+    public void SetObjectTransformationInter(float t, Frame a, Frame b)
+        => SetObjectTransformationInter(root.BDObject.ID, t, a.info, b.info, a.IDDataDict, b.IDDataDict);
     // target에 a, b를 t 비율로 보간하여 적용
-    public void SetObjectTransformationInter(BDObejctContainer target, float t, BDObject a, BDObject b)
+    public void SetObjectTransformationInter(string targetName, float t, BDObject a, BDObject b, Dictionary<string, BDObject> aDict, Dictionary<string, BDObject> bDict)
     {
+        if (!idDict.TryGetValue(targetName, out BDObjectContainer target))
+        {
+            Debug.LogError("Target not found, name : " + targetName);
+            return;
+        }
+
         // 1. transforms(4x4 행렬, float[16])을 t 비율로 보간
         float[] result = new float[16];
         for (int i = 0; i < 16; i++)
         {
-            // 선형 보간: (1 - t) * a + t * b
             result[i] = a.transforms[i] * (1f - t) + b.transforms[i] * t;
         }
 
         // 2. 보간된 결과를 target에 적용
         target.SetTransformation(result);
 
-        // 3. 자식이 있다면, 동일하게 재귀적으로 처리
-        //    a.children와 b.children의 구조가 같다고 가정
-        if (a.children != null && b.children != null)
+        // 3. 자식이 없다면 종료
+        if (a.children == null || b.children == null) return;
+
+        // 4. 동일한 파츠끼리 매칭
+        foreach (var key in aDict.Keys)
         {
-            for (int i = 0; i < a.children.Length; i++)
+            if (bDict.TryGetValue(key, out BDObject bChild) && aDict[key] != null)
             {
-                // 자식도 같은 방식으로 보간
-                SetObjectTransformationInter(target.children[i], t, a.children[i], b.children[i]);
+                BDObject aChild = aDict[key];
+
+                // target에서도 같은 키를 찾는다.
+                if (idDict.TryGetValue(key, out BDObjectContainer targetChild))
+                {
+                    // 재귀적으로 자식들에게도 보간 적용
+                    SetObjectTransformationInter(key, t, aChild, bChild, aDict, bDict);
+                }
             }
         }
     }
+
 
     int GetLeftFrame(int tick)
     {
@@ -158,11 +184,6 @@ public class AnimObject : MonoBehaviour
     {
         Debug.Log("fileName : " + fileName + ", tick : " + tick + ", inter : " + inter);
 
-        if (!CheckBDObject(firstFrame.info, frameInfo))
-        {
-            return;
-        }
-
         var frame = Instantiate(manager.framePrefab, transform.GetChild(0));
 
         while (frames.ContainsKey(tick))
@@ -179,8 +200,8 @@ public class AnimObject : MonoBehaviour
     {
         int tick = MaxTick;
 
-        int sValue = ExtractNumber(fileName, "s", 0);
-        int iValue = ExtractNumber(fileName, "i", -1);
+        int sValue = BDObjectHelper.ExtractNumber(fileName, "s", 0);
+        int iValue = BDObjectHelper.ExtractNumber(fileName, "i", -1);
 
         if (sValue > 0)
             tick += sValue;
@@ -227,12 +248,6 @@ public class AnimObject : MonoBehaviour
         return true;
     }
 
-    // 두 BDObject를 비교하여 name이 다르면 false 반환, children까지 확인한다.
-    // 첫번째일 경우 이름 비교 패스
-    bool CheckBDObject(BDObject a, BDObject b)
-    {
-        return true;
-    }
     //bool CheckBDObject(BDObject a, BDObject b, bool IsFirst = false)
     //{
     //    //Debug.Log(a?.ToString() + " vs " + b?.ToString());
@@ -294,10 +309,4 @@ public class AnimObject : MonoBehaviour
     //    return true;
     //}
     #endregion
-
-    public static int ExtractNumber(string input, string key, int defaultValue = 0)
-    {
-        Match match = Regex.Match(input, $@"\b{key}(\d+)\b");
-        return match.Success ? int.Parse(match.Groups[1].Value) : defaultValue;
-    }
 }

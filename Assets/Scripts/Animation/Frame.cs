@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -17,6 +19,7 @@ public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
     public string fileName;
 
     public BDObject info;
+    public Dictionary<string, BDObject> IDDataDict;
 
     public void Init(string FileName, int tick, int inter, BDObject Info, AnimObject obj)
     {
@@ -30,6 +33,12 @@ public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
 
         UpdatePos();
         GameManager.GetManager<AnimManager>().Timeline.OnGridChanged += UpdatePos;
+
+        IDDataDict = BDObjectHelper.SetDictionary(
+            info,
+            obj => obj,
+            obj => obj.children ?? Enumerable.Empty<BDObject>()
+            );
     }
 
     public int SetTick(int tick)
@@ -115,4 +124,6 @@ public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
         GameManager.GetManager<AnimManager>().Timeline.OnGridChanged -= UpdatePos;
         animObject.RemoveFrame(this);
     }
+
+    
 }

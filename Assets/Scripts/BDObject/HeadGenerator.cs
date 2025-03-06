@@ -146,7 +146,7 @@ public class HeadGenerator : BlockModelGenerator
     Texture2D SetPlayerTexture()
     {
         // BDObject 가져오기
-        BDObject data = transform.parent.parent.GetComponent<BDObejctContainer>().BDObject;
+        BDObject data = transform.parent.parent.GetComponent<BDObjectContainer>().BDObject;
         if (data.ExtraData.TryGetValue("defaultTextureValue", out object value))
         {
             try

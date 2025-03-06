@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class AffineTransformation
+public static class AffineTransformation
 {
     //  float배열을 변환하여 Matrix4x4 생성
     public static Matrix4x4 GetMatrix(float[] transforms)

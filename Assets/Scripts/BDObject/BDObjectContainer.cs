@@ -1,16 +1,16 @@
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class BDObejctContainer : MonoBehaviour
+public class BDObjectContainer : MonoBehaviour
 {
     public BDObject BDObject;
     public DisplayObject displayObj;
 
-    public BDObejctContainer[] children;
+    public BDObjectContainer[] children;
 
     public Matrix4x4 transformation;
 
-    public void Init(BDObject bdObject, BDObjectManager manager)
+    public void Init(BDObject bdObject, string tempNBT, BDObjectManager manager)
     {
         // 정보 저장
         BDObject = bdObject;
@@ -65,10 +65,14 @@ public class BDObejctContainer : MonoBehaviour
 
             }
         }
+        else
+        {
+            BDObject.ID = tempNBT;
+        }
     }
 
     // 후처리
-    public void PostProcess(BDObejctContainer[] childArray)
+    public void PostProcess(BDObjectContainer[] childArray)
     {
         // 변환 행렬을 적용
         SetTransformation(BDObject.transforms);
