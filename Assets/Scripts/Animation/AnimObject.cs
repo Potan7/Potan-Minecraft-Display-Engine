@@ -68,7 +68,7 @@ public class AnimObject : MonoBehaviour
     {
         if (!idDict.TryGetValue(id, out BDObjectContainer target))
         {
-            Debug.LogError("Target not found, name : " + id);
+            Debug.Log("Target not found, name : " + id);
             return;
         }
 
@@ -84,13 +84,25 @@ public class AnimObject : MonoBehaviour
     }
 
     public void SetObjectTransformationInter(float t, Frame a, Frame b)
-        => SetObjectTransformationInter(root.BDObject.ID, t, a.info, b.info, a.IDDataDict, b.IDDataDict);
+        => SetObjectTransformationInter(
+            root.BDObject.ID, t, 
+            a.info, b.info, 
+            a.IDDataDict, b.IDDataDict,
+            new HashSet<string>());
     // target에 a, b를 t 비율로 보간하여 적용
-    public void SetObjectTransformationInter(string targetName, float t, BDObject a, BDObject b, Dictionary<string, BDObject> aDict, Dictionary<string, BDObject> bDict)
+    void SetObjectTransformationInter(
+        string targetName, float t, 
+        BDObject a, BDObject b, 
+        Dictionary<string, BDObject> aDict, Dictionary<string, BDObject> bDict,
+        HashSet<string> visitedNodes
+        )
     {
+        if (visitedNodes.Contains(targetName)) return;
+        visitedNodes.Add(targetName);
+
         if (!idDict.TryGetValue(targetName, out BDObjectContainer target))
         {
-            Debug.LogError("Target not found, name : " + targetName);
+            Debug.Log("Target not found, name : " + targetName);
             return;
         }
 
@@ -104,21 +116,34 @@ public class AnimObject : MonoBehaviour
         // 2. 보간된 결과를 target에 적용
         target.SetTransformation(result);
 
-        // 3. 자식이 없다면 종료
-        if (a.children == null || b.children == null) return;
+        // 자식이 없으면 종료
+        if (a.children == null && b.children == null) return;
 
-        // 4. 동일한 파츠끼리 매칭
+        HashSet<string> processedKeys = new HashSet<string>();
+
         foreach (var key in aDict.Keys)
         {
             if (bDict.TryGetValue(key, out BDObject bChild) && aDict[key] != null)
             {
                 BDObject aChild = aDict[key];
+                processedKeys.Add(key);
 
-                // target에서도 같은 키를 찾는다.
                 if (idDict.TryGetValue(key, out BDObjectContainer targetChild))
                 {
-                    // 재귀적으로 자식들에게도 보간 적용
-                    SetObjectTransformationInter(key, t, aChild, bChild, aDict, bDict);
+                    SetObjectTransformationInter(key, t, aChild, bChild, aDict, bDict, visitedNodes);
+                }
+            }
+        }
+
+        foreach (var key in bDict.Keys)
+        {
+            if (!processedKeys.Contains(key) && aDict.TryGetValue(key, out BDObject aChild))
+            {
+                BDObject bChild = bDict[key];
+
+                if (idDict.TryGetValue(key, out BDObjectContainer targetChild))
+                {
+                    SetObjectTransformationInter(key, t, aChild, bChild, aDict, bDict, visitedNodes);
                 }
             }
         }
@@ -182,7 +207,7 @@ public class AnimObject : MonoBehaviour
     // 만약 입력으로 들어온 BDObject가 firstFrame과 다른 형태라면 거부
     public void AddFrame(string fileName, BDObject frameInfo, int tick, int inter = -1)
     {
-        Debug.Log("fileName : " + fileName + ", tick : " + tick + ", inter : " + inter);
+        //Debug.Log("fileName : " + fileName + ", tick : " + tick + ", inter : " + inter);
 
         var frame = Instantiate(manager.framePrefab, transform.GetChild(0));
 
@@ -200,14 +225,22 @@ public class AnimObject : MonoBehaviour
     {
         int tick = MaxTick;
 
-        int sValue = BDObjectHelper.ExtractNumber(fileName, "s", 0);
-        int iValue = BDObjectHelper.ExtractNumber(fileName, "i", -1);
+        if (GameManager.Instance.Setting.UseNameInfoExtract)
+        {
+            int sValue = BDObjectHelper.ExtractNumber(fileName, "s", 0);
+            int iValue = BDObjectHelper.ExtractNumber(fileName, "i", -1);
 
-        if (sValue > 0)
-            tick += sValue;
+            if (sValue > 0)
+                tick += sValue;
+            else
+                tick += GameManager.Instance.Setting.DefaultTickInterval;
+
+            AddFrame(fileName, frameInfo, tick, iValue);
+        }
         else
-            tick += GameManager.Instance.Setting.DefaultTickInterval;
-        AddFrame(fileName, frameInfo, tick, iValue);
+        {
+            AddFrame(fileName, frameInfo, tick + GameManager.Instance.Setting.DefaultTickInterval);
+        }
     }
 
     // 프레임 삭제하기

@@ -1,0 +1,2 @@
+data merge entity @e[limit=1,tag=pt_appie10,type=item_display] {start_interpolation: 0, interpolation_duration: 5, transformation:[0.4685f,0.0f,0.0f,0.8897f,0.0f,0.4685f,0.0f,1.4045f,0.0f,0.0f,0.4685f,1.2489f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity @e[limit=1,tag=pt_appie11,type=item_display] {start_interpolation: 0, interpolation_duration: 5, transformation:[0.4685f,0.0f,0.0f,0.8897f,0.0f,0.937f,0.0f,1.1703f,0.0f,0.0f,0.4685f,1.2489f,0.0f,0.0f,0.0f,1.0f]}

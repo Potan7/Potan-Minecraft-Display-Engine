@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2ef190b77111ab84ba152f9da434fbae
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 155804
+  packageName: Simple Tooltip
+  packageVersion: 1.0
+  assetPath: Assets/Simple Tooltip/Assets/Font/Acme-Regular SDF.asset
+  uploadId: 334072

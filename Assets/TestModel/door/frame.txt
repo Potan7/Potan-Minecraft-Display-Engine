@@ -1,0 +1,14 @@
+f14 s6 i6
+f1 s4 i0
+f2 s3 i3
+f3 s3 i3
+f4 s3 i3
+f5 s3 i3
+f6 s8 i0
+f7 s10 i10
+f8 s8 i8
+f9 s8 i10
+f10 s6 i2
+f11 s7 i5
+f12 s10 i4
+f13 s6 i6

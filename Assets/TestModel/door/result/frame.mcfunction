@@ -1,0 +1,14 @@
+execute if score pt_anim anim matches 95 run function potan:anim/door/f14
+execute if score pt_anim anim matches 4 run function potan:anim/door/f1
+execute if score pt_anim anim matches 7 run function potan:anim/door/f2
+execute if score pt_anim anim matches 10 run function potan:anim/door/f3
+execute if score pt_anim anim matches 13 run function potan:anim/door/f4
+execute if score pt_anim anim matches 16 run function potan:anim/door/f5
+execute if score pt_anim anim matches 24 run function potan:anim/door/f6
+execute if score pt_anim anim matches 34 run function potan:anim/door/f7
+execute if score pt_anim anim matches 42 run function potan:anim/door/f8
+execute if score pt_anim anim matches 50 run function potan:anim/door/f9
+execute if score pt_anim anim matches 56 run function potan:anim/door/f10
+execute if score pt_anim anim matches 63 run function potan:anim/door/f11
+execute if score pt_anim anim matches 83 run function potan:anim/door/f12
+execute if score pt_anim anim matches 89 run function potan:anim/door/f13

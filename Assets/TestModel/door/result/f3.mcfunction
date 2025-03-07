@@ -1,0 +1,3 @@
+data merge entity 1-0-1-0-0 {start_interpolation: 0, interpolation_duration: 3, transformation:[-0.9996f,-0.0f,-0.0266f,0.9999f,-0.0f,-1.0f,0.0037f,2.25f,-0.0266f,0.0037f,0.9996f,0.8217f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity 1-0-2-0-0 {start_interpolation: 0, interpolation_duration: 3, transformation:[-0.9996f,-0.0f,-0.0266f,0.9998f,-0.0f,-1.0f,0.0037f,1.25f,-0.0266f,0.0037f,0.9996f,0.8253f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity 1-0-3-0-0 {start_interpolation: 0, interpolation_duration: 3, transformation:[-0.9996f,-0.0f,-0.0017f,0.9982f,-0.0f,-1.0f,0.0002f,1.2503f,-0.0266f,0.0037f,0.0625f,0.8878f,0.0f,0.0f,0.0f,1.0f]}

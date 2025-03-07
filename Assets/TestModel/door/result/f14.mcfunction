@@ -1,0 +1,11 @@
+data merge entity 1-0-4-0-0 {start_interpolation: 0, interpolation_duration: 6, transformation:[0.0221f,0.0884f,-0.1083f,4.4f,-0.0442f,0.1768f,0.0f,0.8537f,0.0383f,0.1531f,0.0625f,-2.344f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity 1-0-5-0-0 {start_interpolation: 0, interpolation_duration: 6, transformation:[-0.0f,0.0938f,-0.1083f,4.375f,-0.0625f,-0.0f,0.0f,1.1586f,-0.0f,0.1624f,0.0625f,-2.3873f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity 1-0-6-0-0 {start_interpolation: 0, interpolation_duration: 6, transformation:[-0.0221f,0.0884f,-0.1083f,4.4234f,-0.0442f,-0.1768f,0.0f,1.4594f,-0.0383f,0.1531f,0.0625f,-2.3034f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity 1-0-7-0-0 {start_interpolation: 0, interpolation_duration: 6, transformation:[-0.0221f,-0.0884f,0.1083f,4.6124f,-0.0442f,0.1768f,0.0f,0.8475f,-0.0383f,-0.1531f,-0.0625f,-1.7261f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity 1-0-8-0-0 {start_interpolation: 0, interpolation_duration: 6, transformation:[0.0f,-0.0938f,0.1083f,4.6417f,-0.0625f,-0.0f,0.0f,1.1586f,0.0f,-0.1624f,-0.0625f,-1.6752f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity 1-0-9-0-0 {start_interpolation: 0, interpolation_duration: 6, transformation:[0.0221f,-0.0884f,0.1083f,4.5924f,-0.0442f,-0.1768f,0.0f,1.4481f,0.0383f,-0.1531f,-0.0625f,-1.7608f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity 1-0-a-0-0 {start_interpolation: 0, interpolation_duration: 6, transformation:[0.0625f,-0.0f,-0.1083f,4.5312f,0.0f,0.125f,0.0f,1.0625f,0.1083f,-0.0f,0.0625f,-2.1166f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity 1-0-b-0-0 {start_interpolation: 0, interpolation_duration: 6, transformation:[0.0313f,-0.0f,-0.1083f,4.625f,0.0f,0.25f,0.0f,1.005f,0.0541f,-0.0f,0.0625f,-1.9542f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity 1-0-c-0-0 {start_interpolation: 0, interpolation_duration: 6, transformation:[0.0313f,-0.0f,-0.1083f,4.4688f,0.0f,0.25f,0.0f,1.005f,0.0541f,-0.0f,0.0625f,-2.2249f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity 1-0-d-0-0 {start_interpolation: 0, interpolation_duration: 6, transformation:[0.0f,0.125f,-0.1083f,4.5f,-0.0625f,0.0f,0.0f,1.3125f,0.0f,0.2165f,0.0625f,-2.1708f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity 1-0-e-0-0 {start_interpolation: 0, interpolation_duration: 6, transformation:[0.0f,0.125f,-0.1083f,4.5f,-0.0625f,0.0f,0.0f,1.0f,0.0f,0.2165f,0.0625f,-2.1708f,0.0f,0.0f,0.0f,1.0f]}

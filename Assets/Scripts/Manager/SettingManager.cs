@@ -8,6 +8,9 @@ public class SettingManager : BaseManager
     public int DefaultInterpolation = 0;
     public int DefaultTickInterval = 5;
 
+    public bool UseNameInfoExtract { get; set; } = true;
+    public bool UseFrameTxtFile { get; set; } = true;
+
     public bool UseFindMode = true;
     public string FakePlayer = "anim";
     public string ScoreboardName = "anim";
@@ -49,7 +52,7 @@ public class SettingManager : BaseManager
         switch (idx)
         {
             case 0:
-                if (int.TryParse(value, out int tickInterval) && tickInterval >= 0)
+                if (int.TryParse(value, out int tickInterval) && tickInterval >= 1)
                 {
                     DefaultTickInterval = tickInterval;
                 }

@@ -54,7 +54,7 @@ public class BDObjectManager : BaseManager
         var newObj = Instantiate(BDObjectPrefab, parent);
 
         // √ ±‚»≠
-        newObj.Init(bdObject, rootName + BDObjectCount, this);
+        newObj.Init(bdObject, this);
         BDObjectCount++;
 
         BDObjectContainer[] children = null;

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1f0cc7a28e7642f4697d87459836c5a9
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 155804
+  packageName: Simple Tooltip
+  packageVersion: 1.0
+  assetPath: Assets/Simple Tooltip/Assets/Styles/Light.asset
+  uploadId: 334072

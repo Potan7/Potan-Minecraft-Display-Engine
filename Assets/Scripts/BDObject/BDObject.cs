@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using UnityEngine;
 
-[System.Serializable]
+//[System.Serializable]
 public class BDObject
 {
     public string name;
@@ -39,8 +39,6 @@ public class BDObject
             ID = tag;
             return;
         }
-
-        ID = nbt;
     }
 }
 

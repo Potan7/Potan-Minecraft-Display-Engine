@@ -1,0 +1,12 @@
+f12 s60 i0
+f1 s0 i0
+f2 s20 i5
+f3 s10 i0
+f4 s10 i0
+f5 s15 i0
+f6 s10 i0
+f7 s15 i0
+f8 s15 i5
+f9 s10 i2
+f10 s10 i10
+f11 s10 i5

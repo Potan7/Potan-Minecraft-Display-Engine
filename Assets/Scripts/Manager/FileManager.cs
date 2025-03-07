@@ -8,6 +8,8 @@ using System.IO.Compression;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 public class FileManager : BaseManager
 {
@@ -76,15 +78,25 @@ public class FileManager : BaseManager
     }
 
     // 파일 임포트
-    public void ImportFile()
-    {
-        StartCoroutine(ShowLoadDialogCoroutine(AfterLoadFile));
-    }
+    public void ImportFile() => StartCoroutine(ShowLoadDialogCoroutine(AfterLoadFile));
 
     // 프레임 임포트
-    public void ImportFrame(AnimObject target, int tick)
+    public void ImportFrame(AnimObject target, int tick) => StartCoroutine(FrameImportCoroutine(target, tick));
+
+    IEnumerator FrameImportCoroutine(AnimObject target, int tick)
     {
-        StartCoroutine(ShowLoadDialogCoroutine((filepaths) => AfterLoadFrame(filepaths[0], target, tick)));
+        // 파일 브라우저를 열고 사용자가 파일을 선택하거나 취소할 때까지 대기
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files, false);
+
+        if (FileBrowser.Success)
+        {
+            string filepath = FileBrowser.Result[0];
+            AfterLoadFrame(filepath, target, tick);
+        }
+        else
+        {
+            CustomLog.Log("Failed to load file");
+        }
     }
 
     // 파일 불러와서 디스플레이 생성하기
@@ -92,7 +104,17 @@ public class FileManager : BaseManager
     {
         GameManager.GetManager<UIManger>().SetLoadingPanel(true);
 
-        //List<Task> runningTasks = new List<Task>();
+        SettingManager settingManager = GameManager.GetManager<SettingManager>();
+        if (settingManager.UseFrameTxtFile || settingManager.UseNameInfoExtract)
+        {
+            // 파일명 순으로 정렬
+            filepaths = SortFiles(filepaths);
+            Debug.Log("Sorted Files : ");
+            for (int i = 0; i < filepaths.Count; i++)
+            {
+                Debug.Log(filepaths[i]);
+            }
+        }
 
         // 첫번째 파일로 디스플레이 생성
         AnimObject animObject = await MakeDisplay(filepaths[0]);
@@ -179,5 +201,37 @@ public class FileManager : BaseManager
         {
             return reader.ReadToEnd();
         }
+    }
+
+    public List<string> SortFiles(IEnumerable<string> fileNames)
+    {
+        // "f" 뒤에 오는 숫자를 추출하는 정규식 (경로나 구분자와 무관하게)
+        Regex regex = new Regex(@"f(\d+)", RegexOptions.IgnoreCase);
+
+        var matchedFiles = new List<(string fileName, int number)>();
+        var unmatchedFiles = new List<string>();
+
+        foreach (var fileName in fileNames)
+        {
+            var match = regex.Match(fileName);
+            // f 뒤의 숫자만 추출
+            if (match.Success && int.TryParse(match.Groups[1].Value, out int number))
+            {
+                matchedFiles.Add((fileName, number));
+            }
+            else
+            {
+                unmatchedFiles.Add(fileName);
+            }
+        }
+
+        // "f숫자"가 있는 파일을 숫자 기준으로 정렬
+        matchedFiles.Sort((a, b) => a.number.CompareTo(b.number));
+
+        // 정렬된 리스트 + 패턴이 없는 파일을 뒤에 추가
+        var sortedFiles = matchedFiles.Select(x => x.fileName).ToList();
+        sortedFiles.AddRange(unmatchedFiles);
+
+        return sortedFiles;
     }
 }

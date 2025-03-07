@@ -10,7 +10,7 @@ public class BDObjectContainer : MonoBehaviour
 
     public Matrix4x4 transformation;
 
-    public void Init(BDObject bdObject, string tempNBT, BDObjectManager manager)
+    public void Init(BDObject bdObject, BDObjectManager manager)
     {
         // 정보 저장
         BDObject = bdObject;
@@ -64,10 +64,6 @@ public class BDObjectContainer : MonoBehaviour
                 displayObj = obj;
 
             }
-        }
-        else
-        {
-            BDObject.ID = tempNBT;
         }
     }
 

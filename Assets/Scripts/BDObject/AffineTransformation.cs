@@ -34,11 +34,14 @@ public static class AffineTransformation
         );
 
         // 3. Rotation (localRotation)
-        Vector3 normalizedX = matrix.GetColumn(0).normalized;
+        //Vector3 normalizedX = matrix.GetColumn(0).normalized;
         Vector3 normalizedY = matrix.GetColumn(1).normalized;
         Vector3 normalizedZ = matrix.GetColumn(2).normalized;
 
-        Quaternion rotation = Quaternion.LookRotation(normalizedZ, normalizedY);
+        Vector3 forward = normalizedZ.magnitude > 0 ? normalizedZ : Vector3.forward;
+        Vector3 up = normalizedY.magnitude > 0 ? normalizedY : Vector3.up;
+
+        Quaternion rotation = Quaternion.LookRotation(forward, up);
         //Quaternion rotation = Quaternion.FromToRotation(Vector3.right, normalizedX) *
         //              Quaternion.FromToRotation(Vector3.up, normalizedY);
 

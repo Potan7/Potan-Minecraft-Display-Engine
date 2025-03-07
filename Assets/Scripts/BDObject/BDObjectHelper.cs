@@ -39,6 +39,7 @@ public static class BDObjectHelper
 
     public static Dictionary<string, T> SetDictionary<T>(T root, Func<T, BDObject> getBDObj, Func<T, IEnumerable<T>> getChildren)
     {
+        int count = 0;
         Dictionary<string, T> IDDataDict = new Dictionary<string, T>();
         Queue<T> queue = new Queue<T>();
         queue.Enqueue(root);
@@ -48,10 +49,13 @@ public static class BDObjectHelper
             T obj = queue.Dequeue();
             BDObject bdObj = getBDObj(obj);
 
-            if (!string.IsNullOrEmpty(bdObj.ID))
+            if (string.IsNullOrEmpty(bdObj.ID))
             {
-                IDDataDict[bdObj.ID] = obj;
+                bdObj.ID = count.ToString();
+                count++;
             }
+
+            IDDataDict[bdObj.ID] = obj;
 
 
             // 자식들 큐에 추가
