@@ -20,6 +20,7 @@ public class ContextMenuManager : BaseManager
     public List<GameObject> contextMenuBtns;
 
     public TMP_InputField[] frameInfo;
+    public TextMeshProUGUI frameName;
 
     [Header("Current Context")]
     public Frame currentFrame;
@@ -44,6 +45,7 @@ public class ContextMenuManager : BaseManager
 
         frameInfo[0].text = currentFrame.Tick.ToString();
         frameInfo[1].text = currentFrame.interpolation.ToString();
+        frameName.text = currentFrame.fileName;
 
         SetContextMenu();
     }

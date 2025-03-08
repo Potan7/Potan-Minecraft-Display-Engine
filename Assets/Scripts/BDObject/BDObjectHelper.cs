@@ -37,6 +37,12 @@ public static class BDObjectHelper
         return match.Success ? int.Parse(match.Groups[1].Value) : defaultValue;
     }
 
+    public static string ExtractFrame(string input, string key)
+    {
+        Match match = Regex.Match(input, $@"\b{key}(\d+)\b");
+        return match.Success ? match.Groups[0].Value : null;
+    }
+
     public static Dictionary<string, T> SetDictionary<T>(T root, Func<T, BDObject> getBDObj, Func<T, IEnumerable<T>> getChildren)
     {
         int count = 0;

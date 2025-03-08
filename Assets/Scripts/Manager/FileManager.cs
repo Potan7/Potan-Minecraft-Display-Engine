@@ -17,6 +17,8 @@ public class FileManager : BaseManager
     public AnimObjList animObjList;
     public HashSet<HeadGenerator> WorkingGenerators = new HashSet<HeadGenerator>();
 
+    public Dictionary<string, (int, int)> frameInfo = new Dictionary<string, (int, int)>();
+
     private void Start()
     {
         bdObjManager = GameManager.GetManager<BDObjectManager>();
@@ -57,7 +59,20 @@ public class FileManager : BaseManager
                 // 폴더 내 모든 파일들 리스트에 추가
                 if (Directory.Exists(result[i]))
                 {
-                    string[] folderFiles = Directory.GetFiles(result[i], "*.bdengine", SearchOption.AllDirectories);
+                    string[] folderFiles = Directory.GetFiles(result[i], "*.bdengine", SearchOption.TopDirectoryOnly);
+
+                    SettingManager settingManager = GameManager.GetManager<SettingManager>();
+
+                    // frame.txt 파일이 있는지 확인
+                    if (settingManager.UseFrameTxtFile)
+                    {
+                        string frameFile = Directory.GetFiles(result[i], "frame.txt", SearchOption.TopDirectoryOnly).FirstOrDefault();
+                        //Debug.Log("Try find Frame : " + frameFile);
+
+                        if (!string.IsNullOrEmpty(frameFile))
+                            SetDictByFrameTxt(settingManager, frameFile);
+                    }
+
 
                     files.AddRange(folderFiles);
                 }
@@ -75,6 +90,51 @@ public class FileManager : BaseManager
             CustomLog.Log("Failed to load file");
         }
         
+    }
+
+    private void SetDictByFrameTxt(SettingManager settingManager, string frameFile)
+    {
+        Debug.Log("SetDictByFrameTxt : " + frameFile);
+        frameInfo.Clear();
+
+        // 파일 읽기
+        var lines = File.ReadLines(frameFile);
+
+        foreach (string line in lines)
+        {
+            //Debug.Log("Line : " + line);
+            string[] parts = line.Split(' ');
+
+            string frameKey = null;
+            int sValue = settingManager.DefaultTickInterval; // 기본값 (필요하면 조정)
+            int iValue = settingManager.DefaultInterpolation; // 기본값 (필요하면 조정)
+
+            foreach (string part in parts)
+            {
+                string trimmed = part.Trim();
+
+                if (trimmed.StartsWith("f"))
+                {
+                    frameKey = trimmed;
+                }
+                else if (trimmed.StartsWith("s"))
+                {
+                    if (int.TryParse(trimmed.Substring(1), out int s))
+                        sValue = s;
+                }
+                else if (trimmed.StartsWith("i"))
+                {
+                    if (int.TryParse(trimmed.Substring(1), out int inter))
+                        iValue = inter;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(frameKey))
+            {
+                frameInfo[frameKey] = (sValue, iValue);
+                //Debug.Log("Frame Info : " + frameKey + " " + sValue + " " + iValue);
+            }
+        }
     }
 
     // 파일 임포트
@@ -109,11 +169,11 @@ public class FileManager : BaseManager
         {
             // 파일명 순으로 정렬
             filepaths = SortFiles(filepaths);
-            Debug.Log("Sorted Files : ");
-            for (int i = 0; i < filepaths.Count; i++)
-            {
-                Debug.Log(filepaths[i]);
-            }
+            //Debug.Log("Sorted Files : ");
+            //for (int i = 0; i < filepaths.Count; i++)
+            //{
+            //    Debug.Log(filepaths[i]);
+            //}
         }
 
         // 첫번째 파일로 디스플레이 생성
@@ -154,7 +214,7 @@ public class FileManager : BaseManager
         GameManager.GetManager<UIManger>().SetLoadingPanel(true);
 
         BDObject[] bdObjects = await ProcessFileAsync(filepath);
-        target.AddFrame(Path.GetFileNameWithoutExtension(filepath), bdObjects[0], tick);
+        target.AddFrame(Path.GetFileNameWithoutExtension(filepath), bdObjects[0], tick, GameManager.Instance.Setting.DefaultInterpolation);
 
         GameManager.GetManager<UIManger>().SetLoadingPanel(false);
     }

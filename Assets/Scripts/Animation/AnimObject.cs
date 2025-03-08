@@ -4,6 +4,8 @@ using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using UnityEngine.Windows;
 
 public class AnimObject : MonoBehaviour
 {
@@ -13,7 +15,17 @@ public class AnimObject : MonoBehaviour
     public SortedList<int, Frame> frames = new SortedList<int, Frame>();
     public string fileName;
 
-    public int MaxTick => frames.Values[frames.Count-1].Tick;
+    public int MaxTick
+    {
+        get
+        {
+            if (frames.Count == 0)
+            {
+                return 0;
+            }
+            return frames.Values[frames.Count - 1].Tick;
+        }
+    }
 
     AnimObjList manager;
 
@@ -30,7 +42,10 @@ public class AnimObject : MonoBehaviour
         root = bdObject.Item1;
         idDict = bdObject.Item2;
 
-        firstFrame.Init(fileName, 0, GameManager.Instance.Setting.DefaultInterpolation, root.BDObject, this);
+        GetTickAndInterByFileName(fileName, out int tick, out int inter);
+        firstFrame.Init(fileName, 0, inter, root.BDObject, this);
+
+
         frames[0] = firstFrame;
 
         AnimManager.TickChanged += OnTickChanged;
@@ -45,7 +60,8 @@ public class AnimObject : MonoBehaviour
         if (left < 0) return;
         Frame leftFrame = frames.Values[left];
 
-        if (leftFrame.interpolation == 0 || leftFrame.Tick + leftFrame.interpolation <= tick) 
+        // 첫번째 프레임의 보간은 무시함
+        if (leftFrame.interpolation == 0 || leftFrame.Tick + leftFrame.interpolation <= tick || left == 0) 
         {
 
             // 보간 없이 적용
@@ -56,7 +72,6 @@ public class AnimObject : MonoBehaviour
             // 보간 On
             float t = (float)(tick - leftFrame.Tick) / leftFrame.interpolation;
 
-            // 첫번째 프레임은 inter값이 항상 0이라 에러날 일이 없음
             Frame before = frames.Values[left - 1];
             SetObjectTransformationInter(t, before, leftFrame);
         }
@@ -205,7 +220,7 @@ public class AnimObject : MonoBehaviour
 
     // tick 위치에 프레임 추가하기. 만약 tick에 이미 프레임이 있다면 tick을 그만큼 뒤로 미룸
     // 만약 입력으로 들어온 BDObject가 firstFrame과 다른 형태라면 거부
-    public void AddFrame(string fileName, BDObject frameInfo, int tick, int inter = -1)
+    public void AddFrame(string fileName, BDObject frameInfo, int tick, int inter)
     {
         //Debug.Log("fileName : " + fileName + ", tick : " + tick + ", inter : " + inter);
 
@@ -217,29 +232,52 @@ public class AnimObject : MonoBehaviour
         }
 
         frames.Add(tick, frame);
-        frame.Init(fileName, tick, inter < 0 ? GameManager.Instance.Setting.DefaultInterpolation : inter, frameInfo, this);
+        frame.Init(fileName, tick, inter, frameInfo, this);
     }
 
     // 이름에서 s, i 값을 추출하여 프레임 추가하기
     public void AddFrame(BDObject frameInfo, string fileName)
     {
-        int tick = MaxTick;
+        Debug.Log("AddFrame : " + fileName);    
+        GetTickAndInterByFileName(fileName, out int tick, out int inter);
+        AddFrame(fileName, frameInfo, tick, inter);
+    }
 
-        if (GameManager.Instance.Setting.UseNameInfoExtract)
+    private void GetTickAndInterByFileName(string fileName, out int tick, out int inter)
+    {
+        SettingManager setting = GameManager.Instance.Setting;
+
+        tick = MaxTick;
+        inter = setting.DefaultInterpolation;
+
+        FileManager fileManager = GameManager.GetManager<FileManager>();
+        bool HasFrameTxt = false;
+
+        if (setting.UseFrameTxtFile)
+        {
+            string frame = BDObjectHelper.ExtractFrame(fileName, "f");
+            if (!string.IsNullOrEmpty(frame))
+            {
+                if (fileManager.frameInfo.TryGetValue(frame, out var info))
+                {
+                    tick += info.Item1;
+                    inter = info.Item2;
+                    HasFrameTxt = true;
+                }
+            }
+        }
+
+        if (setting.UseNameInfoExtract && !HasFrameTxt)
         {
             int sValue = BDObjectHelper.ExtractNumber(fileName, "s", 0);
             int iValue = BDObjectHelper.ExtractNumber(fileName, "i", -1);
 
             if (sValue > 0)
                 tick += sValue;
-            else
-                tick += GameManager.Instance.Setting.DefaultTickInterval;
-
-            AddFrame(fileName, frameInfo, tick, iValue);
         }
         else
         {
-            AddFrame(fileName, frameInfo, tick + GameManager.Instance.Setting.DefaultTickInterval);
+            tick += setting.DefaultTickInterval;
         }
     }
 
