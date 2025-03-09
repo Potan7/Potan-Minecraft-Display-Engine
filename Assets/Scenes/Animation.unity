@@ -2345,8 +2345,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -34.88}
-  m_SizeDelta: {x: 1920, y: -69.761}
+  m_AnchoredPosition: {x: 0, y: -34.88025}
+  m_SizeDelta: {x: 1920, y: -69.7605}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &231630967
 CanvasRenderer:
@@ -5759,11 +5759,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1481496110}
+  m_Father: {fileID: 2070522682}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 227}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: 11.000122}
   m_SizeDelta: {x: 1920, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &452743875
@@ -5832,6 +5832,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   AnimPanel: {fileID: 2070522682}
   rect: {fileID: 452743874}
+  canvasRectTransform: {fileID: 1217997569}
 --- !u!1 &468587445
 GameObject:
   m_ObjectHideFlags: 0
@@ -17628,7 +17629,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2070522682}
-  - {fileID: 452743874}
   m_Father: {fileID: 1217997569}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -17664,6 +17664,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dragPanel: {fileID: 452743878}
+  animPanel: {fileID: 0}
+  IsMouseEnter: 0
   totalTickText: {fileID: 0}
   tickField: {fileID: 583919195}
   tickSpeedField: {fileID: 910428488}
@@ -23880,7 +23882,6 @@ GameObject:
   - component: {fileID: 2070522682}
   - component: {fileID: 2070522684}
   - component: {fileID: 2070522683}
-  - component: {fileID: 2070522685}
   m_Layer: 5
   m_Name: AnimPanel
   m_TagString: Untagged
@@ -23903,12 +23904,13 @@ RectTransform:
   - {fileID: 222457189}
   - {fileID: 1311052586}
   - {fileID: 231630965}
+  - {fileID: 452743874}
   m_Father: {fileID: 1481496110}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: -432.88287}
-  m_SizeDelta: {x: 1920, y: -865.7657}
+  m_SizeDelta: {x: 0, y: -865.7657}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2070522683
 MonoBehaviour:
@@ -23948,51 +23950,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2070522681}
   m_CullTransparentMesh: 1
---- !u!114 &2070522685
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2070522681}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Delegates:
-  - eventID: 0
-    callback:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 1481496112}
-          m_TargetAssemblyTypeName: AnimPanel, Assembly-CSharp
-          m_MethodName: OnAnimPanelPointer
-          m_Mode: 6
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 1
-          m_CallState: 2
-  - eventID: 1
-    callback:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 1481496112}
-          m_TargetAssemblyTypeName: AnimPanel, Assembly-CSharp
-          m_MethodName: OnAnimPanelPointer
-          m_Mode: 6
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
 --- !u!1 &2076276003
 GameObject:
   m_ObjectHideFlags: 0

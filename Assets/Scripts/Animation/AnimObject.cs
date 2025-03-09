@@ -1,11 +1,7 @@
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
-using UnityEngine.Windows;
 
 public class AnimObject : MonoBehaviour
 {
@@ -14,6 +10,8 @@ public class AnimObject : MonoBehaviour
     public Frame firstFrame;
     public SortedList<int, Frame> frames = new SortedList<int, Frame>();
     public string fileName;
+
+    public HashSet<string> NoID = new HashSet<string>();
 
     public int MaxTick
     {
@@ -55,6 +53,9 @@ public class AnimObject : MonoBehaviour
     #region Transform
     void OnTickChanged(int tick)
     {
+        if (tick == 0)
+            NoID.Clear();
+
         // 틱에 맞는 프레임을 찾기
         int left = GetLeftFrame(tick);
         if (left < 0) return;
@@ -83,7 +84,11 @@ public class AnimObject : MonoBehaviour
     {
         if (!idDict.TryGetValue(id, out BDObjectContainer target))
         {
-            Debug.Log("Target not found, name : " + id);
+            if (!NoID.Contains(id))
+            {
+                CustomLog.LogError("Target not found, name : " + id);
+                NoID.Add(id);
+            }
             return;
         }
 
@@ -238,7 +243,7 @@ public class AnimObject : MonoBehaviour
     // 이름에서 s, i 값을 추출하여 프레임 추가하기
     public void AddFrame(BDObject frameInfo, string fileName)
     {
-        Debug.Log("AddFrame : " + fileName);    
+        CustomLog.Log("AddFrame : " + fileName);    
         GetTickAndInterByFileName(fileName, out int tick, out int inter);
         AddFrame(fileName, frameInfo, tick, inter);
     }

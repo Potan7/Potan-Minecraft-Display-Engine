@@ -10,9 +10,10 @@ public class AnimPanel : MonoBehaviour
     AnimManager manager;
 
     public DragPanel dragPanel;
+    public RectTransform animPanel;
     Vector2 InitPos;
     bool IsHiding = false;
-    bool IsMouseEnter = false;
+    public bool IsMouseEnter = false;
 
     public TextMeshProUGUI totalTickText;
     public TMP_InputField tickField;
@@ -25,8 +26,29 @@ public class AnimPanel : MonoBehaviour
     private void Start()
     {
         manager = GetComponent<AnimManager>();
-        InitPos = dragPanel.rect.position;
+        animPanel = dragPanel.AnimPanel;
+        InitPos = new Vector2(0, 225);
         AnimManager.TickChanged += AnimManager_TickChanged;
+
+        IsHiding = true;
+        dragPanel.SetPanelSize(0);
+    }
+
+    private void Update()
+    {
+        if (RectTransformUtility.RectangleContainsScreenPoint(
+            animPanel, Input.mousePosition, null
+            ))
+        {
+            IsMouseEnter = true;
+            BDEngineStyleCameraMovement.CanMoveCamera = false;
+        }
+        else
+        {
+            IsMouseEnter = false;
+            BDEngineStyleCameraMovement.CanMoveCamera = true;
+
+        }
     }
 
     public void OnTickFieldEndEdit(string value)
@@ -89,13 +111,13 @@ public class AnimPanel : MonoBehaviour
 
     IEnumerator MovePanelCoroutine(float targetY)
     {
-        Vector2 pos = dragPanel.rect.position;
-        Vector2 target = new Vector2(pos.x, targetY);
+        float pos = dragPanel.rect.position.y;
+        float target = targetY;
 
         float time = 0;
         while (time < 1f)
         {
-            pos = Vector2.Lerp(pos, target, 0.03f);
+            pos = Mathf.Lerp(pos, target, 0.03f);
             dragPanel.SetPanelSize(pos);
             time += Time.deltaTime;
             yield return null;
@@ -103,11 +125,11 @@ public class AnimPanel : MonoBehaviour
         dragPanel.SetPanelSize(target);
     }
 
-    public void OnAnimPanelPointer(bool IsEnter)
-    {
-        BDEngineStyleCameraMovement.CanMoveCamera = !IsEnter;
-        IsMouseEnter = IsEnter;
-    }
+    //public void OnAnimPanelPointer(bool IsEnter)
+    //{
+    //    BDEngineStyleCameraMovement.CanMoveCamera = !IsEnter;
+    //    IsMouseEnter = IsEnter;
+    //}
 
     public void OnScrollWheel(InputAction.CallbackContext callback)
     {
@@ -117,11 +139,11 @@ public class AnimPanel : MonoBehaviour
 
         if (scroll.y > 0.1f)
         {
-            manager.Timeline.ChangeGrid(1);
+            manager.Timeline.ChangeGrid(5);
         }
         else if (scroll.y < -0.1f && manager.Timeline.GridCount > 20)
         {
-            manager.Timeline.ChangeGrid(-1);
+            manager.Timeline.ChangeGrid(-5);
         }
 
     }
