@@ -11181,10 +11181,10 @@ RectTransform:
   - {fileID: 240487670}
   m_Father: {fileID: 973496967}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -33.847862, y: 0}
-  m_SizeDelta: {x: 42.5044, y: 40}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 50.281776, y: 0}
+  m_SizeDelta: {x: 83.7072, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &910428488
 MonoBehaviour:
@@ -11284,9 +11284,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: '20
-
-'
+  m_Text: 20
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0
@@ -12143,8 +12141,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 119, y: 0}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 134.14252, y: 0}
+  m_SizeDelta: {x: 229.6987, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &973496968
 MonoBehaviour:
@@ -12166,7 +12164,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 1 /      s
+  m_text: tick/sec
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 7e7929c3d8179164b9f56b9aca6e5834, type: 2}
   m_sharedMaterial: {fileID: -5336230689261455239, guid: 7e7929c3d8179164b9f56b9aca6e5834, type: 2}
@@ -12200,7 +12198,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 4
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -16415,7 +16413,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "20\n\u200B"
+  m_text: "20\u200B"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 7e7929c3d8179164b9f56b9aca6e5834, type: 2}
   m_sharedMaterial: {fileID: -5336230689261455239, guid: 7e7929c3d8179164b9f56b9aca6e5834, type: 2}

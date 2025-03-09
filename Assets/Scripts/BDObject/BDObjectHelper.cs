@@ -45,7 +45,6 @@ public static class BDObjectHelper
 
     public static Dictionary<string, T> SetDictionary<T>(T root, Func<T, BDObject> getBDObj, Func<T, IEnumerable<T>> getChildren)
     {
-        int count = 0;
         Dictionary<string, T> IDDataDict = new Dictionary<string, T>();
         Queue<T> queue = new Queue<T>();
         queue.Enqueue(root);
@@ -57,8 +56,7 @@ public static class BDObjectHelper
 
             if (string.IsNullOrEmpty(bdObj.ID))
             {
-                bdObj.ID = count.ToString();
-                count++;
+                bdObj.ID = bdObj.name;
             }
 
             IDDataDict[bdObj.ID] = obj;
