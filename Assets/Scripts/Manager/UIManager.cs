@@ -1,5 +1,6 @@
 using Riten.Native.Cursors;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class UIManger : BaseManager
 {
@@ -31,5 +32,11 @@ public class UIManger : BaseManager
     public void OnPressImportButton()
     {
         fileManager.ImportFile();
+    }
+
+    public void OnRealodButton()
+    {
+        DestroyImmediate(GameManager.Instance.gameObject);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

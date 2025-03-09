@@ -17,7 +17,7 @@ public class GameManager : MonoBehaviour
     }
 
     // 모든 매니저가 저장되는 딕셔너리
-    private static Dictionary<Type, BaseManager> managers = new Dictionary<Type, BaseManager>();
+    private Dictionary<Type, BaseManager> managers = new Dictionary<Type, BaseManager>();
 
     public SettingManager Setting => GetManager<SettingManager>();
 
@@ -25,7 +25,7 @@ public class GameManager : MonoBehaviour
     public static T GetManager<T>() where T : BaseManager
     {
         // 딕셔너리에서 해당 타입의 매니저를 찾아 반환
-        if (managers.TryGetValue(typeof(T), out var manager))
+        if (instance.managers.TryGetValue(typeof(T), out var manager))
         {
             if (manager is T)
                 return manager as T;
@@ -61,8 +61,6 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
-        DontDestroyOnLoad(gameObject);
     }
 }
 

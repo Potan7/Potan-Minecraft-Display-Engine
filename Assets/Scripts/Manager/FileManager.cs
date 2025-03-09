@@ -94,7 +94,7 @@ public class FileManager : BaseManager
 
     private void SetDictByFrameTxt(SettingManager settingManager, string frameFile)
     {
-        Debug.Log("SetDictByFrameTxt : " + frameFile);
+        CustomLog.Log("Frame.txt 파일 찾음 : " + frameFile);
         frameInfo.Clear();
 
         // 파일 읽기

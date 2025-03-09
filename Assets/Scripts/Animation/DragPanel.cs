@@ -22,7 +22,7 @@ public class DragPanel : MonoBehaviour,
     {
         if (lastHeight != canvasRectTransform.rect.height)
         {
-            Debug.Log("Canvas Height Changed");
+            //Debug.Log("Canvas Height Changed");
             SetPanelSize(lastPanelSize);
             lastHeight = canvasRectTransform.rect.height;
         }

@@ -38,13 +38,13 @@ public class SystemManager : BaseManager
     {
 
 
-        Rect rect = new Rect(10, 30, Screen.width, Screen.height);
+        Rect rect = new Rect(Screen.width - 200, 30, Screen.width, Screen.height);
 
         float ms = deltaTime * 1000f;
         float fps = 1.0f / deltaTime;
         string text = string.Format("{0:0.} FPS ({1:0.0} ms)", fps, ms);
         
-        Rect versionRect = new Rect(10, 10, Screen.width, Screen.height);
+        Rect versionRect = new Rect(Screen.width - 200, 10, Screen.width, Screen.height);
         string version = string.Format("Version: {0}", Application.version);
 
         GUI.Label(rect, text, style);

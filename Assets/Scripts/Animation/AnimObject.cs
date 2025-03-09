@@ -256,7 +256,6 @@ public class AnimObject : MonoBehaviour
         inter = setting.DefaultInterpolation;
 
         FileManager fileManager = GameManager.GetManager<FileManager>();
-        bool HasFrameTxt = false;
 
         if (setting.UseFrameTxtFile)
         {
@@ -267,12 +266,12 @@ public class AnimObject : MonoBehaviour
                 {
                     tick += info.Item1;
                     inter = info.Item2;
-                    HasFrameTxt = true;
+                    return;
                 }
             }
         }
 
-        if (setting.UseNameInfoExtract && !HasFrameTxt)
+        if (setting.UseNameInfoExtract)
         {
             int sValue = BDObjectHelper.ExtractNumber(fileName, "s", 0);
             int iValue = BDObjectHelper.ExtractNumber(fileName, "i", -1);
@@ -289,6 +288,8 @@ public class AnimObject : MonoBehaviour
     // 프레임 삭제하기
     public void RemoveFrame(Frame frame)
     {
+        if (frames == null) return;
+
         frames.Remove(frame.Tick);
         Destroy(frame.gameObject);
 
@@ -307,6 +308,14 @@ public class AnimObject : MonoBehaviour
     public void RemoveAnimObj()
     {
         AnimManager.TickChanged -= OnTickChanged;
+        var frame = frames;
+        frames = null;
+        while (frame.Count > 0)
+        {
+            frame.Values[0].RemoveFrame();
+            Destroy(frame.Values[0].gameObject);
+            frame.RemoveAt(0);
+        }
         manager.RemoveAnimObject(this);
     }
 

@@ -46,5 +46,7 @@ public class AnimObjList : MonoBehaviour
             animObjects[i].rect.anchoredPosition = new Vector2(animObjects[i].rect.anchoredPosition.x, animObjects[i].rect.anchoredPosition.y + jump);
         }
         importButton.anchoredPosition = new Vector2(importButton.anchoredPosition.x, importButton.anchoredPosition.y + jump);
+
+        CustomLog.Log("애니메이션 라인 삭제됨: " + obj.fileName);
     }
 }
