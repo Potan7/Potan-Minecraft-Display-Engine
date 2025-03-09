@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f1d1c287ded68be43934c42c517f05d2
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 155804
+  packageName: Simple Tooltip
+  packageVersion: 1.0
+  assetPath: Assets/Simple Tooltip/Resources/STDefault.asset
+  uploadId: 334072

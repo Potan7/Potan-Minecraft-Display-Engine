@@ -1,0 +1,2 @@
+data merge entity @e[limit=1,tag=pt_appie1,type=block_display] {start_interpolation: 0, interpolation_duration: 10, transformation:[-1.0f,0.0f,0.0f,0.1875f,0.0f,1.0f,0.0f,0.0f,-0.0f,0.0f,-1.0f,-0.0f,0.0f,0.0f,0.0f,1.0f]}
+data merge entity @e[limit=1,tag=pt_appie2,type=block_display] {start_interpolation: 0, interpolation_duration: 10, transformation:[-1.0f,0.0f,0.0f,0.1875f,0.0f,1.0f,0.0f,1.0f,-0.0f,0.0f,-1.0f,0.0f,0.0f,0.0f,0.0f,1.0f]}

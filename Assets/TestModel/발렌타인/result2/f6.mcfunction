@@ -1,0 +1,3 @@
+data merge entity @e[limit=1,tag=pt_potan10,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[0.5f,-0f,0f,0.0366f,0f,0.25f,0.433f,1.4378f,-0f,-0.433f,0.25f,3.3294f,0f,0f,0f,1f]}
+data merge entity @e[limit=1,tag=pt_potan11,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[0.5f,-0f,0f,0.0366f,0f,0.5f,0.433f,1.3128f,-0f,-0.866f,0.25f,3.5459f,0f,0f,0f,1f]}
+data merge entity @e[limit=1,tag=pt_thing8,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[0.5f,0f,0f,0f,0f,0.3536f,0.7071f,1.1875f,0f,-0.3536f,0.7071f,4f,0f,0f,0f,1f]}

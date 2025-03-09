@@ -6,22 +6,33 @@ using System.Text;
 using System;
 using System.IO.Compression;
 using Newtonsoft.Json;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 
-public class FileManager : RootManager
+public class FileManager : BaseManager
 {
+    public BDObjectManager bdObjManager;
+    public AnimObjList animObjList;
     public HashSet<HeadGenerator> WorkingGenerators = new HashSet<HeadGenerator>();
+
+    public Dictionary<string, (int, int)> frameInfo = new Dictionary<string, (int, int)>();
 
     private void Start()
     {
+        bdObjManager = GameManager.GetManager<BDObjectManager>();
+
         // .bdengine, .bdstudio 확장자만 필터링
         FileBrowser.SetFilters(false,
             new FileBrowser.Filter("Files", ".bdengine", ".bdstudio"));
 
         // 런처 경로 추가
-        FileBrowser.AddQuickLink("Launcher File", Application.dataPath);
+#if UNITY_EDITOR
+        FileBrowser.AddQuickLink("Launcher Folder", Application.dataPath);
+#else
+        FileBrowser.AddQuickLink("Launcher Folder", Application.dataPath + "/../");
+#endif
 
         // 다운로드 폴더 추가
         string download = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal));
@@ -30,85 +41,218 @@ public class FileManager : RootManager
         FileBrowser.AddQuickLink("Downloads", download);
     }
 
-    IEnumerator ShowLoadDialogCoroutine()
+    IEnumerator ShowLoadDialogCoroutine(Action<List<string>> callback)
     {
-        BDEngineStyleCameraMovement.CanMoveCamera = false;
         // 파일 브라우저를 열고 사용자가 파일을 선택하거나 취소할 때까지 대기
-        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files, true, null, null, "Select Files", "Load");
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.FilesAndFolders, true, null, null, "Select Files", "Load");
 
         // 파일 브라우저가 파일을 불러오면 콜백 함수 호출
         if (FileBrowser.Success)
             // 만약 Success가 false라면 Result는 null이 된다.
-            AfterLoadFile(FileBrowser.Result); 
+        { 
+            // 폴더 분리하기
+            List<string> files = new List<string>();
+            string[] result = FileBrowser.Result;
+
+            for (int i = 0; i < result.Length; i++)
+            {
+                // 폴더 내 모든 파일들 리스트에 추가
+                if (Directory.Exists(result[i]))
+                {
+                    string[] folderFiles = Directory.GetFiles(result[i], "*.bdengine", SearchOption.TopDirectoryOnly);
+
+                    SettingManager settingManager = GameManager.GetManager<SettingManager>();
+
+                    // frame.txt 파일이 있는지 확인
+                    if (settingManager.UseFrameTxtFile)
+                    {
+                        string frameFile = Directory.GetFiles(result[i], "frame.txt", SearchOption.TopDirectoryOnly).FirstOrDefault();
+                        //Debug.Log("Try find Frame : " + frameFile);
+
+                        if (!string.IsNullOrEmpty(frameFile))
+                            SetDictByFrameTxt(settingManager, frameFile);
+                    }
+
+
+                    files.AddRange(folderFiles);
+                }
+                else
+                {
+                    // 아니라면 그냥 추가
+                    files.Add(result[i]);
+                }
+            }
+
+            callback?.Invoke(files); 
+        }
         else
         {
             CustomLog.Log("Failed to load file");
-            BDEngineStyleCameraMovement.CanMoveCamera = true;
         }
         
     }
 
-    public void ImportFile()
+    private void SetDictByFrameTxt(SettingManager settingManager, string frameFile)
     {
-        StartCoroutine(ShowLoadDialogCoroutine());
+        Debug.Log("SetDictByFrameTxt : " + frameFile);
+        frameInfo.Clear();
+
+        // 파일 읽기
+        var lines = File.ReadLines(frameFile);
+
+        foreach (string line in lines)
+        {
+            //Debug.Log("Line : " + line);
+            string[] parts = line.Split(' ');
+
+            string frameKey = null;
+            int sValue = settingManager.DefaultTickInterval; // 기본값 (필요하면 조정)
+            int iValue = settingManager.DefaultInterpolation; // 기본값 (필요하면 조정)
+
+            foreach (string part in parts)
+            {
+                string trimmed = part.Trim();
+
+                if (trimmed.StartsWith("f"))
+                {
+                    frameKey = trimmed;
+                }
+                else if (trimmed.StartsWith("s"))
+                {
+                    if (int.TryParse(trimmed.Substring(1), out int s))
+                        sValue = s;
+                }
+                else if (trimmed.StartsWith("i"))
+                {
+                    if (int.TryParse(trimmed.Substring(1), out int inter))
+                        iValue = inter;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(frameKey))
+            {
+                frameInfo[frameKey] = (sValue, iValue);
+                //Debug.Log("Frame Info : " + frameKey + " " + sValue + " " + iValue);
+            }
+        }
     }
 
-    public async void AfterLoadFile(string[] filepaths)
-    {
-        Stopwatch stopwatch = new();
-        stopwatch.Start();
+    // 파일 임포트
+    public void ImportFile() => StartCoroutine(ShowLoadDialogCoroutine(AfterLoadFile));
 
+    // 프레임 임포트
+    public void ImportFrame(AnimObject target, int tick) => StartCoroutine(FrameImportCoroutine(target, tick));
+
+    IEnumerator FrameImportCoroutine(AnimObject target, int tick)
+    {
+        // 파일 브라우저를 열고 사용자가 파일을 선택하거나 취소할 때까지 대기
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files, false);
+
+        if (FileBrowser.Success)
+        {
+            string filepath = FileBrowser.Result[0];
+            AfterLoadFrame(filepath, target, tick);
+        }
+        else
+        {
+            CustomLog.Log("Failed to load file");
+        }
+    }
+
+    // 파일 불러와서 디스플레이 생성하기
+    public async void AfterLoadFile(List<string> filepaths)
+    {
         GameManager.GetManager<UIManger>().SetLoadingPanel(true);
 
-        Task[] tasks = new Task[filepaths.Length];
-
-        for (int i = 0; i < filepaths.Length; i++)
+        SettingManager settingManager = GameManager.GetManager<SettingManager>();
+        if (settingManager.UseFrameTxtFile || settingManager.UseNameInfoExtract)
         {
-            tasks[i] = ProcessFileAsync(filepaths[i]);
+            // 파일명 순으로 정렬
+            filepaths = SortFiles(filepaths);
+            //Debug.Log("Sorted Files : ");
+            //for (int i = 0; i < filepaths.Count; i++)
+            //{
+            //    Debug.Log(filepaths[i]);
+            //}
         }
-        await Task.WhenAll(tasks);
-        await WaitWhileAsync(() => WorkingGenerators.Count > 0);
-        stopwatch.Stop();
+
+        // 첫번째 파일로 디스플레이 생성
+        AnimObject animObject = await MakeDisplay(filepaths[0]);
+
+        // 이후 파일부터는 프레임 추가하기
+        for (int i = 1; i < filepaths.Count; i++)
+        {
+            BDObject[] bdObjects = await ProcessFileAsync(filepaths[i]);
+            animObject.AddFrame(bdObjects[0], Path.GetFileNameWithoutExtension(filepaths[i]));
+        }
+        while (WorkingGenerators.Count > 0) await Task.Delay(500);
+
+
+        //for (int i = 0; i < filepaths.Count; i++)
+        //{
+        //    runningTasks.Add(MakeDisplay(filepaths[i]));
+        //    // 만약 파일이 너무 많으면 나눠서 작업
+        //    if (runningTasks.Count >= batch)
+        //    {
+        //        await Task.WhenAll(runningTasks);
+        //        runningTasks.Clear();
+        //    }
+        //}
+        //if (runningTasks.Count > 0)
+        //{
+        //    await Task.WhenAll(runningTasks);
+        //}
 
         GameManager.GetManager<UIManger>().SetLoadingPanel(false);
-        BDEngineStyleCameraMovement.CanMoveCamera = true;
 
-        CustomLog.Log($"BDObject Count: {GameManager.GetManager<BDObjectManager>().BDObjectCount}, Import Time: {stopwatch.ElapsedMilliseconds}ms");
+        CustomLog.Log($"Import is Done! BDObject Count: {GameManager.GetManager<BDObjectManager>().BDObjectCount}");
     }
 
-    public async Task WaitWhileAsync(Func<bool> conditionFunc, int checkIntervalMs = 500)
+    // 파일 불러와서 프레임 생성하기
+    public async void AfterLoadFrame(string filepath, AnimObject target, int tick)
     {
-        while (conditionFunc())
-        {
-            await Task.Delay(checkIntervalMs); // 지정한 시간(ms)만큼 대기 후 다시 체크
-        }
+        GameManager.GetManager<UIManger>().SetLoadingPanel(true);
+
+        BDObject[] bdObjects = await ProcessFileAsync(filepath);
+        target.AddFrame(Path.GetFileNameWithoutExtension(filepath), bdObjects[0], tick, GameManager.Instance.Setting.DefaultInterpolation);
+
+        GameManager.GetManager<UIManger>().SetLoadingPanel(false);
     }
 
     // 개별 파일 처리 비동기 함수
-    private async Task ProcessFileAsync(string filepath)
+    private async Task<BDObject[]> ProcessFileAsync(string filepath)
     {
-        // 1. 파일 읽기 (비동기)
-        byte[] file = await Task.Run(() => FileBrowserHelpers.ReadBytesFromFile(filepath));
+        return await Task.Run(() =>
+        {
+            // 파일 읽기(텍스트)
+            string base64Text = FileBrowserHelpers.ReadTextFromFile(filepath);
 
-        // 2. Base64 디코딩
-        byte[] gzipData = Convert.FromBase64String(Encoding.UTF8.GetString(file));
+            // Base64 → gzipData
+            byte[] gzipData = Convert.FromBase64String(base64Text);
 
-        // 3. GZip 압축 해제 (비동기)
-        string jsonData = await Task.Run(() => DecompressGzip(gzipData));
+            // gzip 해제 → json
+            string jsonData = DecompressGzip(gzipData);
 
-        // 4. JSON 데이터를 BDObject로 변환 및 오브젝트 생성
-        await MakeDisplay(jsonData);
+#if UNITY_EDITOR
+            Debug.Log(jsonData);
+#endif
+
+            // BDObject[] 역직렬화
+            return JsonConvert.DeserializeObject<BDObject[]>(jsonData);
+        });
     }
 
-    // JSON 데이터를 BDObject로 변환해서 오브젝트 생성
-    public async Task MakeDisplay(string jsonData)
+    // 디스플레이 만들기
+    public async Task<AnimObject> MakeDisplay(string filepath)
     {
-        BDObject[] bDObjects = await Task.Run(() => JsonConvert.DeserializeObject<BDObject[]>(jsonData));
+        BDObject[] bdObjects = await ProcessFileAsync(filepath);
 
-        await GameManager.GetManager<BDObjectManager>().AddObjects(bDObjects);
+        string fileName = Path.GetFileNameWithoutExtension(filepath);
+        await bdObjManager.AddObject(bdObjects[0], fileName);
+        return animObjList.AddAnimObject(fileName);
     }
 
-
+    // gzipData를 string으로 변환하기
     string DecompressGzip(byte[] gzipData)
     {
         using (var compressedStream = new MemoryStream(gzipData))
@@ -117,5 +261,37 @@ public class FileManager : RootManager
         {
             return reader.ReadToEnd();
         }
+    }
+
+    public List<string> SortFiles(IEnumerable<string> fileNames)
+    {
+        // "f" 뒤에 오는 숫자를 추출하는 정규식 (경로나 구분자와 무관하게)
+        Regex regex = new Regex(@"f(\d+)", RegexOptions.IgnoreCase);
+
+        var matchedFiles = new List<(string fileName, int number)>();
+        var unmatchedFiles = new List<string>();
+
+        foreach (var fileName in fileNames)
+        {
+            var match = regex.Match(fileName);
+            // f 뒤의 숫자만 추출
+            if (match.Success && int.TryParse(match.Groups[1].Value, out int number))
+            {
+                matchedFiles.Add((fileName, number));
+            }
+            else
+            {
+                unmatchedFiles.Add(fileName);
+            }
+        }
+
+        // "f숫자"가 있는 파일을 숫자 기준으로 정렬
+        matchedFiles.Sort((a, b) => a.number.CompareTo(b.number));
+
+        // 정렬된 리스트 + 패턴이 없는 파일을 뒤에 추가
+        var sortedFiles = matchedFiles.Select(x => x.fileName).ToList();
+        sortedFiles.AddRange(unmatchedFiles);
+
+        return sortedFiles;
     }
 }

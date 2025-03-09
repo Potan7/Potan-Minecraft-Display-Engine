@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 8037e05bad2415743ba7093be0b35598
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 155804
+  packageName: Simple Tooltip
+  packageVersion: 1.0
+  assetPath: Assets/Simple Tooltip/Resources/SimpleTooltip.prefab
+  uploadId: 334072
