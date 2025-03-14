@@ -1,252 +1,257 @@
-using UnityEngine;
-using Newtonsoft.Json.Linq;
 using System;
+using Manager;
 using Minecraft;
+using Newtonsoft.Json.Linq;
+using UnityEngine;
 
-public class BlockModelGenerator : MonoBehaviour
+namespace BDObject
 {
-    public MinecraftModelData modelData;
-    public string modelName;
-    public Color color = Color.white;
-
-    public void SetModelByBlockState(JToken modelInfo)
+    public class BlockModelGenerator : MonoBehaviour
     {
-        // ¸ğ´ú Á¤º¸ ¼¼ÆÃ
-        string modelLocation;
-        JObject modelObject;
+        public MinecraftModelData ModelData;
+        public string modelName;
+        public Color color = Color.white;
 
-        if (modelInfo.Type == JTokenType.Array)
+        public void SetModelByBlockState(JToken modelInfo)
         {
-            modelObject = modelInfo[0] as JObject;
-            modelLocation = modelInfo[0]["model"].ToString();
-            //CustomLog.Log("Model : " + modelLocation);
-        }
-        else
-        {
-            modelObject = modelInfo as JObject;
-            modelLocation = modelInfo["model"].ToString();
-        }
+            // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            string modelLocation;
+            JObject modelObject;
 
-        int xRot = modelObject.TryGetValue("x", out JToken xToken) ? xToken.Value<int>() : 0;
-        int yRot = modelObject.TryGetValue("y", out JToken yToken) ? yToken.Value<int>() : 0;
-        bool uvlock = modelObject.TryGetValue("uvlock", out JToken uvlockToken) ? uvlockToken.Value<bool>() : false;
-
-        SetModel(modelLocation);
-
-        // XÃà, YÃà È¸ÀüÀ» ¸íÈ®È÷ ¼³Á¤
-        Quaternion modelXRot = Quaternion.Euler(-xRot, 0, 0);
-        Quaternion modelYRot = Quaternion.Euler(0, -yRot, 0);
-
-        transform.localRotation = modelYRot * modelXRot;
-    }
-
-    public void SetModel(string modelLocation)
-    {
-        // ºÒ·¯¿Â ¸ğµ¨À» ¹ÙÅÁÀ¸·Î »ı¼ºÇÏ±â
-        modelLocation = MinecraftFileManager.RemoveNamespace(modelLocation);
-        modelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
-        BDObjectManager bdManager = GameManager.GetManager<BDObjectManager>();
-
-        //Debug.Log("Model Data: " + modelData);
-
-        // ¸ğµ¨ µ¥ÀÌÅÍ¸¦ ÀÌ¿ëÇØ¼­ ºí·ÏÀ» »ı¼º
-        int count = modelData.elements.Count;
-        for (int i = 0; i < count; i++)
-        {
-            JObject element = modelData.elements[i];
-
-            MeshRenderer cubeObject = Instantiate(bdManager.cubePrefab, transform);
-            //cubeObject.transform.localPosition = new Vector3(0.5f, 0.5f, 0.5f);
-
-            // Å¥ºêÀÇ À§Ä¡¿Í Å©±â¸¦ ¼³Á¤
-            Vector3 from = new Vector3(
-                element["from"][0].Value<float>(),
-                element["from"][1].Value<float>(),
-                element["from"][2].Value<float>());
-            Vector3 to = new Vector3(
-                element["to"][0].Value<float>(),
-                element["to"][1].Value<float>(),
-                element["to"][2].Value<float>());
-
-            Vector3 size = (to - from) / 32.0f;
-            Vector3 center = (from + to) / 32.0f;
-
-            // Å¥ºêÀÇ Å©±â Àû¿ë
-            cubeObject.transform.localScale = size;
-
-            // Å¥ºêÀÇ È¸ÀüÀ» ¼³Á¤
-            SetRotation(element, cubeObject, size);
-            // ÃÖÁ¾ À§Ä¡ ¼³Á¤
-            cubeObject.transform.localPosition = center - new Vector3(0.5f, 0.5f, 0.5f);
-
-            // Å¥ºêÀÇ ÅØ½ºÃÄ¸¦ ¼³Á¤
-            SetFaces(modelData, element, cubeObject);
-        }
-    }
-
-    protected void SetRotation(JObject element, MeshRenderer cubeObject, Vector3 size)
-    {
-        if (!element.ContainsKey("rotation"))
-        {
-            return;
-        }
-
-        JObject rotation = element["rotation"] as JObject;
-
-        // origin °ª È®ÀÎ ¹× ¿ùµå ÁÂÇ¥ º¯È¯
-        Vector3 origin = new Vector3(
-            rotation["origin"][0].Value<float>(),
-            rotation["origin"][1].Value<float>(),
-            rotation["origin"][2].Value<float>()
-        ) / 16.0f;
-        Vector3 worldOrigin = cubeObject.transform.parent.position + origin;
-
-        // È¸ÀüÃà ¹× °¢µµ ¼³Á¤
-        Vector3 axis = rotation["axis"].ToString() switch
-        {
-            "x" => Vector3.right,
-            "y" => Vector3.up,
-            "z" => Vector3.forward,
-            _ => Vector3.zero
-        };
-        float angle = rotation["angle"].Value<float>();
-
-        // È¸Àü Àû¿ë
-        cubeObject.transform.RotateAround(worldOrigin, axis, angle);
-
-        // ½ºÄÉÀÏ ÀçÁ¶Á¤ (rescale ¿É¼Ç Àû¿ë)
-        if (rotation.TryGetValue("rescale", out JToken rescaleToken) && rescaleToken.Value<bool>())
-        {
-            float scaleFactor = Mathf.Sqrt(2.0f); // ´ë°¢¼± ±æÀÌ º¸Á¤
-            cubeObject.transform.localScale = size * scaleFactor;
-        }
-    }
-
-    protected void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
-    {
-        if (!element.TryGetValue("faces", out JToken facesToken)) return;
-        JObject faces = facesToken as JObject;
-
-        Texture texture = null;
-        bool isTextureAnimated = false;
-
-        ReadOnlySpan<string> Transparent = new[] { "glass", "honey_block", "slime_block" };
-        for (int i = 0; i < Transparent.Length; i++)
-        {
-            if (modelName.Contains(Transparent[i]))
+            if (modelInfo.Type == JTokenType.Array)
             {
-                var cubeMaterials = cubeObject.materials;
-                int cnt = cubeObject.materials.Length;
-                Material tshader = GameManager.GetManager<BDObjectManager>().BDObjTransportMaterial;
+                modelObject = modelInfo[0] as JObject;
+                modelLocation = modelInfo[0]["model"].ToString();
+                //CustomLog.Log("Model : " + modelLocation);
+            }
+            else
+            {
+                modelObject = modelInfo as JObject;
+                modelLocation = modelInfo["model"].ToString();
+            }
 
-                for (int j = 0; j < cnt; j++)
+            var xRot = modelObject.TryGetValue("x", out var xToken) ? xToken.Value<int>() : 0;
+            var yRot = modelObject.TryGetValue("y", out var yToken) ? yToken.Value<int>() : 0;
+            //var uvlock = modelObject.TryGetValue("uvlock", out var uvlockToken) && uvlockToken.Value<bool>();
+
+            SetModel(modelLocation);
+
+            // Xï¿½ï¿½, Yï¿½ï¿½ È¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            var modelXRot = Quaternion.Euler(-xRot, 0, 0);
+            var modelYRot = Quaternion.Euler(0, -yRot, 0);
+
+            transform.localRotation = modelYRot * modelXRot;
+        }
+
+        public void SetModel(string modelLocation)
+        {
+            // ï¿½Ò·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+            modelLocation = MinecraftFileManager.RemoveNamespace(modelLocation);
+            ModelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
+            var bdManager = GameManager.GetManager<BdObjectManager>();
+
+            //Debug.Log("Model Data: " + modelData);
+
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½Ì¿ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            var count = ModelData.Elements.Count;
+            for (var i = 0; i < count; i++)
+            {
+                var element = ModelData.Elements[i];
+
+                var cubeObject = Instantiate(bdManager.cubePrefab, transform);
+                //cubeObject.transform.localPosition = new Vector3(0.5f, 0.5f, 0.5f);
+
+                // Å¥ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ Å©ï¿½â¸¦ ï¿½ï¿½ï¿½ï¿½
+                var from = new Vector3(
+                    element["from"][0].Value<float>(),
+                    element["from"][1].Value<float>(),
+                    element["from"][2].Value<float>());
+                var to = new Vector3(
+                    element["to"][0].Value<float>(),
+                    element["to"][1].Value<float>(),
+                    element["to"][2].Value<float>());
+
+                var size = (to - from) / 32.0f;
+                var center = (from + to) / 32.0f;
+
+                // Å¥ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                cubeObject.transform.localScale = size;
+
+                // Å¥ï¿½ï¿½ï¿½ï¿½ È¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                SetRotation(element, cubeObject, size);
+                // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½
+                cubeObject.transform.localPosition = center - new Vector3(0.5f, 0.5f, 0.5f);
+
+                // Å¥ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Ä¸ï¿½ ï¿½ï¿½ï¿½ï¿½
+                SetFaces(ModelData, element, cubeObject);
+            }
+        }
+
+        private static void SetRotation(JObject element, MeshRenderer cubeObject, Vector3 size)
+        {
+            if (!element.TryGetValue("rotation", out var value))
+            {
+                return;
+            }
+
+            var rotation = value as JObject;
+
+            // origin ï¿½ï¿½ È®ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ ï¿½ï¿½È¯
+            var origin = new Vector3(
+                rotation["origin"][0].Value<float>(),
+                rotation["origin"][1].Value<float>(),
+                rotation["origin"][2].Value<float>()
+            ) / 16.0f;
+            var worldOrigin = cubeObject.transform.parent.position + origin;
+
+            // È¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            var axis = rotation["axis"].ToString() switch
+            {
+                "x" => Vector3.right,
+                "y" => Vector3.up,
+                "z" => Vector3.forward,
+                _ => Vector3.zero
+            };
+            var angle = rotation["angle"].Value<float>();
+
+            // È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            cubeObject.transform.RotateAround(worldOrigin, axis, angle);
+
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (rescale ï¿½É¼ï¿½ ï¿½ï¿½ï¿½ï¿½)
+            if (rotation.TryGetValue("rescale", out var rescaleToken) && rescaleToken.Value<bool>())
+            {
+                var scaleFactor = Mathf.Sqrt(2.0f); // ï¿½ë°¢ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                cubeObject.transform.localScale = size * scaleFactor;
+            }
+        }
+
+        private void SetFaces(MinecraftModelData model, JObject element, MeshRenderer cubeObject)
+        {
+            if (!element.TryGetValue("faces", out var facesToken)) return;
+            var faces = facesToken as JObject;
+
+            Texture texture = null;
+            var isTextureAnimated = false;
+
+            // ë§Œì•½ ë°˜íˆ¬ëª…í•œ ë¸”ë¡ì´ë©´ ì¬ì§ˆ ë³€ê²½
+            ReadOnlySpan<string> transparent = new[] { "glass", "honey_block", "slime_block" };
+            for (var i = 0; i < transparent.Length; i++)
+            {
+                if (!modelName.Contains(transparent[i])) continue;
+                
+                var cubeMaterials = cubeObject.materials;
+                var cnt = cubeObject.materials.Length;
+                var tshader = GameManager.GetManager<BdObjectManager>().bdObjTransportMaterial;
+
+                for (var j = 0; j < cnt; j++)
                 {
                     cubeMaterials[j] = tshader;
                 }
                 cubeObject.materials = cubeMaterials;
                 break;
             }
-        }
 
-        // °¢ ¸éÀ» Ã¤¿ì±â
-        foreach (var face in faces)
-        {
-            JObject faceData = face.Value as JObject;
-            // °¢ faceÀÇ ÅØ½ºÃ³ ·Îµå ¹× ¼³Á¤
-            var faceTexture = faceData["texture"];
-
-            Enum.TryParse(face.Key, true, out MinecraftModelData.FaceDirection dir);
-            int idx = (int)dir;
-
-            string texturePath = DisplayObject.GetTexturePath(faceTexture.ToString(), model.textures);
-            Texture2D blockTexture = CreateTexture(texturePath);
-            bool IsAnimated = MinecraftFileManager.IsTextureAnimated(texturePath);
-
-            //// Åõ¸íµµ Ã¼Å©
-            //if (!IsTransparented)
-            //{
-            //    if (CheckForTransparency(blockTexture))
-            //    {
-            //        IsTransparented = true;
-
-            //        // ¸ğµç ÀçÁú º¯°æÇÏ±â
-            //        var cubeMaterials = cubeObject.materials;
-            //        int cnt = cubeObject.materials.Length;
-            //        Material tshader = GameManager.GetManager<BDObjectManager>().BDObjTransportMaterial;
-
-            //        for (int i = 0; i < cnt; i++)
-            //        {
-            //            cubeMaterials[i] = tshader;
-            //        }
-            //        cubeObject.materials = cubeMaterials;
-            //    }
-            //}
-
-            Material mat = cubeObject.materials[idx];
-
-            if (IsAnimated)
+            const string uvFace = "_UVFace";
+            const string matRotation = "_Rotation";
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã¤ï¿½ï¿½ï¿½
+            foreach (var face in faces)
             {
-                // ¾Ö´Ï¸ŞÀÌ¼ÇÀÎ °æ¿ì Ã¹¹øÂ° Ä­ ¼±ÅÃ
-                float uvY = 16.0f * (16.0f / blockTexture.height);
-                Vector4 uv = new Vector4(0, 0, 16, uvY);
-                mat.SetVector("_UVFace", uv);
-            }
-            else if (faceData.ContainsKey("uv"))
-            {
-                // UV ¼³Á¤: [xMin, yMin, xMax, yMax] (Minecraft ±âÁØ 16x16)
-                JArray uvArray = faceData["uv"] as JArray;
-                Vector4 uv = new Vector4(
-                    uvArray[0].Value<float>(),
-                    uvArray[1].Value<float>(),
-                    uvArray[2].Value<float>(),
-                    uvArray[3].Value<float>()
-                );
+                var faceData = face.Value as JObject;
+                // ï¿½ï¿½ faceï¿½ï¿½ ï¿½Ø½ï¿½Ã³ ï¿½Îµï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                var faceTexture = faceData["texture"];
 
-                mat.SetVector("_UVFace", uv);
-            }
+                Enum.TryParse(face.Key, true, out MinecraftModelData.FaceDirection dir);
+                var idx = (int)dir;
 
-            // rotation Àû¿ë: faceDataÀÇ uv ¿µ¿ª ³»¿¡¼­ È¸ÀüÇÒ °¢µµ (0, 90, 180, 270)
-            if (faceData.ContainsKey("rotation"))
-            {
-                int rotation = faceData["rotation"].Value<int>() % 360;
-                if (rotation < 0)
-                    rotation += 360;
-                // Ä¿½ºÅÒ ½¦ÀÌ´õ¿¡¼­ uv ¿µ¿ª¸¸ È¸ÀüÇÏµµ·Ï _Rotation ÇÁ·ÎÆÛÆ¼¸¦ »ç¿ëÇÕ´Ï´Ù.
-                mat.SetFloat("_Rotation", -rotation);
-            }
-            else
-            {
-                mat.SetFloat("_Rotation", 0);
-            }
+                var texturePath = DisplayObject.GetTexturePath(faceTexture.ToString(), model.Textures);
+                var blockTexture = CreateTexture(texturePath);
+                var isAnimated = MinecraftFileManager.IsTextureAnimated(texturePath);
 
-            // ÃÖÁ¾ ÅØ½ºÃ³ Àû¿ë
-            mat.mainTexture = blockTexture;
+                //// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã¼Å©
+                //if (!IsTransparented)
+                //{
+                //    if (CheckForTransparency(blockTexture))
+                //    {
+                //        IsTransparented = true;
 
-            if (texture == null)
-            {
-                texture = mat.mainTexture;
-                isTextureAnimated = IsAnimated;
-            }
-        }
+                //        // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+                //        var cubeMaterials = cubeObject.materials;
+                //        int cnt = cubeObject.materials.Length;
+                //        Material tshader = GameManager.GetManager<BDObjectManager>().BDObjTransportMaterial;
 
-        // face¿¡ ¸í½ÃµÇÁö ¾ÊÀº ¸éÀº ±âº» ÅØ½ºÃ³·Î Ã¤¿ò
-        const int faceCount = 6;
-        for (int i = 0; i < faceCount; i++)
-        {
-            string uvVector = "_UVFace";
-            if (cubeObject.materials[i].mainTexture == null)
-            {
-                cubeObject.materials[i].mainTexture = texture;
+                //        for (int i = 0; i < cnt; i++)
+                //        {
+                //            cubeMaterials[i] = tshader;
+                //        }
+                //        cubeObject.materials = cubeMaterials;
+                //    }
+                //}
 
-                if (isTextureAnimated)
+                var mat = cubeObject.materials[idx];
+
+                if (isAnimated)
                 {
-                    float uvY = 16.0f * (16.0f / texture.height);
-                    Vector4 uv = new Vector4(0, 0, 16, uvY);
-                    cubeObject.materials[i].SetVector(uvVector, uv);
+                    // ï¿½Ö´Ï¸ï¿½ï¿½Ì¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Ã¹ï¿½ï¿½Â° Ä­ ï¿½ï¿½ï¿½ï¿½
+                    var uvY = 16.0f * (16.0f / blockTexture.height);
+                    var uv = new Vector4(0, 0, 16, uvY);
+                    mat.SetVector(uvFace, uv);
+                }
+                else if (faceData.TryGetValue("uv", out var value))
+                {
+                    // UV ï¿½ï¿½ï¿½ï¿½: [xMin, yMin, xMax, yMax] (Minecraft ï¿½ï¿½ï¿½ï¿½ 16x16)
+                    var uvArray = value as JArray;
+                    var uv = new Vector4(
+                        uvArray[0].Value<float>(),
+                        uvArray[1].Value<float>(),
+                        uvArray[2].Value<float>(),
+                        uvArray[3].Value<float>()
+                    );
+
+                    mat.SetVector(uvFace, uv);
+                }
+
+                // rotation ï¿½ï¿½ï¿½ï¿½: faceDataï¿½ï¿½ uv ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (0, 90, 180, 270)
+                if (faceData.ContainsKey("rotation"))
+                {
+                    var rotation = faceData["rotation"].Value<int>() % 360;
+                    if (rotation < 0)
+                        rotation += 360;
+                    // Ä¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì´ï¿½ï¿½ï¿½ï¿½ï¿½ uv ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È¸ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ _Rotation ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+                    mat.SetFloat(matRotation, -rotation);
+                }
+                else
+                {
+                    mat.SetFloat(matRotation, 0);
+                }
+
+                // ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½Ã³ ï¿½ï¿½ï¿½ï¿½
+                mat.mainTexture = blockTexture;
+
+                if (!texture)
+                {
+                    texture = mat.mainTexture;
+                    isTextureAnimated = isAnimated;
                 }
             }
-        }
-        /*
+
+            // faceï¿½ï¿½ ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½âº» ï¿½Ø½ï¿½Ã³ï¿½ï¿½ Ã¤ï¿½ï¿½
+            const int faceCount = 6;
+            for (var i = 0; i < faceCount; i++)
+            {
+                const string uvVector = "_UVFace";
+                if (!cubeObject.materials[i].mainTexture)
+                {
+                    cubeObject.materials[i].mainTexture = texture;
+
+                    if (isTextureAnimated)
+                    {
+                        var uvY = 16.0f * (16.0f / texture.height);
+                        var uv = new Vector4(0, 0, 16, uvY);
+                        cubeObject.materials[i].SetVector(uvVector, uv);
+                    }
+                }
+            }
+            /*
         foreach (MinecraftModelData.FaceDirection direction in Enum.GetValues(typeof(MinecraftModelData.FaceDirection)))
         {
             string key = direction.ToString();
@@ -257,50 +262,51 @@ public class BlockModelGenerator : MonoBehaviour
         }
         */
 
-        // ·¹µå½ºÅæ ¿ÍÀÌ¾î Æ¯¼ö Ã³¸®
-        if (modelName.Contains("redstone_wire"))
-        {
-            //CustomLog.Log("Redstone wire");
-            int cnt = cubeObject.materials.Length;
-            for (int i = 0; i < cnt; i++)
+            // ï¿½ï¿½ï¿½å½ºï¿½ï¿½ ï¿½ï¿½ï¿½Ì¾ï¿½ Æ¯ï¿½ï¿½ Ã³ï¿½ï¿½
+            if (modelName.Contains("redstone_wire"))
             {
-                cubeObject.materials[i].color = Color.red;
+                //CustomLog.Log("Redstone wire");
+                var cnt = cubeObject.materials.Length;
+                for (var i = 0; i < cnt; i++)
+                {
+                    cubeObject.materials[i].color = Color.red;
+                }
             }
-        }
-        else if (modelName.Contains("banner") && element.ContainsKey("color"))
-        {
+            else if (modelName.Contains("banner") && element.ContainsKey("color"))
+            {
             
-            int cnt = cubeObject.materials.Length;
-            for (int i = 0; i < cnt; i++)
-            {
-                cubeObject.materials[i].color = color;
+                var cnt = cubeObject.materials.Length;
+                for (var i = 0; i < cnt; i++)
+                {
+                    cubeObject.materials[i].color = color;
+                }
             }
         }
+
+        protected virtual Texture2D CreateTexture(string path)
+        {
+            return MinecraftFileManager.GetTextureFile(path);
+        }
+
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îºï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½ È®ï¿½ï¿½
+        //protected virtual bool CheckForTransparency(Texture2D texture)
+        //{
+        //    if (texture == null)
+        //    {
+        //        return false;
+        //    }
+
+
+        //    Color[] pixels = texture.GetPixels();
+
+        //    foreach (Color pixel in pixels)
+        //    {
+        //        if (pixel.a < 1.0f && pixel.a > 0.1f)
+        //        {
+        //            return true; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½È¼ï¿½ ï¿½ï¿½ï¿½ï¿½
+        //        }
+        //    }
+        //    return false; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        //}
     }
-
-    protected virtual Texture2D CreateTexture(string path)
-    {
-        return MinecraftFileManager.GetTextureFile(path);
-    }
-
-    // Åõ¸íÇÑ ºÎºĞÀÌ ÀÖ´ÂÁö È®ÀÎ
-    //protected virtual bool CheckForTransparency(Texture2D texture)
-    //{
-    //    if (texture == null)
-    //    {
-    //        return false;
-    //    }
-
-
-    //    Color[] pixels = texture.GetPixels();
-
-    //    foreach (Color pixel in pixels)
-    //    {
-    //        if (pixel.a < 1.0f && pixel.a > 0.1f)
-    //        {
-    //            return true; // ¹İÅõ¸í ÇÈ¼¿ Á¸Àç
-    //        }
-    //    }
-    //    return false; // ¿ÏÀüÈ÷ ºÒÅõ¸í
-    //}
 }

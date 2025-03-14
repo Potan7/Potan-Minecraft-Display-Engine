@@ -1,66 +1,67 @@
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using UnityEngine;
-using System.Threading;
-using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
 using System.Linq;
-using System.Collections.Concurrent;
+using System.Threading.Tasks;
+using Manager;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Minecraft
 {
 
     public class MinecraftFileManager : BaseManager
     {
-        static MinecraftFileManager instance;
+        private static MinecraftFileManager _instance;
 
         //Dictionary<string, byte[]> textureFiles = new Dictionary<string, byte[]>();
-        ConcurrentDictionary<string, byte[]> textureFiles = new ConcurrentDictionary<string, byte[]>();
+        private readonly ConcurrentDictionary<string, byte[]> _textureFiles = new();
         //HashSet<string> isTextureAnimated = new HashSet<string>();
-        ConcurrentBag<string> isTextureAnimated = new ConcurrentBag<string>();
+        private readonly ConcurrentBag<string> _isTextureAnimated = new();
 
         //public Dictionary<string, string> jsonFiles = new Dictionary<string, string>();
-        public ConcurrentDictionary<string, string> jsonFiles = new ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<string, string> _jsonFiles = new();
 
-        // readPreReadedFiles¿¡ ÀÖ´Â ÆÄÀÏµéÀº ¹Ì¸® ÀĞ¾îµÒ
-        Dictionary<string, MinecraftModelData> importantModels = new Dictionary<string, MinecraftModelData>();
+        // readPreReadedFilesï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ ï¿½Ğ¾ï¿½ï¿½
+        private readonly Dictionary<string, MinecraftModelData> _importantModels = new();
 
-        //readonly string[] readFolder = { "models", "textures", "blockstates", "items" }; // ÀĞÀ» Æú´õ
+        //readonly string[] readFolder = { "models", "textures", "blockstates", "items" }; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         //readonly string[] readTexturesFolders = 
         //    { "block", "item", "entity/bed", "entity/shulker", "entity/chest", "entity/conduit", 
-        //    "entity/creeper", "entity/zombie/zombie", "entity/skeleton/", "entity/piglin", "entity/player/wide/steve", "entity/enderdragon/dragon"}; // texturesÀÇ ÀĞÀ» ³»¿ë
+        //    "entity/creeper", "entity/zombie/zombie", "entity/skeleton/", "entity/piglin", "entity/player/wide/steve", "entity/enderdragon/dragon"}; // texturesï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         //readonly string[] readPreReadedFiles =
-        //    {"block", "cube", "cube_all", "cube_all_inner_faces", "cube_column"};   // ¹Ì¸® ·ÎµåÇÒ ÆÄÀÏ
+        //    {"block", "cube", "cube_all", "cube_all_inner_faces", "cube_column"};   // ï¿½Ì¸ï¿½ ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-        readonly string[] hardcodeNames = { "head", "bed", "shulker_box", "chest", "conduit", "shield", "decorated_pot", "banner" };
+        private readonly string[] _hardcodeNames = { "head", "bed", "shulker_box", "chest", "conduit", "shield", "decorated_pot", "banner" };
 
-        readonly string Appdata = Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData);
+        private readonly string _appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
-        const string minecraftPath = ".minecraft/versions";
-        const string minecraftVersion = "1.21.4";
+        private const string MinecraftPath = ".minecraft/versions";
+        private const string MinecraftVersion = "1.21.4";
 
-        [SerializeField]
-        string filePath;
+        [SerializeField] private string filePath;
 
         protected override void Awake()
         {
             base.Awake();
-            instance = this;
+            _instance = this;
         }
 
+        // ì‹œì‘í•˜ë©´ ë§ˆí¬ íŒŒì¼ ì½ìŒ 
         private async void Start()
         {
-            filePath = $"{Appdata}/{minecraftPath}/{minecraftVersion}/{minecraftVersion}.jar";
+            filePath = $"{_appdata}/{MinecraftPath}/{MinecraftVersion}/{MinecraftVersion}.jar";
 
-            CustomLog.Log($"Reading minecraft file: {minecraftVersion}");
-            Stopwatch sw = new Stopwatch();
+            CustomLog.Log($"Reading minecraft file: {MinecraftVersion}");
+            var sw = new Stopwatch();
             sw.Start();
 
-            await ReadJarFile(filePath, $"assets/minecraft");
+            await ReadJarFile(filePath, "assets/minecraft");
 
             CustomLog.Log("Finished reading JAR file");
             //CustomLog.Log("Textures: " + textureFiles.Count + ", JSON: " + jsonFiles.Count);
@@ -70,27 +71,25 @@ namespace Minecraft
 
         }
 
-        #region Static ÇÔ¼öµé
+        #region Static ï¿½Ô¼ï¿½ï¿½ï¿½
 
-        public static JObject GetJSONData(string path)
+        public static JObject GetJsonData(string path)
         {
+            Debug.Log(path);
             if (path.Contains("bed") && !path.Contains("items"))
             {
                 //CustomLog.Log("Bed: " + path);
                 var bed = Resources.Load<TextAsset>("hardcoded/" + path.Replace(".json", ""));
                 return JObject.Parse(bed.text);
             }
-
-            if (instance.jsonFiles.ContainsKey(path))
-            {
-                return JObject.Parse(instance.jsonFiles[path]);
-            }
-            return null;
+            Debug.Log(_instance._jsonFiles.ContainsKey(path));
+            
+            return _instance._jsonFiles.TryGetValue(path, out var file) ? JObject.Parse(file) : null;
         }
 
         /// <summary>
-        /// ¸ğµ¨ µ¥ÀÌÅÍ¸¦ °¡Á®¿É´Ï´Ù.
-        /// ¸ÕÀú hardcodeNames¿¡ ÀÖ´Â ÀÌ¸§À» È®ÀÎÇÏ°í, ±× ´ÙÀ½ jsonFiles¿¡ ÀÖ´ÂÁö È®ÀÎÇÕ´Ï´Ù.
+        /// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½É´Ï´ï¿½.
+        /// ï¿½ï¿½ï¿½ï¿½ hardcodeNamesï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½Ì¸ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½Ï°ï¿½, ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ jsonFilesï¿½ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
@@ -98,39 +97,42 @@ namespace Minecraft
         {
             //CustomLog.Log("Get Model Data: " + path);
 
-            if (instance.importantModels.ContainsKey(path))
+            if (_instance._importantModels.TryGetValue(path, out var data))
             {
-                return instance.importantModels[path];
+                return data;
             }
 
-            for (int i = 0; i < instance.hardcodeNames.Length; i++)
+            foreach (var t in _instance._hardcodeNames)
             {
-                if (path.Contains(instance.hardcodeNames[i]))
+                if (path.Contains(t))
                 {
                     return JsonConvert.DeserializeObject<MinecraftModelData>(Resources.Load<TextAsset>("hardcoded/" + path.Replace(".json", "")).text);
                 }
             }
 
-            if (instance.jsonFiles.ContainsKey(path))
+            if (_instance._jsonFiles.TryGetValue(path, out var file))
             {
-                return JsonConvert.DeserializeObject<MinecraftModelData>(instance.jsonFiles[path]);
+                return JsonConvert.DeserializeObject<MinecraftModelData>(file);
             }
 
             CustomLog.LogError("Model not found: " + path);
             return null;
         }
 
+        // ReSharper disable Unity.PerformanceAnalysis
         public static Texture2D GetTextureFile(string path)
         {
-            if (instance.textureFiles.ContainsKey(path))
+            if (_instance._textureFiles.TryGetValue(path, out var file))
             {
-                Texture2D texture = new Texture2D(2, 2);
-                texture.filterMode = FilterMode.Point;
-                texture.wrapMode = TextureWrapMode.Clamp;
+                var texture = new Texture2D(2, 2)
+                {
+                    filterMode = FilterMode.Point,
+                    wrapMode = TextureWrapMode.Clamp
+                };
                 //texture.alphaIsTransparency = true;
                 texture.Apply();
 
-                texture.LoadImage(instance.textureFiles[path]);
+                texture.LoadImage(file);
 
                 return texture;
             }
@@ -140,16 +142,17 @@ namespace Minecraft
 
         public static bool IsTextureAnimated(string path)
         {
-            return instance.isTextureAnimated.Contains(path + ".mcmeta");
+            return _instance._isTextureAnimated.Contains(path + ".mcmeta");
         }
 
         public static string RemoveNamespace(string path) => path.Replace("minecraft:", "");
         #endregion
 
-        #region ÆÄÀÏ ·Îµå
-        async Task ReadJarFile(string path, string targetFolder)
+        #region ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½
+
+                private async Task ReadJarFile(string path, string targetFolder)
         {
-            // Ã³À½¿¡ ·ÎµåÇÏ°í ³¡³ª¹Ç·Î ¿©±â¼­ ¼±¾ğ ÈÄ ¸Ş¸ğ¸®¿¡ ¿Ã¸®Áö ¾Ê°í Ã³¸®
+            // Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ ï¿½ï¿½ï¿½â¼­ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ş¸ğ¸®¿ï¿½ ï¿½Ã¸ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ Ã³ï¿½ï¿½
             string[] readTexturesFolders =
             {
                 "textures/block", "textures/item", "textures/entity/bed", "textures/entity/shulker",
@@ -162,30 +165,27 @@ namespace Minecraft
 
             string[] readFolder = { "models", "textures", "blockstates", "items" };
 
-            string[] readPreReadedFiles =
-            {"block", "cube", "cube_all", "cube_all_inner_faces", "cube_column"};   // ¹Ì¸® ·ÎµåÇÒ ÆÄÀÏ
-
             if (!File.Exists(path))
             {
                 CustomLog.LogError("File not found: " + path);
                 return;
             }
 
-            using (ZipArchive jarArchive = ZipFile.OpenRead(path))
+            using (var jarArchive = ZipFile.OpenRead(path))
             {
-                List<Task> tasks = new List<Task>(); // Store tasks for async processing
+                var tasks = new List<Task>(); // Store tasks for async processing
 
                 foreach (var entry in jarArchive.Entries)
                 {
-                    // assets/minecraft/... ±¸Á¶ ³»ÀÇ targetFolder·Î ½ÃÀÛÇÏ´ÂÁö È®ÀÎ
+                    // assets/minecraft/... ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ targetFolderï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ï¿½ï¿½ È®ï¿½ï¿½
                     if (!entry.FullName.StartsWith(targetFolder) || string.IsNullOrEmpty(entry.Name))
                         continue;
 
-                    // ÃÖ»óÀ§ Æú´õ ÃßÃâ
-                    string folderName = GetTopLevelFolder(entry.FullName, targetFolder);
+                    // ï¿½Ö»ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                    var folderName = GetTopLevelFolder(entry.FullName, targetFolder);
 
-                    bool isTextureFolder = false;
-                    bool isJsonFolder = false;
+                    var isTextureFolder = false;
+                    var isJsonFolder = false;
 
                     if (folderName == "textures" && IsReadFolder(entry.FullName, readTexturesFolders))
                     {
@@ -224,7 +224,7 @@ namespace Minecraft
                             }
                             else if (entry.FullName.EndsWith(".mcmeta"))
                             {
-                                isTextureAnimated.Add(entry.FullName.Replace("assets/minecraft/", ""));
+                                _isTextureAnimated.Add(entry.FullName.Replace("assets/minecraft/", ""));
                                 //lock (isTextureAnimated)
                                 //{
                                 //    isTextureAnimated.Add(entry.FullName.Replace("assets/minecraft/", ""));
@@ -242,57 +242,66 @@ namespace Minecraft
                 
             }
 
-            // readImportantModels();
-            foreach (var read in readPreReadedFiles)
+            CachingImportantModels();
+        }
+
+        private void CachingImportantModels()
+        {
+            string[] cachedFiles =
+                { "block", "cube", "cube_all", "cube_all_inner_faces", "cube_column" }; 
+
+            foreach (var read in cachedFiles)
             {
-                string readPath = $"models/{read}.json";
-                if (jsonFiles.ContainsKey(readPath))
+                var readPath = $"models/{read}.json";
+                if (_jsonFiles.TryGetValue(readPath, out var file))
                 {
-                    importantModels.Add(read, GetModelData(jsonFiles[readPath]));
+                    _importantModels.Add(read, GetModelData(file));
                 }
             }
         }
 
-        // ÃÖ»óÀ§ Æú´õ ÀÌ¸§ ÃßÃâ
-        string GetTopLevelFolder(string fullPath, string targetFolder)
+        // ï¿½Ö»ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½
+        private static string GetTopLevelFolder(string fullPath, string targetFolder)
         {
-            string relativePath = fullPath.Substring(targetFolder.Length + 1); // targetFolder ÀÌÈÄ °æ·Î
-            int firstSlashIndex = relativePath.IndexOf('/');
-            return firstSlashIndex > -1 ? relativePath.Substring(0, firstSlashIndex) : relativePath;
+            var relativePath = fullPath[(targetFolder.Length + 1)..]; // targetFolder ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+            var firstSlashIndex = relativePath.IndexOf('/');
+            return firstSlashIndex > -1 ? relativePath[..firstSlashIndex] : relativePath;
         }
 
-        // ÁÖ¾îÁø Æú´õ °æ·Î°¡ ³»°¡ ¿øÇÏ´Â textures °æ·Î Áß ÇÏ³ªÀÎÁö È®ÀÎ
-        bool IsReadFolder(string fullPath, string[] readTexturesFolders)
+        // ï¿½Ö¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Î°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï´ï¿½ textures ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
+        private static bool IsReadFolder(string fullPath, string[] readTexturesFolders)
         {
-            foreach (var folder in readTexturesFolders)
+            foreach (var texture in readTexturesFolders)
             {
-                if (fullPath.Contains(folder))
+                if (fullPath.Contains(texture))
+                {
                     return true;
+                }
             }
             return false;
         }
 
-        // JSON ÀúÀå
-        void SaveJsonData(string path, byte[] fileData)
+        // JSON ï¿½ï¿½ï¿½ï¿½
+        private void SaveJsonData(string path, byte[] fileData)
         {
             path = path.Replace("assets/minecraft/", "");
 
             using var memoryStream = new MemoryStream(fileData);
             using var reader = new StreamReader(memoryStream);
-            string json = reader.ReadToEnd();
-
-            jsonFiles[path] = json;
+            var json = reader.ReadToEnd();
+            
+            _jsonFiles[path] = json;
             //lock (jsonFiles)
             //{
             //    jsonFiles[path] = json;
             //}
         }
 
-        // ÅØ½ºÃÄÆÄÀÏ ¹ÙÀÌÆ® ÄÚµå·Î ÀúÀåÇÏ±â
-        void SavePNGData(string path, byte[] fileData)
+        // ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Úµï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+        private void SavePNGData(string path, byte[] fileData)
         {
             path = path.Replace("assets/minecraft/", "");
-            textureFiles[path] = fileData;
+            _textureFiles[path] = fileData;
 
             //lock (textureFiles) // Lock because textureFiles is a shared resource
             //{

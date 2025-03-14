@@ -1,65 +1,70 @@
 using System;
+using Manager;
 using UnityEngine;
+using UnityEngine.Serialization;
 
-public class AnimManager : BaseManager
+namespace Animation
 {
-    [SerializeField]
-    private int _tick = 0;
-    public int Tick
+    public class AnimManager : BaseManager
     {
-        get => _tick;
-        set
+        [FormerlySerializedAs("_tick")] [SerializeField]
+        private int tick;
+        public int Tick
         {
-            if (value < 0)
+            get => tick;
+            set
             {
-                value = 0;
-            }
-            _tick = value;
-            TickChanged?.Invoke(_tick);
-        }
-    }
-
-    [SerializeField]
-    private float _tickSpeed = 20.0f;
-    public float TickSpeed
-    {
-        get => _tickSpeed;
-        set
-        {
-            _tickSpeed = value;
-            tickInterval = 1.0f / _tickSpeed; // Á¤È®ÇÑ ½Ã°£ °£°Ý ¾÷µ¥ÀÌÆ®
-        }
-    }
-
-    public static event Action<int> TickChanged;
-
-    public bool IsPlaying { get; set; } = false;
-
-    public Timeline Timeline;
-
-    private float lastTickTime = 0f;  // ¸¶Áö¸· Tick ¾÷µ¥ÀÌÆ® ½Ã°£
-    private float tickInterval = 1.0f / 20.0f; // ÃÊ±â Tick °£°Ý
-
-    private void Start()
-    {
-        tickInterval = 1.0f / _tickSpeed; // ÃÊ±â TickSpeed ¹Ý¿µ
-        lastTickTime = Time.time; // ½ÃÀÛ ½Ã°£ ±â·Ï
-    }
-
-    private void Update()
-    {
-        if (IsPlaying)
-        {
-            if (Time.time - lastTickTime >= tickInterval)
-            {
-                lastTickTime = Time.time; // ÇöÀç ½Ã°£ ¾÷µ¥ÀÌÆ®
-                Tick++; // Tick Áõ°¡
+                if (value < 0)
+                {
+                    value = 0;
+                }
+                tick = value;
+                TickChanged?.Invoke(tick);
             }
         }
-    }
 
-    public void TickAdd(int value)
-    {
-        Tick += value;
+        [FormerlySerializedAs("_tickSpeed")] [SerializeField]
+        private float tickSpeed = 20.0f;
+        public float TickSpeed
+        {
+            get => tickSpeed;
+            set
+            {
+                tickSpeed = value;
+                _tickInterval = 1.0f / tickSpeed; // ï¿½ï¿½È®ï¿½ï¿½ ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+            }
+        }
+
+        public static event Action<int> TickChanged;
+
+        public bool IsPlaying { get; set; }
+
+        [FormerlySerializedAs("Timeline")] public Timeline timeline;
+
+        private float _lastTickTime;  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Tick ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ã°ï¿½
+        private float _tickInterval = 1.0f / 20.0f; // ï¿½Ê±ï¿½ Tick ï¿½ï¿½ï¿½ï¿½
+
+        private void Start()
+        {
+            _tickInterval = 1.0f / tickSpeed; // ï¿½Ê±ï¿½ TickSpeed ï¿½Ý¿ï¿½
+            _lastTickTime = Time.time; // ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½
+        }
+
+        private void Update()
+        {
+            if (IsPlaying)
+            {
+                if (Time.time - _lastTickTime >= _tickInterval)
+                {
+                    _lastTickTime = Time.time; // ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+                    Tick++; // Tick ï¿½ï¿½ï¿½ï¿½
+                }
+            }
+        }
+
+        public void TickAdd(int value)
+        {
+            Tick += value;
+        }
     }
 }

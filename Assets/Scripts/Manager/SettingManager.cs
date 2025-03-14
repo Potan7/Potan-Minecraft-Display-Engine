@@ -1,104 +1,107 @@
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-public class SettingManager : BaseManager
+namespace Manager
 {
-    public int DefaultInterpolation = 0;
-    public int DefaultTickInterval = 5;
-
-    public bool UseNameInfoExtract { get; set; } = true;
-    public bool UseFrameTxtFile { get; set; } = true;
-
-    public bool UseFindMode = true;
-    public string FakePlayer = "anim";
-    public string ScoreboardName = "anim";
-    public int StartTick = 0;
-    public string Namespace = "PotanAnim";
-    public string FrameFileName = "frame";
-    public string FrameFilePath = "result";
-    public string ResultPath = "result";
-
-    public Toggle FindModeToggle;
-    public TMP_InputField[] inputFields;
-    public GameObject SettingPanel;
-
-    private void Start()
+    public class SettingManager : BaseManager
     {
-        FindModeToggle.onValueChanged.AddListener(
-            (value) =>
-            {
-                UseFindMode = value;
-                if (!UseFindMode)
-                    inputFields[2].text = "@s";
+        [FormerlySerializedAs("DefaultInterpolation")] public int defaultInterpolation;
+        [FormerlySerializedAs("DefaultTickInterval")] public int defaultTickInterval = 5;
+
+        public bool UseNameInfoExtract { get; set; } = true;
+        public bool UseFrameTxtFile { get; set; } = true;
+
+        [FormerlySerializedAs("UseFindMode")] public bool useFindMode = true;
+        [FormerlySerializedAs("FakePlayer")] public string fakePlayer = "anim";
+        [FormerlySerializedAs("ScoreboardName")] public string scoreboardName = "anim";
+        [FormerlySerializedAs("StartTick")] public int startTick;
+        [FormerlySerializedAs("Namespace")] public string @namespace = "PotanAnim";
+        [FormerlySerializedAs("FrameFileName")] public string frameFileName = "frame";
+        [FormerlySerializedAs("FrameFilePath")] public string frameFilePath = "result";
+        [FormerlySerializedAs("ResultPath")] public string resultPath = "result";
+
+        [FormerlySerializedAs("FindModeToggle")] public Toggle findModeToggle;
+        public TMP_InputField[] inputFields;
+        [FormerlySerializedAs("SettingPanel")] public GameObject settingPanel;
+
+        private void Start()
+        {
+            findModeToggle.onValueChanged.AddListener(
+                value =>
+                {
+                    useFindMode = value;
+                    if (!useFindMode)
+                        inputFields[2].text = "@s";
                 });
-        for (int i = 0; i < inputFields.Length; i++)
-        {
-            int idx = i;
-            inputFields[i].onEndEdit.AddListener((value) => OnEndEditValue(value, idx));
-            OnEndEditValue(inputFields[i].text, i);
+            for (var i = 0; i < inputFields.Length; i++)
+            {
+                var idx = i;
+                inputFields[i].onEndEdit.AddListener(value => OnEndEditValue(value, idx));
+                OnEndEditValue(inputFields[i].text, i);
+            }
         }
-    }
 
-    public void SetSettingPanel(bool IsOn)
-    {
-        SettingPanel.SetActive(IsOn);
-    }
-
-    void OnEndEditValue(string value, int idx)
-    {
-        //Debug.Log(idx);
-        switch (idx)
+        public void SetSettingPanel(bool isOn)
         {
-            case 0:
-                if (int.TryParse(value, out int tickInterval) && tickInterval >= 1)
-                {
-                    DefaultTickInterval = tickInterval;
-                }
-                else
-                {
-                    value = DefaultTickInterval.ToString();
-                }
-                break;
-            case 1:
-                if (int.TryParse(value, out int Interpolation) && Interpolation >= 0)
-                {
-                    DefaultInterpolation = Interpolation;
-                }
-                else
-                {
-                    value = Interpolation.ToString();
-                }
-                break;
-            case 2:
-                if (!UseFindMode)
-                    value = "@s";
-                else
-                    FakePlayer = value;
-                break;
-            case 3:
-                ScoreboardName = value;
-                break;
-            case 4:
-                if (int.TryParse(value, out int startTick) && startTick >= 0)
-                    StartTick = startTick;
-                else
-                    value = StartTick.ToString();
-                break;
-            case 5:
-                Namespace = value;
-                break;
-            case 6:
-                FrameFileName = value;
-                break;
-            case 7:
-                FrameFilePath = value;
-                break;
-            case 8:
-                ResultPath = value;
-                break;
+            settingPanel.SetActive(isOn);
         }
-        inputFields[idx].text = value;
+
+        private void OnEndEditValue(string value, int idx)
+        {
+            //Debug.Log(idx);
+            switch (idx)
+            {
+                case 0:
+                    if (int.TryParse(value, out var tickInterval) && tickInterval >= 1)
+                    {
+                        defaultTickInterval = tickInterval;
+                    }
+                    else
+                    {
+                        value = defaultTickInterval.ToString();
+                    }
+                    break;
+                case 1:
+                    if (int.TryParse(value, out var interpolation) && interpolation >= 0)
+                    {
+                        defaultInterpolation = interpolation;
+                    }
+                    else
+                    {
+                        value = interpolation.ToString();
+                    }
+                    break;
+                case 2:
+                    if (!useFindMode)
+                        value = "@s";
+                    else
+                        fakePlayer = value;
+                    break;
+                case 3:
+                    scoreboardName = value;
+                    break;
+                case 4:
+                    if (int.TryParse(value, out var tick) && tick >= 0)
+                        startTick = tick;
+                    else
+                        value = startTick.ToString();
+                    break;
+                case 5:
+                    @namespace = value;
+                    break;
+                case 6:
+                    frameFileName = value;
+                    break;
+                case 7:
+                    frameFilePath = value;
+                    break;
+                case 8:
+                    resultPath = value;
+                    break;
+            }
+            inputFields[idx].text = value;
+        }
     }
 }

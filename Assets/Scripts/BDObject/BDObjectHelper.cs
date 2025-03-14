@@ -1,73 +1,75 @@
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using UnityEngine;
 
-public static class BDObjectHelper
+namespace BDObject
 {
-    private static readonly Regex tagsRegex = new Regex(@"Tags:\[([^\]]+)\]");
-    private static readonly Regex uuidRegex = new Regex(@"UUID:\[I;(-?\d+),(-?\d+),(-?\d+),(-?\d+)\]");
-
-    // Tags:[]¿¡¼­ ÅÂ±× ¹®ÀÚ¿­ ÃßÃâ
-    public static string GetTags(string input)
+    public static class BdObjectHelper
     {
-        if (string.IsNullOrEmpty(input)) return null;
+        private static readonly Regex tagsRegex = new Regex(@"Tags:\[([^\]]+)\]");
+        private static readonly Regex uuidRegex = new Regex(@"UUID:\[I;(-?\d+),(-?\d+),(-?\d+),(-?\d+)\]");
 
-        Match match = tagsRegex.Match(input);
-        return match.Success ? match.Groups[1].Value : null;
-    }
-
-    // UUID:[]¿¡¼­ UUID ¹®ÀÚ¿­ ÃßÃâ
-    public static string GetUUID(string input)
-    {
-        if (string.IsNullOrEmpty(input)) return null;
-
-        Match match = uuidRegex.Match(input);
-        return match.Success
-            ? $"{match.Groups[1].Value},{match.Groups[2].Value},{match.Groups[3].Value},{match.Groups[4].Value}"
-            : null;
-    }
-
-    /// <summary>
-    /// ÆØÄ¡ ½ºÅ¸ÀÏ ÀÌ¸§¿¡¼­ ÇÁ·¹ÀÓ°ú º¸°£ ÃßÃâ
-    /// </summary>
-    public static int ExtractNumber(string input, string key, int defaultValue = 0)
-    {
-        Match match = Regex.Match(input, $@"\b{key}(\d+)\b");
-        return match.Success ? int.Parse(match.Groups[1].Value) : defaultValue;
-    }
-
-    public static string ExtractFrame(string input, string key)
-    {
-        Match match = Regex.Match(input, $@"\b{key}(\d+)\b");
-        return match.Success ? match.Groups[0].Value : null;
-    }
-
-    public static Dictionary<string, T> SetDictionary<T>(T root, Func<T, BDObject> getBDObj, Func<T, IEnumerable<T>> getChildren)
-    {
-        Dictionary<string, T> IDDataDict = new Dictionary<string, T>();
-        Queue<T> queue = new Queue<T>();
-        queue.Enqueue(root);
-
-        while (queue.Count > 0)
+        // Tags:[]ï¿½ï¿½ï¿½ï¿½ ï¿½Â±ï¿½ ï¿½ï¿½ï¿½Ú¿ï¿½ ï¿½ï¿½ï¿½ï¿½
+        public static string GetTags(string input)
         {
-            T obj = queue.Dequeue();
-            BDObject bdObj = getBDObj(obj);
+            if (string.IsNullOrEmpty(input)) return null;
 
-            if (string.IsNullOrEmpty(bdObj.ID))
-            {
-                bdObj.ID = bdObj.name;
-            }
-
-            IDDataDict[bdObj.ID] = obj;
-
-
-            // ÀÚ½Äµé Å¥¿¡ Ãß°¡
-            foreach (var child in getChildren(obj))
-            {
-                queue.Enqueue(child);
-            }
+            var match = tagsRegex.Match(input);
+            return match.Success ? match.Groups[1].Value : null;
         }
-        return IDDataDict;
+
+        // UUID:[]ï¿½ï¿½ï¿½ï¿½ UUID ï¿½ï¿½ï¿½Ú¿ï¿½ ï¿½ï¿½ï¿½ï¿½
+        public static string GetUuid(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return null;
+
+            var match = uuidRegex.Match(input);
+            return match.Success
+                ? $"{match.Groups[1].Value},{match.Groups[2].Value},{match.Groups[3].Value},{match.Groups[4].Value}"
+                : null;
+        }
+
+        /// <summary>
+        /// ï¿½ï¿½Ä¡ ï¿½ï¿½Å¸ï¿½ï¿½ ï¿½Ì¸ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ó°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        /// </summary>
+        public static int ExtractNumber(string input, string key, int defaultValue = 0)
+        {
+            var match = Regex.Match(input, $@"\b{key}(\d+)\b");
+            return match.Success ? int.Parse(match.Groups[1].Value) : defaultValue;
+        }
+
+        public static string ExtractFrame(string input, string key)
+        {
+            var match = Regex.Match(input, $@"\b{key}(\d+)\b");
+            return match.Success ? match.Groups[0].Value : null;
+        }
+
+        public static Dictionary<string, T> SetDictionary<T>(T root, Func<T, BdObject> getBdObj, Func<T, IEnumerable<T>> getChildren)
+        {
+            var idDataDict = new Dictionary<string, T>();
+            var queue = new Queue<T>();
+            queue.Enqueue(root);
+
+            while (queue.Count > 0)
+            {
+                var obj = queue.Dequeue();
+                var bdObj = getBdObj(obj);
+
+                if (string.IsNullOrEmpty(bdObj.ID))
+                {
+                    bdObj.ID = bdObj.Name;
+                }
+
+                idDataDict[bdObj.ID] = obj;
+
+
+                // ï¿½Ú½Äµï¿½ Å¥ï¿½ï¿½ ï¿½ß°ï¿½
+                foreach (var child in getChildren(obj))
+                {
+                    queue.Enqueue(child);
+                }
+            }
+            return idDataDict;
+        }
     }
 }

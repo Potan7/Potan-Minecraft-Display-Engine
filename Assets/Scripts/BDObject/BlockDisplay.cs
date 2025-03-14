@@ -1,153 +1,156 @@
-using Newtonsoft.Json.Linq;
-using UnityEngine;
+using System;
+using Manager;
 using Minecraft;
+using Newtonsoft.Json.Linq;
 
-public class BlockDisplay : ModelDisPlayObject
+namespace BDObject
 {
-    public BlockModelGenerator modelElementParent;
-
-
-    public override void LoadDisplayModel(string name, string state)
+    public class BlockDisplay : ModelDisPlayObject
     {
-        //CustomLog.Log(name + ", " + state);
+        public BlockModelGenerator modelElementParent;
 
-        // ºí·Ï ½ºÅ×ÀÌÆ®¸¦ ºÒ·¯¿Í¼­
-        modelName = name;
-        modelElementParent.modelName = name;
-        JObject blockState = MinecraftFileManager.GetJSONData("blockstates/" + name + ".json");
-        //CustomLog.Log("BlockState : " + blockState.ToString());
-        //CustomLog.Log("State : " + state);
 
-        // variants Çü½ÄÀÏ °æ¿ì
-        if (blockState.TryGetValue("variants", out JToken variant))
+        public override void LoadDisplayModel(string mName, string state)
         {
-            //CustomLog.Log("Variants : " + variants.ToString());
+            //CustomLog.Log(name + ", " + state);
 
-            // ºí·Ï ½ºÅ×ÀÌÆ®¿¡ ÇØ´çÇÏ´Â ¸ðµ¨À» ºÒ·¯¿È
-            modelElementParent.SetModelByBlockState((variant as JObject)[state]);
-        }
-        else if (blockState.TryGetValue("multipart", out JToken multi))
-        {
-            // multipart Çü½ÄÀÏ °æ¿ì
-            var multipart = multi as JArray;
-            //CustomLog.Log("Multipart : " + multipart.ToString());
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ò·ï¿½ï¿½Í¼ï¿½
+            modelName = mName;
+            modelElementParent.modelName = mName;
+            var blockState = MinecraftFileManager.GetJsonData("blockstates/" + mName + ".json");
+            //CustomLog.Log("BlockState : " + blockState.ToString());
+            //CustomLog.Log("State : " + state);
 
-            int cnt = multipart.Count;
-            bool needNewOne = false;
-            for (int i = 0; i < cnt; i++)
+            // variants ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+            if (blockState.TryGetValue("variants", out var variant))
             {
-                //CustomLog.Log("Part : " + multipart[i].ToString());
-                JObject partObject = multipart[i] as JObject;
+                //CustomLog.Log("Variants : " + variants.ToString());
 
-                bool check = true;
-                if (partObject.TryGetValue("when", out JToken value))
-                {
-                    check = CheckState(value as JObject, state);
-                }
+                // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ø´ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ò·ï¿½ï¿½ï¿½
+                modelElementParent.SetModelByBlockState(((JObject)variant)[state]);
+            }
+            else if (blockState.TryGetValue("multipart", out var multi))
+            {
+                // multipart ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+                var multipart = multi as JArray;
+                //CustomLog.Log("Multipart : " + multipart.ToString());
 
-                if (check)
+                var cnt = multipart.Count;
+                var needNewOne = false;
+                for (var i = 0; i < cnt; i++)
                 {
-                    if (!needNewOne)
-                    { 
-                        modelElementParent.SetModelByBlockState(partObject["apply"]);
-                        needNewOne = true;
-                    }
-                    else
+                    //CustomLog.Log("Part : " + multipart[i].ToString());
+                    var partObject = multipart[i] as JObject;
+
+                    var check = true;
+                    if (partObject.TryGetValue("when", out var value))
                     {
-                        BlockModelGenerator newModel = Instantiate(GameManager.GetManager<BDObjectManager>().blockPrefab, transform);
-                        newModel.modelName = modelElementParent.modelName;
-                        newModel.SetModelByBlockState(partObject["apply"]);
+                        check = CheckState(value as JObject, state);
                     }
 
-                    //CustomLog.Log("Part : " + partObject["apply"].ToString());
+                    if (check)
+                    {
+                        if (!needNewOne)
+                        { 
+                            modelElementParent.SetModelByBlockState(partObject["apply"]);
+                            needNewOne = true;
+                        }
+                        else
+                        {
+                            var newModel = Instantiate(GameManager.GetManager<BdObjectManager>().blockPrefab, transform);
+                            newModel.modelName = modelElementParent.modelName;
+                            newModel.SetModelByBlockState(partObject["apply"]);
+                        }
+
+                        //CustomLog.Log("Part : " + partObject["apply"].ToString());
+                    }
                 }
+
             }
-
-        }
-        else
-        {
-            CustomLog.LogError("Unknown blockstate format");
-        }
-
-        SetAABBBounds();
-
-        modelData = modelElementParent.modelData;
-        modelName = modelElementParent.modelName;
-        //CustomLog.Log("AABB : " + AABBBound.ToString());
-        //CustomLog.Log("AABB : " + AABBBound.min);
-    }
-
-    private bool CheckState(JObject when, string state)
-    {
-        if (when.TryGetValue("OR", out JToken ORValue))
-        {
-            var OR = ORValue as JArray;
-            for (int i = 0; i < OR.Count; i++)
+            else
             {
-                if (CheckStateName(OR[i] as JObject, state))
-                {
-                    return true;
-                }
+                CustomLog.LogError("Unknown blockstate format");
             }
-            return false;
+
+            SetAABBBounds();
+
+            ModelData = modelElementParent.ModelData;
+            modelName = modelElementParent.modelName;
+            //CustomLog.Log("AABB : " + AABBBound.ToString());
+            //CustomLog.Log("AABB : " + AABBBound.min);
         }
-        else if (when.TryGetValue("AND", out JToken ANDValue))
+
+        private static bool CheckState(JObject when, string state)
         {
-            var AND = ANDValue as JArray;
-            for (int i = 0; i < AND.Count; i++)
+            if (when.TryGetValue("OR", out var orValue))
             {
-                if (!CheckStateName(AND[i] as JObject, state))
+                var or = orValue as JArray;
+                for (var i = 0; i < or.Count; i++)
                 {
-                    return false;
+                    if (CheckStateName(or[i] as JObject, state))
+                    {
+                        return true;
+                    }
                 }
+                return false;
             }
-            return true;
-        }
-        else
-        {
+
+            if (when.TryGetValue("AND", out var andValue))
+            {
+                var and = andValue as JArray;
+                for (var i = 0; i < and.Count; i++)
+                {
+                    if (!CheckStateName(and[i] as JObject, state))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
             return CheckStateName(when, state);
         }
-    }
 
-    private bool CheckStateName(JObject checks, string state)
-    {
-        //CustomLog.Log("Item : " + checks.ToString());
-        //CustomLog.Log("State : " + state);
-
-        if (string.IsNullOrEmpty(state))
+        private static bool CheckStateName(JObject checks, string state)
         {
-            return false;
-        }
+            //CustomLog.Log("Item : " + checks.ToString());
+            //CustomLog.Log("State : " + state);
 
-        string[] stateSplit = state.Split(',');
-        int stateCount = stateSplit.Length;
+            if (string.IsNullOrEmpty(state)) return false;
 
-        foreach (var item in checks)
-        {
-            bool matched = false;
+            // State ë¶„ë¦¬
+            var stateSplit = state.Split(',');
+            var stateCount = stateSplit.Length;
 
-            for (int i = 0; i < stateCount; i++)
+            foreach (var item in checks)
             {
-                string[] split = stateSplit[i].Split('=');
-                if (split[0] == item.Key)   // Å°°¡ °°ÀºÁö È®ÀÎ
+                var matched = false;
+
+                for (var i = 0; i < stateCount; i++)
                 {
-                    string[] itemSplit = item.Value.ToString().Split('|');
-                    for (int j = 0; j < itemSplit.Length; j++)
+                    var split = stateSplit[i].Split('=');
+                    
+                    if (split[0] != item.Key) continue; // ë¹„êµí•  keyëž‘ ë‹¤ë¥´ë©´ ìŠ¤í‚µ 
+                    
+                    var itemSplit = item.Value.ToString().Split('|');
+                    
+                    foreach (var t in itemSplit)
                     {
-                        if (itemSplit[j] == split[1])
+                        // ReSharper disable once InvertIf
+                        if (t == split[1])
                         {
                             matched = true;
                             break;
                         }
                     }
-                    break; // Å°°¡ °°´Ù¸é ÀÌ ºÎºÐÀº ³¡³².
+                    break; // Å°ï¿½ï¿½ ï¿½ï¿½ï¿½Ù¸ï¿½ ï¿½ï¿½ ï¿½Îºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
                 }
+
+                if (!matched)
+                    return false;
             }
-
-            if (!matched)
-                return false;
+            return true;
         }
-        return true;
-    }
 
+    }
 }

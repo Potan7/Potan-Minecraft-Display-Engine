@@ -1,397 +1,406 @@
+using System;
 using System.Collections.Generic;
+using BDObject;
+using Manager;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 
-public class AnimObject : MonoBehaviour
+namespace Animation
 {
-    public RectTransform rect;
-    public TextMeshProUGUI title;
-    public Frame firstFrame;
-    public SortedList<int, Frame> frames = new SortedList<int, Frame>();
-    public string fileName;
-
-    public HashSet<string> NoID = new HashSet<string>();
-
-    public int MaxTick
+    public class AnimObject : MonoBehaviour
     {
-        get
+        public RectTransform rect;
+        public TextMeshProUGUI title;
+        public Frame firstFrame;
+        private SortedList<int, Frame> _frames = new SortedList<int, Frame>();
+        [FormerlySerializedAs("fileName")] public string bdFileName;
+
+        private readonly HashSet<string> _noID = new HashSet<string>();
+
+        private int MaxTick
         {
-            if (frames.Count == 0)
+            get
             {
-                return 0;
-            }
-            return frames.Values[frames.Count - 1].Tick;
-        }
-    }
-
-    AnimObjList manager;
-
-    BDObjectContainer root;
-    Dictionary<string, BDObjectContainer> idDict;
-
-    public void Init(string FileName, AnimObjList list)
-    {
-        title.text = FileName;
-        manager = list;
-        fileName = FileName;
-
-        var bdObject = GameManager.GetManager<BDObjectManager>().BDObjects[FileName];
-        root = bdObject.Item1;
-        idDict = bdObject.Item2;
-
-        GetTickAndInterByFileName(fileName, out int tick, out int inter);
-        firstFrame.Init(fileName, 0, inter, root.BDObject, this);
-
-
-        frames[0] = firstFrame;
-
-        AnimManager.TickChanged += OnTickChanged;
-
-    }
-
-    #region Transform
-    void OnTickChanged(int tick)
-    {
-        if (tick == 0)
-            NoID.Clear();
-
-        // Æ½¿¡ ¸Â´Â ÇÁ·¹ÀÓÀ» Ã£±â
-        int left = GetLeftFrame(tick);
-        if (left < 0) return;
-        Frame leftFrame = frames.Values[left];
-
-        // Ã¹¹øÂ° ÇÁ·¹ÀÓÀÇ º¸°£Àº ¹«½ÃÇÔ
-        if (leftFrame.interpolation == 0 || leftFrame.Tick + leftFrame.interpolation <= tick || left == 0) 
-        {
-
-            // º¸°£ ¾øÀÌ Àû¿ë
-            SetObjectTransformation(root.BDObject.ID, leftFrame.info);
-        }
-        else
-        {
-            // º¸°£ On
-            float t = (float)(tick - leftFrame.Tick) / leftFrame.interpolation;
-
-            Frame before = frames.Values[left - 1];
-            SetObjectTransformationInter(t, before, leftFrame);
-        }
-
-    }
-
-    // º¸°£ ¾øÀÌ ±×´ë·Î Àû¿ë
-    public void SetObjectTransformation(string id, BDObject obj)
-    {
-        if (!idDict.TryGetValue(id, out BDObjectContainer target))
-        {
-            if (!NoID.Contains(id))
-            {
-                CustomLog.LogError("Target not found, name : " + id);
-                NoID.Add(id);
-            }
-            return;
-        }
-
-        target.SetTransformation(obj.transforms);
-
-        if (obj.children != null)
-        {
-            foreach (var child in obj.children)
-            {
-                SetObjectTransformation(child.ID, child);
-            }
-        }
-    }
-
-    public void SetObjectTransformationInter(float t, Frame a, Frame b)
-        => SetObjectTransformationInter(
-            root.BDObject.ID, t, 
-            a.info, b.info, 
-            a.IDDataDict, b.IDDataDict,
-            new HashSet<string>());
-    // target¿¡ a, b¸¦ t ºñÀ²·Î º¸°£ÇÏ¿© Àû¿ë
-    void SetObjectTransformationInter(
-        string targetName, float t, 
-        BDObject a, BDObject b, 
-        Dictionary<string, BDObject> aDict, Dictionary<string, BDObject> bDict,
-        HashSet<string> visitedNodes
-        )
-    {
-        if (visitedNodes.Contains(targetName)) return;
-        visitedNodes.Add(targetName);
-
-        if (!idDict.TryGetValue(targetName, out BDObjectContainer target))
-        {
-            Debug.Log("Target not found, name : " + targetName);
-            return;
-        }
-
-        // 1. transforms(4x4 Çà·Ä, float[16])À» t ºñÀ²·Î º¸°£
-        float[] result = new float[16];
-        for (int i = 0; i < 16; i++)
-        {
-            result[i] = a.transforms[i] * (1f - t) + b.transforms[i] * t;
-        }
-
-        // 2. º¸°£µÈ °á°ú¸¦ target¿¡ Àû¿ë
-        target.SetTransformation(result);
-
-        // ÀÚ½ÄÀÌ ¾øÀ¸¸é Á¾·á
-        if (a.children == null && b.children == null) return;
-
-        HashSet<string> processedKeys = new HashSet<string>();
-
-        foreach (var key in aDict.Keys)
-        {
-            if (bDict.TryGetValue(key, out BDObject bChild) && aDict[key] != null)
-            {
-                BDObject aChild = aDict[key];
-                processedKeys.Add(key);
-
-                if (idDict.TryGetValue(key, out BDObjectContainer targetChild))
+                if (_frames.Count == 0)
                 {
-                    SetObjectTransformationInter(key, t, aChild, bChild, aDict, bDict, visitedNodes);
+                    return 0;
                 }
+                return _frames.Values[_frames.Count - 1].tick;
             }
         }
 
-        foreach (var key in bDict.Keys)
-        {
-            if (!processedKeys.Contains(key) && aDict.TryGetValue(key, out BDObject aChild))
-            {
-                BDObject bChild = bDict[key];
+        private AnimObjList _manager;
 
-                if (idDict.TryGetValue(key, out BDObjectContainer targetChild))
-                {
-                    SetObjectTransformationInter(key, t, aChild, bChild, aDict, bDict, visitedNodes);
-                }
-            }
+        private BdObjectContainer _root;
+        private Dictionary<string, BdObjectContainer> _idDict;
+
+        public void Init(string fileName, AnimObjList list)
+        {
+            title.text = fileName;
+            _manager = list;
+            bdFileName = fileName;
+
+            var bdObject = GameManager.GetManager<BdObjectManager>().BdObjects[fileName];
+            _root = bdObject.Item1;
+            _idDict = bdObject.Item2;
+
+            GetTickAndInterByFileName(bdFileName, out _, out var inter);
+            firstFrame.Init(bdFileName, 0, inter, _root.BdObject, this);
+
+
+            _frames[0] = firstFrame;
+
+            AnimManager.TickChanged += OnTickChanged;
+
         }
-    }
 
+        #region Transform
 
-    int GetLeftFrame(int tick)
-    {
-
-        // 1. °¡Àå ÀÛÀº ÇÁ·¹ÀÓº¸´Ù tickÀÌ ÀÛÀ¸¸é null ¹ÝÈ¯
-        if (frames.Values[0].Tick > tick)
-            return -1;
-
-        int left = 0;
-        int right = frames.Count - 1;
-        var keys = frames.Keys;
-        int idx = -1; // ÃÊ±ê°ªÀ» -1·Î ¼³Á¤ (À¯È¿ÇÑ ÀÎµ¦½º°¡ ¾øÀ» °æ¿ì ´ëºñ)
-
-        // 2. ÀÌÁø Å½»öÀ¸·Î left ÇÁ·¹ÀÓ Ã£±â
-        while (left <= right)
+        private void OnTickChanged(int tick)
         {
-            int mid = (left + right) / 2;
-            if (keys[mid] <= tick) // "<" ´ë½Å "<=" »ç¿ëÇÏ¿© Á¤È®È÷ tickÀÏ °æ¿ì mid¸¦ idx·Î ¼³Á¤
+            if (tick == 0)
+                _noID.Clear();
+
+            // Æ½ï¿½ï¿½ ï¿½Â´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½
+            var left = GetLeftFrame(tick);
+            if (left < 0) return;
+            var leftFrame = _frames.Values[left];
+
+            // Ã¹ï¿½ï¿½Â° ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            if (leftFrame.interpolation == 0 || leftFrame.tick + leftFrame.interpolation <= tick || left == 0) 
             {
-                idx = mid; // ÇöÀç mid°¡ left ÈÄº¸
-                left = mid + 1; // ´õ Å« °ª Å½»ö
+
+                // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                SetObjectTransformation(_root.BdObject.ID, leftFrame.Info);
             }
             else
             {
-                right = mid - 1; // ´õ ÀÛÀº °ª Å½»ö
+                // ï¿½ï¿½ï¿½ï¿½ On
+                var t = (float)(tick - leftFrame.tick) / leftFrame.interpolation;
+
+                var before = _frames.Values[left - 1];
+                SetObjectTransformationInter(t, before, leftFrame);
             }
+
         }
 
-        // 3. leftIdx ¼³Á¤ (idx°¡ -1ÀÎ °æ¿ìµµ °í·Á)
-        if (idx >= 0)
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×´ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        private void SetObjectTransformation(string id, BdObject obj)
         {
-            return idx;
-        }
-
-        return -1;
-    }
-
-    #endregion
-
-    #region EditFrame
-
-    // Å¬¸¯ÇßÀ» ¶§ 
-    public void OnEventTriggerClick(BaseEventData eventData)
-    {
-        PointerEventData pointerData = eventData as PointerEventData;
-
-        if (pointerData.button == PointerEventData.InputButton.Right)
-        {
-            //Debug.Log("Right Click");
-            var line = manager.Timeline.GetTickLine(pointerData.position);
-            GameManager.GetManager<ContextMenuManager>().ShowContextMenu(this, line.Tick);
-        }
-    }
-
-    // tick À§Ä¡¿¡ ÇÁ·¹ÀÓ Ãß°¡ÇÏ±â. ¸¸¾à tick¿¡ ÀÌ¹Ì ÇÁ·¹ÀÓÀÌ ÀÖ´Ù¸é tickÀ» ±×¸¸Å­ µÚ·Î ¹Ì·ë
-    // ¸¸¾à ÀÔ·ÂÀ¸·Î µé¾î¿Â BDObject°¡ firstFrame°ú ´Ù¸¥ ÇüÅÂ¶ó¸é °ÅºÎ
-    public void AddFrame(string fileName, BDObject frameInfo, int tick, int inter)
-    {
-        //Debug.Log("fileName : " + fileName + ", tick : " + tick + ", inter : " + inter);
-
-        var frame = Instantiate(manager.framePrefab, transform.GetChild(0));
-
-        while (frames.ContainsKey(tick))
-        {
-            tick++;
-        }
-
-        frames.Add(tick, frame);
-        frame.Init(fileName, tick, inter, frameInfo, this);
-    }
-
-    // ÀÌ¸§¿¡¼­ s, i °ªÀ» ÃßÃâÇÏ¿© ÇÁ·¹ÀÓ Ãß°¡ÇÏ±â
-    public void AddFrame(BDObject frameInfo, string fileName)
-    {
-        CustomLog.Log("AddFrame : " + fileName);    
-        GetTickAndInterByFileName(fileName, out int tick, out int inter);
-        AddFrame(fileName, frameInfo, tick, inter);
-    }
-
-    private void GetTickAndInterByFileName(string fileName, out int tick, out int inter)
-    {
-        SettingManager setting = GameManager.Instance.Setting;
-
-        tick = MaxTick;
-        inter = setting.DefaultInterpolation;
-
-        FileManager fileManager = GameManager.GetManager<FileManager>();
-
-        if (setting.UseFrameTxtFile)
-        {
-            string frame = BDObjectHelper.ExtractFrame(fileName, "f");
-            if (!string.IsNullOrEmpty(frame))
+            if (!_idDict.TryGetValue(id, out var target))
             {
-                if (fileManager.frameInfo.TryGetValue(frame, out var info))
+                if (!_noID.Contains(id))
                 {
-                    tick += info.Item1;
-                    inter = info.Item2;
-                    return;
+                    CustomLog.LogError("Target not found, name : " + id);
+                    _noID.Add(id);
+                }
+                return;
+            }
+
+            target.SetTransformation(obj.Transforms);
+
+            if (obj.Children != null)
+            {
+                foreach (var child in obj.Children)
+                {
+                    SetObjectTransformation(child.ID, child);
                 }
             }
         }
 
-        if (setting.UseNameInfoExtract)
+        
+        // ReSharper disable Unity.PerformanceAnalysis
+        public void SetObjectTransformationInter(float t, Frame a, Frame b)
+            => SetObjectTransformationInter(
+                _root.BdObject.ID, t, 
+                a.Info, b.Info, 
+                a.IDDataDict, b.IDDataDict,
+                new HashSet<string>());
+        
+        // targetï¿½ï¿½ a, bï¿½ï¿½ t ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½
+        private void SetObjectTransformationInter(
+            string targetName, float t, 
+            BdObject a, BdObject b, 
+            Dictionary<string, BdObject> aDict, Dictionary<string, BdObject> bDict,
+            HashSet<string> visitedNodes
+        )
         {
-            int sValue = BDObjectHelper.ExtractNumber(fileName, "s", 0);
-            int iValue = BDObjectHelper.ExtractNumber(fileName, "i", -1);
+            if (!visitedNodes.Add(targetName)) return;
 
-            if (sValue > 0)
-                tick += sValue;
+            if (!_idDict.TryGetValue(targetName, out var target))
+            {
+                CustomLog.Log("Target not found, name : " + targetName);
+                return;
+            }
+
+            // 1. transforms(4x4 ï¿½ï¿½ï¿½, float[16])ï¿½ï¿½ t ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            var result = new float[16];
+            for (var i = 0; i < 16; i++)
+            {
+                result[i] = a.Transforms[i] * (1f - t) + b.Transforms[i] * t;
+            }
+
+            // 2. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ targetï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            target.SetTransformation(result);
+
+            // ï¿½Ú½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            if (a.Children == null && b.Children == null) return;
+
+            var processedKeys = new HashSet<string>();
+
+            foreach (var key in aDict.Keys)
+            {
+                if (bDict.TryGetValue(key, out var bChild) && aDict[key] != null)
+                {
+                    var aChild = aDict[key];
+                    processedKeys.Add(key);
+
+                    if (_idDict.ContainsKey(key))
+                    {
+                        SetObjectTransformationInter(key, t, aChild, bChild, aDict, bDict, visitedNodes);
+                    }
+                }
+            }
+
+            foreach (var key in bDict.Keys)
+            {
+                if (!processedKeys.Contains(key) && aDict.TryGetValue(key, out var aChild))
+                {
+                    var bChild = bDict[key];
+
+                    if (_idDict.ContainsKey(key))
+                    {
+                        SetObjectTransformationInter(key, t, aChild, bChild, aDict, bDict, visitedNodes);
+                    }
+                }
+            }
         }
-        else
+
+
+        private int GetLeftFrame(int tick)
         {
-            tick += setting.DefaultTickInterval;
+
+            // 1. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Óºï¿½ï¿½ï¿½ tickï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ null ï¿½ï¿½È¯
+            if (_frames.Values[0].tick > tick)
+                return -1;
+
+            var left = 0;
+            var right = _frames.Count - 1;
+            var keys = _frames.Keys;
+            var idx = -1; // ï¿½Ê±ê°ªï¿½ï¿½ -1ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½È¿ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½)
+
+            // 2. ï¿½ï¿½ï¿½ï¿½ Å½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ left ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½
+            while (left <= right)
+            {
+                var mid = (left + right) / 2;
+                if (keys[mid] <= tick) // "<" ï¿½ï¿½ï¿½ "<=" ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½È®ï¿½ï¿½ tickï¿½ï¿½ ï¿½ï¿½ï¿½ midï¿½ï¿½ idxï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                {
+                    idx = mid; // ï¿½ï¿½ï¿½ï¿½ midï¿½ï¿½ left ï¿½Äºï¿½
+                    left = mid + 1; // ï¿½ï¿½ Å« ï¿½ï¿½ Å½ï¿½ï¿½
+                }
+                else
+                {
+                    right = mid - 1; // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ Å½ï¿½ï¿½
+                }
+            }
+
+            // 3. leftIdx ï¿½ï¿½ï¿½ï¿½ (idxï¿½ï¿½ -1ï¿½ï¿½ ï¿½ï¿½ìµµ ï¿½ï¿½ï¿½)
+            if (idx >= 0)
+            {
+                return idx;
+            }
+
+            return -1;
         }
+
+        #endregion
+
+        #region EditFrame
+
+        // Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ 
+        public void OnEventTriggerClick(BaseEventData eventData)
+        {
+            if (eventData is PointerEventData { button: PointerEventData.InputButton.Right } pointerData)
+            {
+                //Debug.Log("Right Click");
+                var line = _manager.timeline.GetTickLine(pointerData.position);
+                GameManager.GetManager<ContextMenuManager>().ShowContextMenu(this, line.Tick);
+            }
+        }
+
+        // tick ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½Ï±ï¿½. ï¿½ï¿½ï¿½ï¿½ tickï¿½ï¿½ ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´Ù¸ï¿½ tickï¿½ï¿½ ï¿½×¸ï¿½Å­ ï¿½Ú·ï¿½ ï¿½Ì·ï¿½
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ BDObjectï¿½ï¿½ firstFrameï¿½ï¿½ ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½Â¶ï¿½ï¿½ ï¿½Åºï¿½
+        public void AddFrame(string fileName, BdObject frameInfo, int tick, int inter)
+        {
+            //Debug.Log("fileName : " + fileName + ", tick : " + tick + ", inter : " + inter);
+
+            var frame = Instantiate(_manager.framePrefab, transform.GetChild(0));
+
+            while (_frames.ContainsKey(tick))
+            {
+                tick++;
+            }
+
+            _frames.Add(tick, frame);
+            frame.Init(fileName, tick, inter, frameInfo, this);
+        }
+
+        // ï¿½Ì¸ï¿½ï¿½ï¿½ï¿½ï¿½ s, i ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½Ï±ï¿½
+        public void AddFrame(BdObject frameInfo, string fileName)
+        {
+            CustomLog.Log("AddFrame : " + fileName);    
+            GetTickAndInterByFileName(fileName, out var tick, out var inter);
+            AddFrame(fileName, frameInfo, tick, inter);
+        }
+
+        private void GetTickAndInterByFileName(string fileName, out int tick, out int inter)
+        {
+            var setting = GameManager.Setting;
+
+            tick = MaxTick;
+            inter = setting.defaultInterpolation;
+
+            var fileManager = GameManager.GetManager<FileManager>();
+
+            // frame.txt ì“´ë‹¤ë©´
+            if (setting.UseFrameTxtFile)
+            {
+                var frame = BdObjectHelper.ExtractFrame(fileName, "f");
+                if (!string.IsNullOrEmpty(frame))
+                {
+                    if (fileManager.FrameInfo.TryGetValue(frame, out var info))
+                    {
+                        tick += info.Item1;
+                        inter = info.Item2;
+                        return;
+                    }
+                }
+            }
+
+            if (setting.UseNameInfoExtract)
+            {
+                var sValue = BdObjectHelper.ExtractNumber(fileName, "s");
+                inter = BdObjectHelper.ExtractNumber(fileName, "i", inter);
+
+                if (sValue > 0)
+                    tick += sValue;
+            }
+            else
+            {
+                tick += setting.defaultTickInterval;
+            }
+        }
+
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+        public void RemoveFrame(Frame frame)
+        {
+            if (_frames == null) return;
+
+            _frames.Remove(frame.tick);
+            Destroy(frame.gameObject);
+
+            if (_frames.Count == 0)
+            {
+                RemoveAnimObj();
+            }
+            else if (frame.tick == 0)
+            {
+                _frames.Values[0].SetTick(0);
+            }
+
+        }
+
+        // ï¿½Ö´Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+        public void RemoveAnimObj()
+        {
+            AnimManager.TickChanged -= OnTickChanged;
+            var frame = _frames;
+            _frames = null;
+            while (frame.Count > 0)
+            {
+                frame.Values[0].RemoveFrame();
+                Destroy(frame.Values[0].gameObject);
+                frame.RemoveAt(0);
+            }
+            _manager.RemoveAnimObject(this);
+        }
+
+        // ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ frames ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ true ï¿½ï¿½È¯
+        public bool ChangePos(Frame frame, int firstTick, int changedTick)
+        {
+            //Debug.Log("firstTick : " + firstTick + ", changedTick : " +  changedTick);
+            if (firstTick == changedTick) return true;
+            if (_frames.ContainsKey(changedTick)) return false;
+
+            _frames.Remove(firstTick);
+            _frames.Add(changedTick, frame);
+
+            OnTickChanged(GameManager.GetManager<AnimManager>().Tick);
+            return true;
+        }
+
+        //bool CheckBDObject(BDObject a, BDObject b, bool IsFirst = false)
+        //{
+        //    //Debug.Log(a?.ToString() + " vs " + b?.ToString());
+
+        //    // 1) ï¿½ï¿½ ï¿½ï¿½ nullï¿½Ì¸ï¿½ "ï¿½ï¿½ï¿½ï¿½"ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        //    if (a == null && b == null)
+        //    {
+        //        //CustomLog.Log("Both objects are null ï¿½ï¿½ Considered equal.");
+        //        return true;
+        //    }
+
+        //    // 2) ï¿½ï¿½ ï¿½Ê¸ï¿½ nullï¿½Ì¸ï¿½ ï¿½Ù¸ï¿½
+        //    if (a == null || b == null)
+        //    {
+        //        CustomLog.LogError($"One object is null -> a: {(a == null ? "null" : a.name)}, b: {(b == null ? "null" : b.name)}");
+        //        return false;
+        //    }
+
+        //    // 3) nameï¿½ï¿½ ï¿½Ù¸ï¿½ï¿½ï¿½ ï¿½Ù·ï¿½ false
+        //    if (a.name != b.name && !IsFirst)
+        //    {
+        //        CustomLog.LogError($"Different Name -> a: {a.name}, b: {b.name}");
+        //        return false;
+        //    }
+
+        //    // 4) children ï¿½ï¿½
+        //    if (a.children == null && b.children == null)
+        //    {
+        //        //CustomLog.Log($"Both '{a.name}' and '{b.name}' have no children ï¿½ï¿½ Considered equal.");
+        //        return true;
+        //    }
+
+        //    if (a.children == null || b.children == null)
+        //    {
+        //        CustomLog.LogError($"Children mismatch -> a: {(a.children == null ? "null" : "exists")}, b: {(b.children == null ? "null" : "exists")}");
+        //        return false;
+        //    }
+
+        //    // ï¿½ï¿½ï¿½Ì°ï¿½ ï¿½Ù¸ï¿½ï¿½ï¿½ false
+        //    if (a.children.Length != b.children.Length)
+        //    {
+        //        CustomLog.LogError($"Children count mismatch -> a: {a.children.Length}, b: {b.children.Length}");
+        //        CustomLog.LogError($"a: {string.Join(", ", a.children.Select(c => c.name))}");
+        //        CustomLog.LogError($"b: {string.Join(", ", b.children.Select(c => c.name))}");
+        //        return false;
+        //    }
+
+        //    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+        //    for (int i = 0; i < a.children.Length; i++)
+        //    {
+        //        if (!CheckBDObject(a.children[i], b.children[i]))
+        //        {
+        //            CustomLog.LogError($"Child mismatch at index {i} ï¿½ï¿½ a: {a.children[i]?.name}, b: {b.children[i]?.name}");
+        //            return false;
+        //        }
+        //    }
+
+        //    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ë»ç¸¦ ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ true
+        //    return true;
+        //}
+        #endregion
     }
-
-    // ÇÁ·¹ÀÓ »èÁ¦ÇÏ±â
-    public void RemoveFrame(Frame frame)
-    {
-        if (frames == null) return;
-
-        frames.Remove(frame.Tick);
-        Destroy(frame.gameObject);
-
-        if (frames.Count == 0)
-        {
-            RemoveAnimObj();
-        }
-        else if (frame.Tick == 0)
-        {
-            frames.Values[0].SetTick(0);
-        }
-
-    }
-
-    // ¾Ö´Ï¸ÞÀÌ¼Ç ¿ÀºêÁ§Æ® »èÁ¦ÇÏ±â
-    public void RemoveAnimObj()
-    {
-        AnimManager.TickChanged -= OnTickChanged;
-        var frame = frames;
-        frames = null;
-        while (frame.Count > 0)
-        {
-            frame.Values[0].RemoveFrame();
-            Destroy(frame.Values[0].gameObject);
-            frame.RemoveAt(0);
-        }
-        manager.RemoveAnimObject(this);
-    }
-
-    // À§Ä¡¸¦ º¯°æ °¡´ÉÇÑÁö È®ÀÎÇÏ°í º¯°æ °¡´ÉÇÏ¸é frames º¯°æÇÏ°í true ¹ÝÈ¯
-    public bool ChangePos(Frame frame, int firstTick, int changedTick)
-    {
-        //Debug.Log("firstTick : " + firstTick + ", changedTick : " +  changedTick);
-        if (firstTick == changedTick) return true;
-        if (frames.ContainsKey(changedTick)) return false;
-
-        frames.Remove(firstTick);
-        frames.Add(changedTick, frame);
-
-        OnTickChanged(GameManager.GetManager<AnimManager>().Tick);
-        return true;
-    }
-
-    //bool CheckBDObject(BDObject a, BDObject b, bool IsFirst = false)
-    //{
-    //    //Debug.Log(a?.ToString() + " vs " + b?.ToString());
-
-    //    // 1) µÑ ´Ù nullÀÌ¸é "µ¿ÀÏ"·Î °£ÁÖ
-    //    if (a == null && b == null)
-    //    {
-    //        //CustomLog.Log("Both objects are null ¡æ Considered equal.");
-    //        return true;
-    //    }
-
-    //    // 2) ÇÑ ÂÊ¸¸ nullÀÌ¸é ´Ù¸§
-    //    if (a == null || b == null)
-    //    {
-    //        CustomLog.LogError($"One object is null -> a: {(a == null ? "null" : a.name)}, b: {(b == null ? "null" : b.name)}");
-    //        return false;
-    //    }
-
-    //    // 3) nameÀÌ ´Ù¸£¸é ¹Ù·Î false
-    //    if (a.name != b.name && !IsFirst)
-    //    {
-    //        CustomLog.LogError($"Different Name -> a: {a.name}, b: {b.name}");
-    //        return false;
-    //    }
-
-    //    // 4) children ºñ±³
-    //    if (a.children == null && b.children == null)
-    //    {
-    //        //CustomLog.Log($"Both '{a.name}' and '{b.name}' have no children ¡æ Considered equal.");
-    //        return true;
-    //    }
-
-    //    if (a.children == null || b.children == null)
-    //    {
-    //        CustomLog.LogError($"Children mismatch -> a: {(a.children == null ? "null" : "exists")}, b: {(b.children == null ? "null" : "exists")}");
-    //        return false;
-    //    }
-
-    //    // ±æÀÌ°¡ ´Ù¸£¸é false
-    //    if (a.children.Length != b.children.Length)
-    //    {
-    //        CustomLog.LogError($"Children count mismatch -> a: {a.children.Length}, b: {b.children.Length}");
-    //        CustomLog.LogError($"a: {string.Join(", ", a.children.Select(c => c.name))}");
-    //        CustomLog.LogError($"b: {string.Join(", ", b.children.Select(c => c.name))}");
-    //        return false;
-    //    }
-
-    //    // °¢°¢ÀÇ ÀÚ½ÄÀ» Àç±ÍÀûÀ¸·Î ºñ±³
-    //    for (int i = 0; i < a.children.Length; i++)
-    //    {
-    //        if (!CheckBDObject(a.children[i], b.children[i]))
-    //        {
-    //            CustomLog.LogError($"Child mismatch at index {i} ¡æ a: {a.children[i]?.name}, b: {b.children[i]?.name}");
-    //            return false;
-    //        }
-    //    }
-
-    //    // À§ÀÇ ¸ðµç °Ë»ç¸¦ Åë°úÇÏ¸é true
-    //    return true;
-    //}
-    #endregion
 }

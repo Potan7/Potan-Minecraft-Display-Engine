@@ -1,62 +1,54 @@
-using Newtonsoft.Json.Linq;
+using Manager;
 using UnityEngine;
 
-public class BDObjectContainer : MonoBehaviour
+namespace BDObject
 {
-    public BDObject BDObject;
-    public DisplayObject displayObj;
-
-    public BDObjectContainer[] children;
-
-    public Matrix4x4 transformation;
-
-    public void Init(BDObject bdObject, BDObjectManager manager)
+    public class BdObjectContainer : MonoBehaviour
     {
-        // Á¤º¸ ÀúÀå
-        BDObject = bdObject;
-        gameObject.name = bdObject.name;
+        public BdObject BdObject;
+        public DisplayObject displayObj;
 
-        // µğ½ºÇÃ·¹ÀÌ¶ó¸é
-        if (bdObject.isBlockDisplay || bdObject.isItemDisplay || bdObject.isTextDisplay)
+        public BdObjectContainer[] children;
+
+        public Matrix4x4 transformation;
+
+        public void Init(BdObject bdObject, BdObjectManager manager)
         {
-            // ÀÌ¸§°ú »óÅÂ ÃßÃâ
-            int typeStart = bdObject.name.IndexOf('[');
+            // ê¸°ë³¸ ì •ë³´ ì„¤ì •
+            BdObject = bdObject;
+            gameObject.name = bdObject.Name;
+
+            // ê·¸ë£¹ê³¼ ë””ìŠ¤í”Œë ˆì´ êµ¬ë¶„ 
+            if (!bdObject.IsBlockDisplay && !bdObject.IsItemDisplay && !bdObject.IsTextDisplay) return;
+            
+            // ë””ìŠ¤í”Œë ˆì´ ê³µí†µë¶€ë¶„
+            var typeStart = bdObject.Name.IndexOf('[');
             if (typeStart == -1)
             {
-                typeStart = bdObject.name.Length;
+                typeStart = bdObject.Name.Length;
             }
-            string name = bdObject.name.Substring(0, typeStart);
-            string state = bdObject.name.Substring(typeStart);
+            var modelName = bdObject.Name[..typeStart];
+            var state = bdObject.Name[typeStart..];
             state = state.Replace("[", "").Replace("]", "");
 
-            // ºí·Ï µğ½ºÇÃ·¹ÀÌÀÏ ¶§
-            if (bdObject.isBlockDisplay)
+            // ë¸”ë¡ ë””ìŠ¤í”Œë ˆì´
+            if (bdObject.IsBlockDisplay)
             {
-                // ºí·Ï µğ½ºÇÃ·¹ÀÌ ÀÚ½ÄÀ¸·Î »ı¼º ÈÄ ¸ğµ¨ ·Îµå
-                //GameObject blockDisplay = new GameObject("BlockDisplay");
-                //blockDisplay.transform.SetParent(transform);
-                //blockDisplay.transform.localPosition = Vector3.zero;
-                //displayObj = blockDisplay.AddComponent<BlockDisplay>().LoadDisplayModel(name, state);
                 var obj = Instantiate(manager.blockDisplay, transform);
-                obj.LoadDisplayModel(name, state);
+                obj.LoadDisplayModel(modelName, state);
                 displayObj = obj;
 
-                // blockDisplayÀÇ À§Ä¡¸¦ ÁÂÃø ÇÏ´Ü¿¡ ¸ÂÃã
+                // blockDisplayï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´Ü¿ï¿½ ï¿½ï¿½ï¿½ï¿½
                 obj.transform.localPosition = -obj.AABBBound.min/2;
             }
-            // ¾ÆÀÌÅÛ µğ½ºÇÃ·¹ÀÌÀÏ ¶§
-            else if (bdObject.isItemDisplay)
+            // ì•„ì´í…œ ë””ìŠ¤í”Œë ˆì´
+            else if (bdObject.IsItemDisplay)
             {
-                // ¾ÆÀÌÅÛ µğ½ºÇÃ·¹ÀÌ ÀÚ½ÄÀ¸·Î »ı¼º ÈÄ ¸ğµ¨ ·Îµå
-                //GameObject itemDisplay = new GameObject("ItemDisplay");
-                //itemDisplay.transform.SetParent(transform);
-                //itemDisplay.transform.localPosition = Vector3.zero;
-                //displayObj = itemDisplay.AddComponent<ItemDisplay>();
                 var obj = Instantiate(manager.itemDisplay, transform);
-                obj.LoadDisplayModel(name, state);
+                obj.LoadDisplayModel(modelName, state);
                 displayObj = obj;
             }
-            // ÅØ½ºÆ® µğ½ºÇÃ·¹ÀÌÀÏ ¶§
+            // í…ìŠ¤íŠ¸ ë””ìŠ¤í”Œë ˆì´ 
             else
             {
                 var obj = Instantiate(manager.textDisplay, transform);
@@ -65,24 +57,24 @@ public class BDObjectContainer : MonoBehaviour
 
             }
         }
-    }
 
-    // ÈÄÃ³¸®
-    public void PostProcess(BDObjectContainer[] childArray)
-    {
-        // º¯È¯ Çà·ÄÀ» Àû¿ë
-        SetTransformation(BDObject.transforms);
-        children = childArray;
+        // ï¿½ï¿½Ã³ï¿½ï¿½
+        public void PostProcess(BdObjectContainer[] childArray)
+        {
+            // ï¿½ï¿½È¯ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            SetTransformation(BdObject.Transforms);
+            children = childArray;
 
-        //if (displayObj == null)
-        //{
-        //    transform.position = new Vector3(transform.position.x, transform.position.y, -transform.position.z);
-        //}
-    }
+            //if (displayObj == null)
+            //{
+            //    transform.position = new Vector3(transform.position.x, transform.position.y, -transform.position.z);
+            //}
+        }
 
-    public void SetTransformation(float[] mat)
-    {
-        transformation = AffineTransformation.GetMatrix(mat);
-        AffineTransformation.ApplyMatrixToTransform(transform, transformation);
+        public void SetTransformation(float[] mat)
+        {
+            transformation = AffineTransformation.GetMatrix(mat);
+            AffineTransformation.ApplyMatrixToTransform(transform, transformation);
+        }
     }
 }

@@ -1,162 +1,166 @@
 using System.Collections;
+using CameraMovement;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-public class AnimPanel : MonoBehaviour
+namespace Animation
 {
-    AnimManager manager;
-
-    public DragPanel dragPanel;
-    public RectTransform animPanel;
-    Vector2 InitPos;
-    bool IsHiding = false;
-    public bool IsMouseEnter = false;
-
-    public TextMeshProUGUI totalTickText;
-    public TMP_InputField tickField;
-    public TMP_InputField tickSpeedField;
-
-    public Image playPauseButton;
-    public Sprite playSprite;
-    public Sprite pauseSprite;
-
-    private void Start()
+    public class AnimPanel : MonoBehaviour
     {
-        manager = GetComponent<AnimManager>();
-        animPanel = dragPanel.AnimPanel;
-        InitPos = new Vector2(0, 225);
-        AnimManager.TickChanged += AnimManager_TickChanged;
+        private AnimManager _manager;
 
-        IsHiding = true;
-        dragPanel.SetPanelSize(0);
-    }
+        public DragPanel dragPanel;
+        public RectTransform animPanel;
+        private Vector2 _initPos;
+        private bool _isHiding;
+        [FormerlySerializedAs("IsMouseEnter")] public bool isMouseEnter;
 
-    private void Update()
-    {
-        if (RectTransformUtility.RectangleContainsScreenPoint(
-            animPanel, Input.mousePosition, null
-            ))
+        public TextMeshProUGUI totalTickText;
+        public TMP_InputField tickField;
+        public TMP_InputField tickSpeedField;
+
+        public Image playPauseButton;
+        public Sprite playSprite;
+        public Sprite pauseSprite;
+
+        private void Start()
         {
-            IsMouseEnter = true;
-            BDEngineStyleCameraMovement.CanMoveCamera = false;
+            _manager = GetComponent<AnimManager>();
+            animPanel = dragPanel.animPanel;
+            _initPos = new Vector2(0, 225);
+            AnimManager.TickChanged += AnimManager_TickChanged;
+
+            _isHiding = true;
+            dragPanel.SetPanelSize(0);
         }
-        else
-        {
-            IsMouseEnter = false;
-            BDEngineStyleCameraMovement.CanMoveCamera = true;
 
+        private void Update()
+        {
+            if (RectTransformUtility.RectangleContainsScreenPoint(
+                    animPanel, Input.mousePosition, null
+                ))
+            {
+                isMouseEnter = true;
+                BdEngineStyleCameraMovement.CanMoveCamera = false;
+            }
+            else
+            {
+                isMouseEnter = false;
+                BdEngineStyleCameraMovement.CanMoveCamera = true;
+
+            }
         }
-    }
 
-    public void OnTickFieldEndEdit(string value)
-    {
-        if (int.TryParse(value, out int t))
-            manager.Tick = t;
-        else
-            tickField.text = manager.Tick.ToString();
-    }
-
-    public void OnTickSpeedFieldEndEdit(string value)
-    {
-        if (float.TryParse(value, out float t))
-            manager.TickSpeed = t;
-        else
-            tickSpeedField.text = manager.TickSpeed.ToString();
-    }
-
-    private void AnimManager_TickChanged(int obj)
-    {
-        tickField.text = obj.ToString();
-    }
-
-    public void Stop()
-    {
-        manager.IsPlaying = false;
-        playPauseButton.sprite = playSprite;
-        manager.Tick = 0;
-    }
-
-    public void PlayPause()
-    {
-
-        if (manager.IsPlaying)
+        public void OnTickFieldEndEdit(string value)
         {
+            if (int.TryParse(value, out var t))
+                _manager.Tick = t;
+            else
+                tickField.text = _manager.Tick.ToString();
+        }
+
+        public void OnTickSpeedFieldEndEdit(string value)
+        {
+            if (float.TryParse(value, out var t))
+                _manager.TickSpeed = t;
+            else
+                tickSpeedField.text = _manager.TickSpeed.ToString();
+        }
+
+        private void AnimManager_TickChanged(int obj)
+        {
+            tickField.text = obj.ToString();
+        }
+
+        public void Stop()
+        {
+            _manager.IsPlaying = false;
             playPauseButton.sprite = playSprite;
+            _manager.Tick = 0;
         }
-        else
+
+        public void PlayPause()
         {
-            playPauseButton.sprite = pauseSprite;
-        }
-        manager.IsPlaying = !manager.IsPlaying;
-    }
 
-    public void TogglePanel()
-    {
-        if (IsHiding)
+            if (_manager.IsPlaying)
+            {
+                playPauseButton.sprite = playSprite;
+            }
+            else
+            {
+                playPauseButton.sprite = pauseSprite;
+            }
+            _manager.IsPlaying = !_manager.IsPlaying;
+        }
+
+        public void TogglePanel()
         {
-            StopAllCoroutines();
-            StartCoroutine(MovePanelCoroutine(InitPos.y));
+            if (_isHiding)
+            {
+                StopAllCoroutines();
+                StartCoroutine(MovePanelCoroutine(_initPos.y));
+            }
+            else
+            {
+                StopAllCoroutines();
+                StartCoroutine(MovePanelCoroutine(0));
+            }
+
+            _isHiding = !_isHiding;
         }
-        else
+
+        private IEnumerator MovePanelCoroutine(float targetY)
         {
-            StopAllCoroutines();
-            StartCoroutine(MovePanelCoroutine(0));
+            var pos = dragPanel.rect.position.y;
+
+            float time = 0;
+            while (time < 1f)
+            {
+                pos = Mathf.Lerp(pos, targetY, 0.03f);
+                dragPanel.SetPanelSize(pos);
+                time += Time.deltaTime;
+                yield return null;
+            }
+            dragPanel.SetPanelSize(targetY);
         }
 
-        IsHiding = !IsHiding;
-    }
+        //public void OnAnimPanelPointer(bool IsEnter)
+        //{
+        //    BDEngineStyleCameraMovement.CanMoveCamera = !IsEnter;
+        //    IsMouseEnter = IsEnter;
+        //}
 
-    IEnumerator MovePanelCoroutine(float targetY)
-    {
-        float pos = dragPanel.rect.position.y;
-        float target = targetY;
-
-        float time = 0;
-        while (time < 1f)
+        public void OnScrollWheel(InputAction.CallbackContext callback)
         {
-            pos = Mathf.Lerp(pos, target, 0.03f);
-            dragPanel.SetPanelSize(pos);
-            time += Time.deltaTime;
-            yield return null;
+            if (!isMouseEnter) return;
+
+            var scroll = callback.ReadValue<Vector2>();
+
+            switch (scroll.y)
+            {
+                case > 0.1f:
+                    _manager.timeline.ChangeGrid(5);
+                    break;
+                case < -0.1f when _manager.timeline.gridCount > 20:
+                    _manager.timeline.ChangeGrid(-5);
+                    break;
+            }
+
         }
-        dragPanel.SetPanelSize(target);
-    }
 
-    //public void OnAnimPanelPointer(bool IsEnter)
-    //{
-    //    BDEngineStyleCameraMovement.CanMoveCamera = !IsEnter;
-    //    IsMouseEnter = IsEnter;
-    //}
-
-    public void OnScrollWheel(InputAction.CallbackContext callback)
-    {
-        if (!IsMouseEnter) return;
-
-        var scroll = callback.ReadValue<Vector2>();
-
-        if (scroll.y > 0.1f)
+        public void MoveTickLeft(InputAction.CallbackContext callback)
         {
-            manager.Timeline.ChangeGrid(5);
+            if (callback.started)
+                _manager.TickAdd(-1);
         }
-        else if (scroll.y < -0.1f && manager.Timeline.GridCount > 20)
+
+        public void MoveTickRight(InputAction.CallbackContext callback)
         {
-            manager.Timeline.ChangeGrid(-5);
+            if (callback.started)
+                _manager.TickAdd(1);
         }
-
-    }
-
-    public void MoveTickLeft(InputAction.CallbackContext callback)
-    {
-        if (callback.started)
-            manager.TickAdd(-1);
-    }
-
-    public void MoveTickRight(InputAction.CallbackContext callback)
-    {
-        if (callback.started)
-            manager.TickAdd(1);
     }
 }

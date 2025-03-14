@@ -1,122 +1,124 @@
-using UnityEngine;
 using System.Collections.Generic;
-using System.Collections;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using System;
-using Unity.VisualScripting;
 using System.Linq;
+using System.Threading.Tasks;
+using BDObject;
+using JetBrains.Annotations;
+using UnityEngine;
+using UnityEngine.Serialization;
 
-public class BDObjectManager : BaseManager
+namespace Manager
 {
-    // µð½ºÇÃ·¹ÀÌ »ý¼º¿ë
-    public Material BDObjTransportMaterial;
-    public Material BDObjHeadMaterial;
-
-    public Transform BDObjectParent;
-    public BDObjectContainer BDObjectPrefab;
-
-    public int BDObjectCount = 0;
-    //public List<BDObejctContainer> BDObjectList = new List<BDObejctContainer>();
-    public Dictionary<string, (BDObjectContainer, Dictionary<string, BDObjectContainer>)> BDObjects = new();
-
-    [Header("Prefabs")]
-    public BlockDisplay blockDisplay;
-    public ItemDisplay itemDisplay;
-    public TextDisplay textDisplay;
-
-    public MeshRenderer cubePrefab;
-    public ItemModelGenerator itemPrefab;
-    public BlockModelGenerator blockPrefab;
-    public HeadGenerator headPrefab;
-
-    // ÃÖ»óÀ§ BDObject¸¦ ÇÏ³ª ¹Þ¾Æ¼­ ÀüÃ¼ °èÃþ ±¸Á¶¸¦ »ý¼ºÇÏ°í,
-    // ÇØ´ç ÃÖ»óÀ§ ¿ÀºêÁ§Æ®¸¸ Dictionary¿¡ µî·ÏÇÑ´Ù.
-    public async Task AddObject(BDObject bdObject, string fileName)
+    public class BdObjectManager : BaseManager
     {
-        BDObjectCount = 0;
-        // ÃÖ»óÀ§ BDObject¸¦ Æ®¸® ±¸Á¶·Î »ý¼º
-        var rootObj = await CreateObjectHierarchyAsync(bdObject, BDObjectParent, fileName);
+        // ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        [FormerlySerializedAs("BDObjTransportMaterial")] public Material bdObjTransportMaterial;
+        [FormerlySerializedAs("BDObjHeadMaterial")] [UsedImplicitly]
+        public Material bdObjHeadMaterial;
 
-        // ÃÖ»óÀ§ ¿ÀºêÁ§Æ®¸¸ Dictionary¿¡ µî·Ï
-        Dictionary<string, BDObjectContainer> idDict = BDObjectHelper.SetDictionary(
-            rootObj,
-            obj => obj.BDObject,
-            obj => obj.children ?? Enumerable.Empty<BDObjectContainer>()
-            );
-        BDObjects[fileName] = (rootObj, idDict);
-    }
+        [FormerlySerializedAs("BDObjectParent")] public Transform bdObjectParent;
+        [FormerlySerializedAs("BDObjectPrefab")] public BdObjectContainer bdObjectPrefab;
 
-    // bdObject ÇÏ³ª¸¦ ¹Þ¾Æ ÀÚ½ÅÀÇ GameObject¸¦ »ý¼ºÇÏ°í, ±× ÀÚ½Äµéµµ Àç±ÍÀûÀ¸·Î »ý¼ºÇÑ´Ù.
-    private async Task<BDObjectContainer> CreateObjectHierarchyAsync(BDObject bdObject, Transform parent, string rootName, int batchSize = 10)
-    {
-        // BDObjectPrefab ±â¹ÝÀ¸·Î ÀÎ½ºÅÏ½º »ý¼º
-        var newObj = Instantiate(BDObjectPrefab, parent);
+        [FormerlySerializedAs("BDObjectCount")] public int bdObjectCount;
+        public readonly Dictionary<string, (BdObjectContainer, Dictionary<string, BdObjectContainer>)> BdObjects = new();
 
-        // ÃÊ±âÈ­
-        newObj.Init(bdObject, this);
-        BDObjectCount++;
+        [Header("Prefabs")]
+        public BlockDisplay blockDisplay;
+        public ItemDisplay itemDisplay;
+        public TextDisplay textDisplay;
 
-        BDObjectContainer[] children = null;
-        // ÀÚ½Ä Æ®¸® »ý¼º
-        if (bdObject.children != null && bdObject.children.Length > 0)
+        public MeshRenderer cubePrefab;
+        public ItemModelGenerator itemPrefab;
+        public BlockModelGenerator blockPrefab;
+        public HeadGenerator headPrefab;
+
+        
+        // ReSharper disable Unity.PerformanceAnalysis
+        public async Task AddObject(BdObject bdObject, string fileName)
         {
-            children = new BDObjectContainer[bdObject.children.Length];
-            for (int i = 0; i < bdObject.children.Length; i++)
-            {
-                children[i] = await CreateObjectHierarchyAsync(bdObject.children[i], newObj.transform, rootName, batchSize);
+            bdObjectCount = 0;
+            // ï¿½Ö»ï¿½ï¿½ï¿½ BDObjectï¿½ï¿½ Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            var rootObj = await CreateObjectHierarchyAsync(bdObject, bdObjectParent);
 
-                // ÀÏÁ¤ °³¼ö¸¶´Ù ÇÑ ÇÁ·¹ÀÓ¾¿ ´ë±â
-                if (i % batchSize == 0)
-                {
-                    await Task.Yield();
-                }
-            }
+            // ï¿½Ö»ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ Dictionaryï¿½ï¿½ ï¿½ï¿½ï¿½
+            var idDict = BdObjectHelper.SetDictionary(
+                rootObj,
+                obj => obj.BdObject,
+                obj => obj.children ?? Enumerable.Empty<BdObjectContainer>()
+            );
+            BdObjects[fileName] = (rootObj, idDict);
         }
 
-        // °³º° ÈÄÃ³¸®
-        newObj.PostProcess(children);
-
-        return newObj;
-    }
-
-    //void AddObjects(BDObject[] bdObjects, Transform parent)
-    //{
-    //    // ¹è¿­À» ¼øÈ¸ÇÏ¸ç
-    //    int count = bdObjects.Length;
-    //    for (int i = 0; i < count; i++)
-    //    {
-    //        // ¿ÀºêÁ§Æ® »ý¼º
-    //        var newObj = Instantiate(BDObjectPrefab, parent);
-    //        newObj.Init(bdObjects[i], this);
-    //        //BDObjectList.Add(newObj);
-    //        BDObjectCount++;
-
-    //        // ÀÚ½Ä ¿ÀºêÁ§Æ®¸¦ Ãß°¡
-    //        if (bdObjects[i].children != null)
-    //        {
-    //            AddObjects(bdObjects[i].children, newObj.transform);
-    //        }
-
-    //        // ÀÚ½Ä »ý¼º Á¾·á ÈÄ ÈÄÃ³¸®.
-    //        newObj.PostProcess();
-    //    }
-    //}
-
-    public void ClearAllObject()
-    {
-        Destroy(BDObjectParent.gameObject);
-        BDObjectParent = new GameObject("BDObjectParent").transform;
-        BDObjectParent.localScale = new Vector3(1, 1, -1);
-    }
-
-    // ¿ÀºêÁ§Æ® »èÁ¦ÇÏ±â
-    public void RemoveBDObject(string name)
-    {
-        if (BDObjects.TryGetValue(name, out var obj))
+        // bdObject ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½Þ¾ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ GameObjectï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½, ï¿½ï¿½ ï¿½Ú½Äµéµµ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+        private async Task<BdObjectContainer> CreateObjectHierarchyAsync(BdObject bdObject, Transform parent, int batchSize = 10)
         {
-            BDObjects.Remove(name);
-            Destroy(obj.Item1.gameObject);
+            // BDObjectPrefab ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Î½ï¿½ï¿½Ï½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            var newObj = Instantiate(bdObjectPrefab, parent);
+
+            // ï¿½Ê±ï¿½È­
+            newObj.Init(bdObject, this);
+            bdObjectCount++;
+
+            BdObjectContainer[] children = null;
+            // ï¿½Ú½ï¿½ Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            if (bdObject.Children is { Length: > 0 })
+            {
+                children = new BdObjectContainer[bdObject.Children.Length];
+                for (var i = 0; i < bdObject.Children.Length; i++)
+                {
+                    children[i] = await CreateObjectHierarchyAsync(bdObject.Children[i], newObj.transform, batchSize);
+
+                    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ó¾ï¿½ ï¿½ï¿½ï¿½
+                    if (i % batchSize == 0)
+                    {
+                        await Task.Yield();
+                    }
+                }
+            }
+
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã³ï¿½ï¿½
+            newObj.PostProcess(children);
+
+            return newObj;
+        }
+
+        //void AddObjects(BDObject[] bdObjects, Transform parent)
+        //{
+        //    // ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½È¸ï¿½Ï¸ï¿½
+        //    int count = bdObjects.Length;
+        //    for (int i = 0; i < count; i++)
+        //    {
+        //        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½
+        //        var newObj = Instantiate(BDObjectPrefab, parent);
+        //        newObj.Init(bdObjects[i], this);
+        //        //BDObjectList.Add(newObj);
+        //        BDObjectCount++;
+
+        //        // ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ß°ï¿½
+        //        if (bdObjects[i].children != null)
+        //        {
+        //            AddObjects(bdObjects[i].children, newObj.transform);
+        //        }
+
+        //        // ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Ã³ï¿½ï¿½.
+        //        newObj.PostProcess();
+        //    }
+        //}
+        
+        [UsedImplicitly]
+        public void ClearAllObject()
+        {
+            Destroy(bdObjectParent.gameObject);
+            bdObjectParent = new GameObject("BDObjectParent").transform;
+            bdObjectParent.localScale = new Vector3(1, 1, -1);
+        }
+
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+        public void RemoveBdObject(string bdName)
+        {
+            if (BdObjects.Remove(bdName, out var obj))
+            {
+                Destroy(obj.Item1.gameObject);
+            }
         }
     }
 }

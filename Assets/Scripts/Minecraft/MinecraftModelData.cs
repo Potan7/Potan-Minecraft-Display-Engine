@@ -1,67 +1,66 @@
-using UnityEngine;
+using System.Collections.Generic;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 
 namespace Minecraft
 {
-    [SerializeField]
+    [System.Serializable]
     public class MinecraftModelData
     {
         public enum FaceDirection
         {
-            up = 0,
-            north = 5,
-            west = 4,
-            down = 3,
-            east = 2,
-            south = 1
+            [UsedImplicitly] Up = 0,
+            [UsedImplicitly] North = 5,
+            [UsedImplicitly] West = 4,
+            [UsedImplicitly] Down = 3,
+            [UsedImplicitly] East = 2,
+            [UsedImplicitly] South = 1
         }
-
-        public string parent;
+        
+        private string _parent;
+        
         //public string gui_light;
         //public JObject display;
-        public JObject textures;
-        public List<JObject> elements;
+        public JObject Textures;
+        public List<JObject> Elements;
 
         //public JArray texture_size;
 
+        // ReSharper disable Unity.PerformanceAnalysis
         public MinecraftModelData UnpackParent()
         {
 
-            if (string.IsNullOrEmpty(parent)) return this;
+            if (string.IsNullOrEmpty(_parent)) return this;
 
-            if (parent == "builtin/generated") return this;
+            if (_parent == "builtin/generated") return this;
 
-            MinecraftModelData parentData =
-                MinecraftFileManager.GetModelData("models/" + MinecraftFileManager.RemoveNamespace(parent) + ".json")
+            var parentData =
+                MinecraftFileManager.GetModelData("models/" + MinecraftFileManager.RemoveNamespace(_parent) + ".json")
                 .UnpackParent();
 
-            MergeJObject(ref textures, parentData.textures);
-            MergeList(ref elements, parentData.elements);
+            MergeJObject(ref Textures, parentData.Textures);
+            MergeList(ref Elements, parentData.Elements);
 
-            parent = null;
+            _parent = null;
             return this;
         }
 
-        override public string ToString()
+        public override string ToString()
         {
             return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
 
-        private void MergeJObject(ref JObject target, JObject source)
+        private static void MergeJObject(ref JObject target, JObject source)
         {
             if (source == null) return;
 
-            if (target == null)
-            {
-                target = new JObject();
-            }
+            target ??= new JObject();
 
             foreach (var property in source.Properties())
             {
 
-                // ÀÚ½Ä°ú ºÎ¸ð°¡ °ãÄ¡¸é ÀÚ½ÄÀÌ ¿ì¼±¼øÀ§
+                // ï¿½Ú½Ä°ï¿½ ï¿½Î¸ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ ï¿½ì¼±ï¿½ï¿½ï¿½ï¿½
                 if (target.ContainsKey(property.Name) == false)
                 {
                     target[property.Name] = property.Value;
@@ -69,14 +68,11 @@ namespace Minecraft
             }
         }
 
-        private void MergeList(ref List<JObject> target, List<JObject> source)
+        private static void MergeList(ref List<JObject> target, List<JObject> source)
         {
             if (source == null) return;
 
-            if (target == null)
-            {
-                target = new List<JObject>();
-            }
+            target ??= new List<JObject>();
 
             target.AddRange(source);
         }

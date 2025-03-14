@@ -1,297 +1,301 @@
-using UnityEngine;
-using System.Collections;
-using SimpleFileBrowser;
-using System.IO;
-using System.Text;
 using System;
-using System.IO.Compression;
-using Newtonsoft.Json;
-using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Animation;
+using BDObject;
+using Newtonsoft.Json;
+using SimpleFileBrowser;
+using UnityEngine;
 
-public class FileManager : BaseManager
+namespace Manager
 {
-    public BDObjectManager bdObjManager;
-    public AnimObjList animObjList;
-    public HashSet<HeadGenerator> WorkingGenerators = new HashSet<HeadGenerator>();
-
-    public Dictionary<string, (int, int)> frameInfo = new Dictionary<string, (int, int)>();
-
-    private void Start()
+    public class FileManager : BaseManager
     {
-        bdObjManager = GameManager.GetManager<BDObjectManager>();
+        public BdObjectManager bdObjManager;
+        public AnimObjList animObjList;
+        public HashSet<HeadGenerator> WorkingGenerators = new HashSet<HeadGenerator>();
 
-        // .bdengine, .bdstudio È®ÀåÀÚ¸¸ ÇÊÅÍ¸µ
-        FileBrowser.SetFilters(false,
-            new FileBrowser.Filter("Files", ".bdengine", ".bdstudio"));
+        public Dictionary<string, (int, int)> FrameInfo = new Dictionary<string, (int, int)>();
 
-        // ·±Ã³ °æ·Î Ãß°¡
+        private void Start()
+        {
+            bdObjManager = GameManager.GetManager<BdObjectManager>();
+
+            // .bdengine, .bdstudio È®ï¿½ï¿½ï¿½Ú¸ï¿½ ï¿½ï¿½ï¿½Í¸ï¿½
+            FileBrowser.SetFilters(false,
+                new FileBrowser.Filter("Files", ".bdengine", ".bdstudio"));
+
+            // ï¿½ï¿½Ã³ ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
 #if UNITY_EDITOR
-        FileBrowser.AddQuickLink("Launcher Folder", Application.dataPath);
+            FileBrowser.AddQuickLink("Launcher Folder", Application.dataPath);
 #else
         FileBrowser.AddQuickLink("Launcher Folder", Application.dataPath + "/../");
 #endif
 
-        // ´Ù¿î·Îµå Æú´õ Ãß°¡
-        string download = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal));
-        download = Path.Combine(download, "Downloads");
+            // ï¿½Ù¿ï¿½Îµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
+            var download = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal));
+            download = Path.Combine(download, "Downloads");
 
-        FileBrowser.AddQuickLink("Downloads", download);
-    }
+            FileBrowser.AddQuickLink("Downloads", download);
+        }
 
-    IEnumerator ShowLoadDialogCoroutine(Action<List<string>> callback)
-    {
-        // ÆÄÀÏ ºê¶ó¿ìÀú¸¦ ¿­°í »ç¿ëÀÚ°¡ ÆÄÀÏÀ» ¼±ÅÃÇÏ°Å³ª Ãë¼ÒÇÒ ¶§±îÁö ´ë±â
-        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.FilesAndFolders, true, null, null, "Select Files", "Load");
+        // ReSharper disable Unity.PerformanceAnalysis
+        private IEnumerator ShowLoadDialogCoroutine(Action<List<string>> callback)
+        {
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ú°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°Å³ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+            yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.FilesAndFolders, true, null, null, "Select Files", "Load");
 
-        // ÆÄÀÏ ºê¶ó¿ìÀú°¡ ÆÄÀÏÀ» ºÒ·¯¿À¸é ÄÝ¹é ÇÔ¼ö È£Ãâ
-        if (FileBrowser.Success)
-            // ¸¸¾à Success°¡ false¶ó¸é Result´Â nullÀÌ µÈ´Ù.
-        { 
-            // Æú´õ ºÐ¸®ÇÏ±â
-            List<string> files = new List<string>();
-            string[] result = FileBrowser.Result;
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ò·ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ý¹ï¿½ ï¿½Ô¼ï¿½ È£ï¿½ï¿½
+            if (FileBrowser.Success)
+                // ï¿½ï¿½ï¿½ï¿½ Successï¿½ï¿½ falseï¿½ï¿½ï¿½ Resultï¿½ï¿½ nullï¿½ï¿½ ï¿½È´ï¿½.
+            { 
+                // ï¿½ï¿½ï¿½ï¿½ ï¿½Ð¸ï¿½ï¿½Ï±ï¿½
+                var files = new List<string>();
+                var result = FileBrowser.Result;
 
-            for (int i = 0; i < result.Length; i++)
-            {
-                // Æú´õ ³» ¸ðµç ÆÄÀÏµé ¸®½ºÆ®¿¡ Ãß°¡
-                if (Directory.Exists(result[i]))
+                foreach (var t in result)
                 {
-                    string[] folderFiles = Directory.GetFiles(result[i], "*.bdengine", SearchOption.TopDirectoryOnly);
-
-                    SettingManager settingManager = GameManager.GetManager<SettingManager>();
-
-                    // frame.txt ÆÄÀÏÀÌ ÀÖ´ÂÁö È®ÀÎ
-                    if (settingManager.UseFrameTxtFile)
+                    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ïµï¿½ ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ß°ï¿½
+                    if (Directory.Exists(t))
                     {
-                        string frameFile = Directory.GetFiles(result[i], "frame.txt", SearchOption.TopDirectoryOnly).FirstOrDefault();
-                        //Debug.Log("Try find Frame : " + frameFile);
+                        var folderFiles = Directory.GetFiles(t, "*.bdengine", SearchOption.TopDirectoryOnly);
 
-                        if (!string.IsNullOrEmpty(frameFile))
-                            SetDictByFrameTxt(settingManager, frameFile);
+                        var settingManager = GameManager.GetManager<SettingManager>();
+
+                        // frame.txt ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½ È®ï¿½ï¿½
+                        if (settingManager.UseFrameTxtFile)
+                        {
+                            var frameFile = Directory.GetFiles(t, "frame.txt", SearchOption.TopDirectoryOnly).FirstOrDefault();
+                            //Debug.Log("Try find Frame : " + frameFile);
+
+                            if (!string.IsNullOrEmpty(frameFile))
+                                SetDictByFrameTxt(settingManager, frameFile);
+                        }
+
+
+                        files.AddRange(folderFiles);
                     }
-
-
-                    files.AddRange(folderFiles);
+                    else
+                    {
+                        // ï¿½Æ´Ï¶ï¿½ï¿½ ï¿½×³ï¿½ ï¿½ß°ï¿½
+                        files.Add(t);
+                    }
                 }
-                else
-                {
-                    // ¾Æ´Ï¶ó¸é ±×³É Ãß°¡
-                    files.Add(result[i]);
-                }
-            }
 
-            callback?.Invoke(files); 
-        }
-        else
-        {
-            CustomLog.Log("Failed to load file");
-        }
-        
-    }
-
-    private void SetDictByFrameTxt(SettingManager settingManager, string frameFile)
-    {
-        CustomLog.Log("Frame.txt ÆÄÀÏ Ã£À½ : " + frameFile);
-        frameInfo.Clear();
-
-        // ÆÄÀÏ ÀÐ±â
-        var lines = File.ReadLines(frameFile);
-
-        foreach (string line in lines)
-        {
-            //Debug.Log("Line : " + line);
-            string[] parts = line.Split(' ');
-
-            string frameKey = null;
-            int sValue = settingManager.DefaultTickInterval; // ±âº»°ª (ÇÊ¿äÇÏ¸é Á¶Á¤)
-            int iValue = settingManager.DefaultInterpolation; // ±âº»°ª (ÇÊ¿äÇÏ¸é Á¶Á¤)
-
-            foreach (string part in parts)
-            {
-                string trimmed = part.Trim();
-
-                if (trimmed.StartsWith("f"))
-                {
-                    frameKey = trimmed;
-                }
-                else if (trimmed.StartsWith("s"))
-                {
-                    if (int.TryParse(trimmed.Substring(1), out int s))
-                        sValue = s;
-                }
-                else if (trimmed.StartsWith("i"))
-                {
-                    if (int.TryParse(trimmed.Substring(1), out int inter))
-                        iValue = inter;
-                }
-            }
-
-            if (!string.IsNullOrEmpty(frameKey))
-            {
-                frameInfo[frameKey] = (sValue, iValue);
-                //Debug.Log("Frame Info : " + frameKey + " " + sValue + " " + iValue);
-            }
-        }
-    }
-
-    // ÆÄÀÏ ÀÓÆ÷Æ®
-    public void ImportFile() => StartCoroutine(ShowLoadDialogCoroutine(AfterLoadFile));
-
-    // ÇÁ·¹ÀÓ ÀÓÆ÷Æ®
-    public void ImportFrame(AnimObject target, int tick) => StartCoroutine(FrameImportCoroutine(target, tick));
-
-    IEnumerator FrameImportCoroutine(AnimObject target, int tick)
-    {
-        // ÆÄÀÏ ºê¶ó¿ìÀú¸¦ ¿­°í »ç¿ëÀÚ°¡ ÆÄÀÏÀ» ¼±ÅÃÇÏ°Å³ª Ãë¼ÒÇÒ ¶§±îÁö ´ë±â
-        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files, false);
-
-        if (FileBrowser.Success)
-        {
-            string filepath = FileBrowser.Result[0];
-            AfterLoadFrame(filepath, target, tick);
-        }
-        else
-        {
-            CustomLog.Log("Failed to load file");
-        }
-    }
-
-    // ÆÄÀÏ ºÒ·¯¿Í¼­ µð½ºÇÃ·¹ÀÌ »ý¼ºÇÏ±â
-    public async void AfterLoadFile(List<string> filepaths)
-    {
-        GameManager.GetManager<UIManger>().SetLoadingPanel(true);
-
-        SettingManager settingManager = GameManager.GetManager<SettingManager>();
-        if (settingManager.UseFrameTxtFile || settingManager.UseNameInfoExtract)
-        {
-            // ÆÄÀÏ¸í ¼øÀ¸·Î Á¤·Ä
-            filepaths = SortFiles(filepaths);
-            //Debug.Log("Sorted Files : ");
-            //for (int i = 0; i < filepaths.Count; i++)
-            //{
-            //    Debug.Log(filepaths[i]);
-            //}
-        }
-
-        // Ã¹¹øÂ° ÆÄÀÏ·Î µð½ºÇÃ·¹ÀÌ »ý¼º
-        AnimObject animObject = await MakeDisplay(filepaths[0]);
-
-        // ÀÌÈÄ ÆÄÀÏºÎÅÍ´Â ÇÁ·¹ÀÓ Ãß°¡ÇÏ±â
-        for (int i = 1; i < filepaths.Count; i++)
-        {
-            BDObject[] bdObjects = await ProcessFileAsync(filepaths[i]);
-            animObject.AddFrame(bdObjects[0], Path.GetFileNameWithoutExtension(filepaths[i]));
-        }
-        while (WorkingGenerators.Count > 0) await Task.Delay(500);
-
-
-        //for (int i = 0; i < filepaths.Count; i++)
-        //{
-        //    runningTasks.Add(MakeDisplay(filepaths[i]));
-        //    // ¸¸¾à ÆÄÀÏÀÌ ³Ê¹« ¸¹À¸¸é ³ª´²¼­ ÀÛ¾÷
-        //    if (runningTasks.Count >= batch)
-        //    {
-        //        await Task.WhenAll(runningTasks);
-        //        runningTasks.Clear();
-        //    }
-        //}
-        //if (runningTasks.Count > 0)
-        //{
-        //    await Task.WhenAll(runningTasks);
-        //}
-
-        GameManager.GetManager<UIManger>().SetLoadingPanel(false);
-
-        CustomLog.Log($"Import is Done! BDObject Count: {GameManager.GetManager<BDObjectManager>().BDObjectCount}");
-    }
-
-    // ÆÄÀÏ ºÒ·¯¿Í¼­ ÇÁ·¹ÀÓ »ý¼ºÇÏ±â
-    public async void AfterLoadFrame(string filepath, AnimObject target, int tick)
-    {
-        GameManager.GetManager<UIManger>().SetLoadingPanel(true);
-
-        BDObject[] bdObjects = await ProcessFileAsync(filepath);
-        target.AddFrame(Path.GetFileNameWithoutExtension(filepath), bdObjects[0], tick, GameManager.Instance.Setting.DefaultInterpolation);
-
-        GameManager.GetManager<UIManger>().SetLoadingPanel(false);
-    }
-
-    // °³º° ÆÄÀÏ Ã³¸® ºñµ¿±â ÇÔ¼ö
-    private async Task<BDObject[]> ProcessFileAsync(string filepath)
-    {
-        return await Task.Run(() =>
-        {
-            // ÆÄÀÏ ÀÐ±â(ÅØ½ºÆ®)
-            string base64Text = FileBrowserHelpers.ReadTextFromFile(filepath);
-
-            // Base64 ¡æ gzipData
-            byte[] gzipData = Convert.FromBase64String(base64Text);
-
-            // gzip ÇØÁ¦ ¡æ json
-            string jsonData = DecompressGzip(gzipData);
-
-#if UNITY_EDITOR
-            Debug.Log(jsonData);
-#endif
-
-            // BDObject[] ¿ªÁ÷·ÄÈ­
-            return JsonConvert.DeserializeObject<BDObject[]>(jsonData);
-        });
-    }
-
-    // µð½ºÇÃ·¹ÀÌ ¸¸µé±â
-    public async Task<AnimObject> MakeDisplay(string filepath)
-    {
-        BDObject[] bdObjects = await ProcessFileAsync(filepath);
-
-        string fileName = Path.GetFileNameWithoutExtension(filepath);
-        await bdObjManager.AddObject(bdObjects[0], fileName);
-        return animObjList.AddAnimObject(fileName);
-    }
-
-    // gzipData¸¦ stringÀ¸·Î º¯È¯ÇÏ±â
-    string DecompressGzip(byte[] gzipData)
-    {
-        using (var compressedStream = new MemoryStream(gzipData))
-        using (var gzipStream = new GZipStream(compressedStream, CompressionMode.Decompress))
-        using (var reader = new StreamReader(gzipStream, Encoding.UTF8))
-        {
-            return reader.ReadToEnd();
-        }
-    }
-
-    public List<string> SortFiles(IEnumerable<string> fileNames)
-    {
-        // "f" µÚ¿¡ ¿À´Â ¼ýÀÚ¸¦ ÃßÃâÇÏ´Â Á¤±Ô½Ä (°æ·Î³ª ±¸ºÐÀÚ¿Í ¹«°üÇÏ°Ô)
-        Regex regex = new Regex(@"f(\d+)", RegexOptions.IgnoreCase);
-
-        var matchedFiles = new List<(string fileName, int number)>();
-        var unmatchedFiles = new List<string>();
-
-        foreach (var fileName in fileNames)
-        {
-            var match = regex.Match(fileName);
-            // f µÚÀÇ ¼ýÀÚ¸¸ ÃßÃâ
-            if (match.Success && int.TryParse(match.Groups[1].Value, out int number))
-            {
-                matchedFiles.Add((fileName, number));
+                callback?.Invoke(files); 
             }
             else
             {
-                unmatchedFiles.Add(fileName);
+                CustomLog.Log("Failed to load file");
+            }
+        
+        }
+
+        private void SetDictByFrameTxt(SettingManager settingManager, string frameFile)
+        {
+            CustomLog.Log("Frame.txt ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ : " + frameFile);
+            FrameInfo.Clear();
+
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½
+            var lines = File.ReadLines(frameFile);
+
+            foreach (var line in lines)
+            {
+                //Debug.Log("Line : " + line);
+                var parts = line.Split(' ');
+
+                string frameKey = null;
+                var sValue = settingManager.defaultTickInterval; // ï¿½âº»ï¿½ï¿½ (ï¿½Ê¿ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½)
+                var iValue = settingManager.defaultInterpolation; // ï¿½âº»ï¿½ï¿½ (ï¿½Ê¿ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½)
+
+                foreach (var part in parts)
+                {
+                    var trimmed = part.Trim();
+
+                    if (trimmed.StartsWith("f"))
+                    {
+                        frameKey = trimmed;
+                    }
+                    else if (trimmed.StartsWith("s"))
+                    {
+                        if (int.TryParse(trimmed[1..], out var s))
+                            sValue = s;
+                    }
+                    else if (trimmed.StartsWith("i"))
+                    {
+                        if (int.TryParse(trimmed[1..], out var inter))
+                            iValue = inter;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(frameKey))
+                {
+                    FrameInfo[frameKey] = (sValue, iValue);
+                    //Debug.Log("Frame Info : " + frameKey + " " + sValue + " " + iValue);
+                }
             }
         }
 
-        // "f¼ýÀÚ"°¡ ÀÖ´Â ÆÄÀÏÀ» ¼ýÀÚ ±âÁØÀ¸·Î Á¤·Ä
-        matchedFiles.Sort((a, b) => a.number.CompareTo(b.number));
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®
+        public void ImportFile() => StartCoroutine(ShowLoadDialogCoroutine(AfterLoadFile));
 
-        // Á¤·ÄµÈ ¸®½ºÆ® + ÆÐÅÏÀÌ ¾ø´Â ÆÄÀÏÀ» µÚ¿¡ Ãß°¡
-        var sortedFiles = matchedFiles.Select(x => x.fileName).ToList();
-        sortedFiles.AddRange(unmatchedFiles);
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®
+        public void ImportFrame(AnimObject target, int tick) => StartCoroutine(FrameImportCoroutine(target, tick));
 
-        return sortedFiles;
+        private IEnumerator FrameImportCoroutine(AnimObject target, int tick)
+        {
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ú°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°Å³ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+            yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files);
+
+            if (FileBrowser.Success)
+            {
+                var filepath = FileBrowser.Result[0];
+                AfterLoadFrame(filepath, target, tick);
+            }
+            else
+            {
+                CustomLog.Log("Failed to load file");
+            }
+        }
+
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½Ò·ï¿½ï¿½Í¼ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+        public async void AfterLoadFile(List<string> filepaths)
+        {
+            GameManager.GetManager<UIManger>().SetLoadingPanel(true);
+
+            var settingManager = GameManager.GetManager<SettingManager>();
+            if (settingManager.UseFrameTxtFile || settingManager.UseNameInfoExtract)
+            {
+                // ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                filepaths = SortFiles(filepaths);
+                //Debug.Log("Sorted Files : ");
+                //for (int i = 0; i < filepaths.Count; i++)
+                //{
+                //    Debug.Log(filepaths[i]);
+                //}
+            }
+
+            // Ã¹ï¿½ï¿½Â° ï¿½ï¿½ï¿½Ï·ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            var animObject = await MakeDisplay(filepaths[0]);
+
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ïºï¿½ï¿½Í´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½Ï±ï¿½
+            for (var i = 1; i < filepaths.Count; i++)
+            {
+                var bdObjects = await ProcessFileAsync(filepaths[i]);
+                animObject.AddFrame(bdObjects[0], Path.GetFileNameWithoutExtension(filepaths[i]));
+            }
+            while (WorkingGenerators.Count > 0) await Task.Delay(500);
+
+
+            //for (int i = 0; i < filepaths.Count; i++)
+            //{
+            //    runningTasks.Add(MakeDisplay(filepaths[i]));
+            //    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¹ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Û¾ï¿½
+            //    if (runningTasks.Count >= batch)
+            //    {
+            //        await Task.WhenAll(runningTasks);
+            //        runningTasks.Clear();
+            //    }
+            //}
+            //if (runningTasks.Count > 0)
+            //{
+            //    await Task.WhenAll(runningTasks);
+            //}
+
+            GameManager.GetManager<UIManger>().SetLoadingPanel(false);
+
+            CustomLog.Log($"Import is Done! BDObject Count: {GameManager.GetManager<BdObjectManager>().bdObjectCount}");
+        }
+
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½Ò·ï¿½ï¿½Í¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+        public async void AfterLoadFrame(string filepath, AnimObject target, int tick)
+        {
+            GameManager.GetManager<UIManger>().SetLoadingPanel(true);
+
+            var bdObjects = await ProcessFileAsync(filepath);
+            target.AddFrame(Path.GetFileNameWithoutExtension(filepath), bdObjects[0], tick, GameManager.Setting.defaultInterpolation);
+
+            GameManager.GetManager<UIManger>().SetLoadingPanel(false);
+        }
+
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ ï¿½ñµ¿±ï¿½ ï¿½Ô¼ï¿½
+        private static async Task<BdObject[]> ProcessFileAsync(string filepath)
+        {
+            return await Task.Run(() =>
+            {
+                // ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½(ï¿½Ø½ï¿½Æ®)
+                var base64Text = FileBrowserHelpers.ReadTextFromFile(filepath);
+
+                // Base64 ï¿½ï¿½ gzipData
+                var gzipData = Convert.FromBase64String(base64Text);
+
+                // gzip ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ json
+                var jsonData = DecompressGzip(gzipData);
+
+#if UNITY_EDITOR
+                Debug.Log(jsonData);
+#endif
+
+                // BDObject[] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È­
+                return JsonConvert.DeserializeObject<BdObject[]>(jsonData);
+            });
+        }
+
+        // ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
+        public async Task<AnimObject> MakeDisplay(string filepath)
+        {
+            var bdObjects = await ProcessFileAsync(filepath);
+
+            var fileName = Path.GetFileNameWithoutExtension(filepath);
+            await bdObjManager.AddObject(bdObjects[0], fileName);
+            return animObjList.AddAnimObject(fileName);
+        }
+
+        // gzipDataï¿½ï¿½ stringï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ï±ï¿½
+        private static string DecompressGzip(byte[] gzipData)
+        {
+            using var compressedStream = new MemoryStream(gzipData);
+            using var gzipStream = new GZipStream(compressedStream, CompressionMode.Decompress);
+            using var reader = new StreamReader(gzipStream, Encoding.UTF8);
+            return reader.ReadToEnd();
+        }
+
+        public List<string> SortFiles(IEnumerable<string> fileNames)
+        {
+            // "f" ï¿½Ú¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ú¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½Ô½ï¿½ (ï¿½ï¿½Î³ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½)
+            var regex = new Regex(@"f(\d+)", RegexOptions.IgnoreCase);
+
+            var matchedFiles = new List<(string fileName, int number)>();
+            var unmatchedFiles = new List<string>();
+
+            foreach (var fileName in fileNames)
+            {
+                var match = regex.Match(fileName);
+                // f ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ú¸ï¿½ ï¿½ï¿½ï¿½ï¿½
+                if (match.Success && int.TryParse(match.Groups[1].Value, out var number))
+                {
+                    matchedFiles.Add((fileName, number));
+                }
+                else
+                {
+                    unmatchedFiles.Add(fileName);
+                }
+            }
+
+            // "fï¿½ï¿½ï¿½ï¿½"ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            matchedFiles.Sort((a, b) => a.number.CompareTo(b.number));
+
+            // ï¿½ï¿½ï¿½Äµï¿½ ï¿½ï¿½ï¿½ï¿½Æ® + ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú¿ï¿½ ï¿½ß°ï¿½
+            var sortedFiles = matchedFiles.Select(x => x.fileName).ToList();
+            sortedFiles.AddRange(unmatchedFiles);
+
+            return sortedFiles;
+        }
     }
 }

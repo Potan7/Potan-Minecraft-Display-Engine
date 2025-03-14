@@ -1,56 +1,57 @@
+using System;
 using UnityEngine;
-using System.Collections.Generic;
 
-public static class AffineTransformation
+namespace BDObject
 {
-    //  float¹è¿­À» º¯È¯ÇÏ¿© Matrix4x4 »ý¼º
-    public static Matrix4x4 GetMatrix(float[] transforms)
+    public static class AffineTransformation
     {
-        if (transforms.Length != 16)
+        //  floatï¿½è¿­ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ï¿ï¿½ Matrix4x4 ï¿½ï¿½ï¿½ï¿½
+        public static Matrix4x4 GetMatrix(float[] transforms)
         {
+            if (transforms.Length == 16)
+                return new Matrix4x4(
+                    new Vector4(transforms[0], transforms[4], transforms[8], transforms[12]), // X ï¿½ï¿½
+                    new Vector4(transforms[1], transforms[5], transforms[9], transforms[13]), // Y ï¿½ï¿½
+                    new Vector4(transforms[2], transforms[6], transforms[10], transforms[14]), // Z ï¿½ï¿½
+                    new Vector4(transforms[3], transforms[7], transforms[11], transforms[15]) // Translation
+                );
             CustomLog.LogError("Invalid transform data");
             return Matrix4x4.identity;
+
+            //  Row-Major
         }
 
-        //  Row-Major
-        return new Matrix4x4(
-            new Vector4(transforms[0], transforms[4], transforms[8], transforms[12]),  // X Ãà
-            new Vector4(transforms[1], transforms[5], transforms[9], transforms[13]),  // Y Ãà
-            new Vector4(transforms[2], transforms[6], transforms[10], transforms[14]), // Z Ãà
-            new Vector4(transforms[3], transforms[7], transforms[11], transforms[15])  // Translation
-        );
-    }
+        public static void ApplyMatrixToTransform(Transform target, Matrix4x4 matrix)
+        {
+            // 1. Translation (localPosition)
+            Vector3 translation = matrix.GetColumn(3);
 
-    public static void ApplyMatrixToTransform(Transform target, Matrix4x4 matrix)
-    {
-        // 1. Translation (localPosition)
-        Vector3 translation = matrix.GetColumn(3);
+            // 2. Scale (localScale)
+            var scale = new Vector3(
+                matrix.GetColumn(0).magnitude, // X ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                matrix.GetColumn(1).magnitude, // Y ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                matrix.GetColumn(2).magnitude  // Z ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            );
 
-        // 2. Scale (localScale)
-        Vector3 scale = new Vector3(
-            matrix.GetColumn(0).magnitude, // X Ãà ½ºÄÉÀÏ
-            matrix.GetColumn(1).magnitude, // Y Ãà ½ºÄÉÀÏ
-            matrix.GetColumn(2).magnitude  // Z Ãà ½ºÄÉÀÏ
-        );
+            // 3. Rotation (localRotation)
+            //Vector3 normalizedX = matrix.GetColumn(0).normalized;
+            Vector3 normalizedY = matrix.GetColumn(1).normalized;
+            Vector3 normalizedZ = matrix.GetColumn(2).normalized;
 
-        // 3. Rotation (localRotation)
-        //Vector3 normalizedX = matrix.GetColumn(0).normalized;
-        Vector3 normalizedY = matrix.GetColumn(1).normalized;
-        Vector3 normalizedZ = matrix.GetColumn(2).normalized;
+            var forward = normalizedZ.magnitude > 0 ? normalizedZ : Vector3.forward;
+            var up = normalizedY.magnitude > 0 ? normalizedY : Vector3.up;
 
-        Vector3 forward = normalizedZ.magnitude > 0 ? normalizedZ : Vector3.forward;
-        Vector3 up = normalizedY.magnitude > 0 ? normalizedY : Vector3.up;
+            var rotation = Quaternion.LookRotation(forward, up);
+            //Quaternion rotation = Quaternion.FromToRotation(Vector3.right, normalizedX) *
+            //              Quaternion.FromToRotation(Vector3.up, normalizedY);
 
-        Quaternion rotation = Quaternion.LookRotation(forward, up);
-        //Quaternion rotation = Quaternion.FromToRotation(Vector3.right, normalizedX) *
-        //              Quaternion.FromToRotation(Vector3.up, normalizedY);
-
-        //Quaternion rotation = matrix.rotation;
+            //Quaternion rotation = matrix.rotation;
 
 
-        // 4. Transform¿¡ Àû¿ë
-        target.localPosition = translation;
-        target.localScale = scale;
-        target.localRotation = rotation;
+            // 4. Transformï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            target.localPosition = translation;
+            target.localScale = scale;
+            target.localRotation = rotation;
+        }
     }
 }

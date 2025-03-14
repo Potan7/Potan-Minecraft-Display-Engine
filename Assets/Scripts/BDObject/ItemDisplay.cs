@@ -1,114 +1,126 @@
-using Newtonsoft.Json.Linq;
-using System.Linq;
-using UnityEngine;
-using Minecraft;
-using Minecraft.MColor;
 using System;
+using System.Linq;
+using Manager;
+using Minecraft;
+using Newtonsoft.Json.Linq;
+using UnityEngine;
 
-public class ItemDisplay : ModelDisPlayObject
+namespace BDObject
 {
-    public ItemModelGenerator itemModel;
-    JObject currentItemState;
-
-    public override void LoadDisplayModel(string name, string state)
+    public class ItemDisplay : ModelDisPlayObject
     {
-        // items Æú´õÀÇ Á¤º¸¸¦ °¡Á®¿Í¼­
-        modelName = name;
-        JObject ItemState = MinecraftFileManager.GetJSONData("items/" + name + ".json");
+        public ItemModelGenerator itemModel;
+        private JObject _currentItemState;
 
-        if (!ItemState.ContainsKey("model"))
+        public override void LoadDisplayModel(string mName, string state)
         {
-            CustomLog.LogError("Model not found: " + name);
-            return;
-        }
+            // items ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½
+            modelName = mName;
+            var itemState = MinecraftFileManager.GetJsonData("items/" + mName + ".json");
 
-        // ¸ðµ¨ Á¤º¸¸¦ °¡Á®¿È
-        currentItemState = ItemState.GetValue("model") as JObject;
-
-        CheckModelType(currentItemState);
-    }
-
-    private void CheckModelType(JObject model)
-    {
-        //CustomLog.Log(model["type"] + " : " + model);
-        switch (model["type"].ToString())
-        {
-            case "minecraft:model":
-                TypeModel(model["model"].ToString());
-                break;
-            case "minecraft:condition":
-                CheckModelType(model["on_false"] as JObject);
-                break;
-            case "minecraft:select":
-                TypeSelect(model);
-                break;
-            case "minecraft:special":
-                TypeSpecial(model);
-                break;
-            case "minecraft:composite":
-                JArray parts = model["models"] as JArray;
-                int cnt = parts.Count();
-                for (int i = 0; i < cnt; i++)
-                {
-                    CheckModelType(parts[i] as JObject);
-                }
-                break;
-            case "minecraft:range_dispatch":
-
-                CheckModelType(model["entries"][0]["model"] as JObject);
-                break;
-            default:
-                CustomLog.LogError("Unknown model type: " + model["type"]);
-                break;
-        }
-    }
-
-    void TypeModel(string model)
-    {
-        //Debug.Log("Model: " + model);
-        //string model = itemState["model"].ToString();
-        if (model.StartsWith("minecraft:block/"))
-        {
-            GenerateUsingBlockModel(model);
-        }
-        else
-        {
-            SetItemModel(model);
-        }
-    }
-
-    private void GenerateUsingBlockModel(string model, Color co)
-    {
-        var bd = Instantiate(GameManager.GetManager<BDObjectManager>().blockPrefab, transform);
-        bd.modelName = model;
-        bd.color = co;
-        bd.SetModel(model);
-    }
-
-    void GenerateUsingBlockModel(string model)
-    {
-        GenerateUsingBlockModel(model, Color.white);
-    }
-
-    void TypeSelect(JObject itemState)
-    {
-        // guiÀÏ ¶§ÀÇ ¸ðµ¨À» Ã£¾Æ¼­ »ý¼º
-        JArray cases = itemState["cases"] as JArray;
-        foreach (var item in cases)
-        {
-            JObject caseItem = item as JObject;
-            if (!caseItem.ContainsKey("when"))
+            if (!itemState.ContainsKey("model"))
             {
-                CheckModelType(caseItem["model"] as JObject);
+                CustomLog.LogError("Model not found: " + mName);
                 return;
             }
 
-            if (caseItem["when"] is JArray)
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            _currentItemState = itemState.GetValue("model") as JObject;
+
+            CheckModelType(_currentItemState);
+        }
+
+        private void CheckModelType(JObject model)
+        {
+            //CustomLog.Log(model["type"] + " : " + model);
+            switch (model["type"].ToString())
             {
-                int cnt = caseItem["when"].Count();
-                for (int i = 0; i < cnt; i++)
+                case "minecraft:model":
+                    TypeModel(model["model"].ToString());
+                    break;
+                case "minecraft:condition":
+                    CheckModelType(model["on_false"] as JObject);
+                    break;
+                case "minecraft:select":
+                    TypeSelect(model);
+                    break;
+                case "minecraft:special":
+                    TypeSpecial(model);
+                    break;
+                case "minecraft:composite":
+                    var parts = model["models"] as JArray;
+                    var cnt = parts.Count();
+                    for (var i = 0; i < cnt; i++)
+                    {
+                        CheckModelType(parts[i] as JObject);
+                    }
+                    break;
+                case "minecraft:range_dispatch":
+
+                    CheckModelType(model["entries"][0]["model"] as JObject);
+                    break;
+                default:
+                    CustomLog.LogError("Unknown model type: " + model["type"]);
+                    break;
+            }
+        }
+
+        private void TypeModel(string model)
+        {
+            //Debug.Log("Model: " + model);
+            //string model = itemState["model"].ToString();
+            if (model.StartsWith("minecraft:block/"))
+            {
+                GenerateUsingBlockModel(model);
+            }
+            else
+            {
+                SetItemModel(model);
+            }
+        }
+
+        private void GenerateUsingBlockModel(string model, Color co)
+        {
+            var bd = Instantiate(GameManager.GetManager<BdObjectManager>().blockPrefab, transform);
+            bd.modelName = model;
+            bd.color = co;
+            bd.SetModel(model);
+        }
+
+        private void GenerateUsingBlockModel(string model)
+        {
+            GenerateUsingBlockModel(model, Color.white);
+        }
+
+        private void TypeSelect(JObject itemState)
+        {
+            // guiï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½Æ¼ï¿½ ï¿½ï¿½ï¿½ï¿½
+            var cases = itemState["cases"] as JArray;
+            foreach (var item in cases)
+            {
+                var caseItem = item as JObject;
+                if (!caseItem.ContainsKey("when"))
                 {
-                    string when = caseItem["when"][i].ToString();
+                    CheckModelType(caseItem["model"] as JObject);
+                    return;
+                }
+
+                if (caseItem["when"] is JArray)
+                {
+                    var cnt = caseItem["when"].Count();
+                    for (var i = 0; i < cnt; i++)
+                    {
+                        var when = caseItem["when"][i].ToString();
+                        if (when == "gui")
+                        {
+                            CheckModelType(caseItem["model"] as JObject);
+                            return;
+                        }
+                    }
+                }
+                else
+                {
+                    var when = caseItem["when"].ToString();
                     if (when == "gui")
                     {
                         CheckModelType(caseItem["model"] as JObject);
@@ -116,122 +128,113 @@ public class ItemDisplay : ModelDisPlayObject
                     }
                 }
             }
-            else
-            {
-                string when = caseItem["when"].ToString();
-                if (when == "gui")
-                {
-                    CheckModelType(caseItem["model"] as JObject);
-                    return;
-                }
-            }
+
+            CheckModelType(itemState["fallback"] as JObject);
         }
 
-        CheckModelType(itemState["fallback"] as JObject);
-    }
-
-    void TypeSpecial(JObject itemState)
-    {
-        JObject specialModel = itemState["model"] as JObject;
-        string baseModel = itemState["base"].ToString();
-        //Debug.Log("Base: " + baseModel);
-
-        switch (specialModel["type"].ToString())
+        private void TypeSpecial(JObject itemState)
         {
-            case "minecraft:bed":
-            case "minecraft:chest":
-            case "minecraft:shulker_box":
-            case "minecraft:conduit":
-            case "minecraft:decorated_pot":
-                GenerateUsingBlockModel(baseModel.Replace("item/", "block/"));
-                break;
-            case "minecraft:banner":
-                GenerateUsingBlockModel(
-                    "block/" + specialModel["type"].ToString(),
-                    MinecraftColorExtensions.ToColorEnum(specialModel["color"].ToString()).ToColor()
+            var specialModel = itemState["model"] as JObject;
+            var baseModel = itemState["base"].ToString();
+            //Debug.Log("Base: " + baseModel);
+
+            switch (specialModel["type"].ToString())
+            {
+                case "minecraft:bed":
+                case "minecraft:chest":
+                case "minecraft:shulker_box":
+                case "minecraft:conduit":
+                case "minecraft:decorated_pot":
+                    GenerateUsingBlockModel(baseModel.Replace("item/", "block/"));
+                    break;
+                case "minecraft:banner":
+                    GenerateUsingBlockModel(
+                        "block/" + specialModel["type"],
+                        MinecraftColorExtensions.ToColorEnum(specialModel["color"].ToString()).ToColor()
                     );
 
-                break;
-            case "minecraft:head":
-                var head = Instantiate(GameManager.GetManager<BDObjectManager>().headPrefab, transform);
-                head.GenerateHead(specialModel["kind"].ToString());
-                break;
-            case "minecraft:shield":
-                //CustomLog.Log("Shield: " + baseModel);
-                GenerateUsingBlockModel(baseModel);
-                break;
+                    break;
+                case "minecraft:head":
+                    var head = Instantiate(GameManager.GetManager<BdObjectManager>().headPrefab, transform);
+                    head.GenerateHead(specialModel["kind"].ToString());
+                    break;
+                case "minecraft:shield":
+                    //CustomLog.Log("Shield: " + baseModel);
+                    GenerateUsingBlockModel(baseModel);
+                    break;
 
-        }
+            }
 
-        /*
-         * ¹è³Ê, Àü´ÞÃ¼, µµÀÚ±â, ¹æÆÐ : ¸ðµ¨ ¾øÀ½, ºí·Ï µð½ºÇÃ·¹ÀÌ ÂÊµµ ¸ðµ¨ ¾øÀ½
-         * Ä§´ë, »óÀÚ, ¼ÈÄ¿ »óÀÚ : ºí·ÏÀ¸·Î ³Ñ±â±â (Done)
-         * ¸Ó¸® : ¸ðµ¨ ¾øÀ½, ºí·Ï µð½ºÇÃ·¹ÀÌ ÂÊµµ ¸ðµ¨ ¾øÀ½ (ÇÃ·¹ÀÌ¾î ¸Ó¸®´Â profile Ã³¸® ÇØ¾ßÇÔ)
-         * Ç¥ÁöÆÇ, ¸Å´Þ¸° Ç¥ÁöÆÇ : ¸ðµ¨ ¾øÀ½, ºí·Ï µð½ºÇÃ·¹ÀÌ ÂÊµµ ¸ðµ¨ ¾øÀ½ ±Ùµ¥ BDEngineµµ Áö¿øÀ» ¾ÈÇÔ(???)
+            /*
+         * ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½Ã¼, ï¿½ï¿½ï¿½Ú±ï¿½, ï¿½ï¿½ï¿½ï¿½ : ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+         * Ä§ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½Ä¿ ï¿½ï¿½ï¿½ï¿½ : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ±ï¿½ï¿½ (Done)
+         * ï¿½Ó¸ï¿½ : ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½Ó¸ï¿½ï¿½ï¿½ profile Ã³ï¿½ï¿½ ï¿½Ø¾ï¿½ï¿½ï¿½)
+         * Ç¥ï¿½ï¿½ï¿½ï¿½, ï¿½Å´Þ¸ï¿½ Ç¥ï¿½ï¿½ï¿½ï¿½ : ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ùµï¿½ BDEngineï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(???)
          */
-    }
-
-
-    protected void SetItemModel(string modelLocation)
-    {
-        // ºÒ·¯¿Â ¸ðµ¨À» ¹ÙÅÁÀ¸·Î »ý¼ºÇÏ±â
-        modelLocation = MinecraftFileManager.RemoveNamespace(modelLocation);
-
-        modelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
-
-        //CustomLog.Log("Model Data: " + modelData);
-        string layer0 = GetTexturePath(modelData.textures["layer0"].ToString(), modelData.textures);
-        Texture2D texture = MinecraftFileManager.GetTextureFile(layer0);
-        Texture2D texture2 = null;
-
-        if (modelData.textures.ContainsKey("layer1"))
-        {
-            string layer1 = GetTexturePath(modelData.textures["layer1"].ToString(), modelData.textures);
-            texture2 = MinecraftFileManager.GetTextureFile(layer1);
         }
 
-        if (currentItemState.TryGetValue("tints", out JToken value))
-        {
-            SetTint(texture, value[0] as JObject);
 
-            if (texture2 != null)
+        private void SetItemModel(string modelLocation)
+        {
+            // ï¿½Ò·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+            modelLocation = MinecraftFileManager.RemoveNamespace(modelLocation);
+
+            ModelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
+
+            //CustomLog.Log("Model Data: " + modelData);
+            var layer0 = GetTexturePath(ModelData.Textures["layer0"].ToString(), ModelData.Textures);
+            var texture = MinecraftFileManager.GetTextureFile(layer0);
+            Texture2D texture2 = null;
+
+            if (ModelData.Textures.TryGetValue("layer1", out var dataTexture))
             {
-                SetTint(texture2, value[1] as JObject);
+                var layer1 = GetTexturePath(dataTexture.ToString(), ModelData.Textures);
+                texture2 = MinecraftFileManager.GetTextureFile(layer1);
             }
-        }
 
-        itemModel = Instantiate(GameManager.GetManager<BDObjectManager>().itemPrefab, transform);
-        itemModel.Init(texture, texture2);
-    }
-
-    void SetTint(Texture2D texture, JObject tint)
-    {
-        Debug.Log("Tint: " + tint);
-        if (tint["type"].ToString() == "minecraft:constant")
-        {
-            // Á¤¼ö º¯È¯
-            int packedValue = int.Parse(tint["value"].ToString());
-
-            // Á¤È®ÇÑ RGB °ª ÃßÃâ (ºñÆ® ¸¶½ºÅ© Àû¿ë)
-            float r = ((packedValue >> 16) & 0xFF) / 255f;
-            float g = ((packedValue >> 8) & 0xFF) / 255f;
-            float b = (packedValue & 0xFF) / 255f;
-
-            Color color = new Color(r, g, b, 1.0f);
-           // CustomLog.Log("Color: " + color);
-
-            // ÅØ½ºÃ³¿¡ »ö»ó Àû¿ë
-            Color[] pixels = texture.GetPixels();
-            for (int i = 0; i < pixels.Length; i++)
+            if (_currentItemState.TryGetValue("tints", out var value))
             {
-                if (pixels[i].a == 0) continue;
-                pixels[i] = Color.Lerp(pixels[i], color, 0.9f);
+                SetTint(texture, value[0] as JObject);
+
+                if (texture2)
+                {
+                    SetTint(texture2, value[1] as JObject);
+                }
             }
-            texture.SetPixels(pixels);
-            texture.Apply();
+
+            itemModel = Instantiate(GameManager.GetManager<BdObjectManager>().itemPrefab, transform);
+            itemModel.Init(texture, texture2);
         }
 
+        private static void SetTint(Texture2D texture, JObject tint)
+        {
+            Debug.Log("Tint: " + tint);
+            if (tint["type"].ToString() == "minecraft:constant")
+            {
+                // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯
+                var packedValue = int.Parse(tint["value"].ToString());
+
+                // ï¿½ï¿½È®ï¿½ï¿½ RGB ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½Å© ï¿½ï¿½ï¿½ï¿½)
+                var r = ((packedValue >> 16) & 0xFF) / 255f;
+                var g = ((packedValue >> 8) & 0xFF) / 255f;
+                var b = (packedValue & 0xFF) / 255f;
+
+                var color = new Color(r, g, b, 1.0f);
+                // CustomLog.Log("Color: " + color);
+
+                // ï¿½Ø½ï¿½Ã³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                var pixels = texture.GetPixels();
+                for (var i = 0; i < pixels.Length; i++)
+                {
+                    if (pixels[i].a == 0) continue;
+                    pixels[i] = Color.Lerp(pixels[i], color, 0.9f);
+                }
+                texture.SetPixels(pixels);
+                texture.Apply();
+            }
 
 
+
+        }
     }
 }

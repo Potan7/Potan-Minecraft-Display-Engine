@@ -2,64 +2,62 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+namespace Manager
 {
-    // ½Ì±ÛÅæ Static ÆÐÅÏ
-    private static GameManager instance;
-    public static GameManager Instance
+    public class GameManager : MonoBehaviour
     {
-        get
+        // ï¿½Ì±ï¿½ï¿½ï¿½ Static ï¿½ï¿½ï¿½ï¿½
+        private static GameManager _instance;
+        public static GameManager Instance
         {
-            if (instance == null)
-                instance = FindAnyObjectByType<GameManager>();
-            return instance;
-        }
-    }
-
-    // ¸ðµç ¸Å´ÏÀú°¡ ÀúÀåµÇ´Â µñ¼Å³Ê¸®
-    private Dictionary<Type, BaseManager> managers = new Dictionary<Type, BaseManager>();
-
-    public SettingManager Setting => GetManager<SettingManager>();
-
-    // ¸Å´ÏÀú¸¦ °¡Á®¿À´Â ÇÔ¼ö
-    public static T GetManager<T>() where T : BaseManager
-    {
-        // µñ¼Å³Ê¸®¿¡¼­ ÇØ´ç Å¸ÀÔÀÇ ¸Å´ÏÀú¸¦ Ã£¾Æ ¹ÝÈ¯
-        if (instance.managers.TryGetValue(typeof(T), out var manager))
-        {
-            if (manager is T)
-                return manager as T;
+            get
+            {
+                if (!_instance)
+                    _instance = FindAnyObjectByType<GameManager>();
+                return _instance;
+            }
         }
 
-        CustomLog.LogError($"Manager of type {typeof(T)} not found!");
-        return null;
-    }
+        // ï¿½ï¿½ï¿½ ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ç´ï¿½ ï¿½ï¿½Å³Ê¸ï¿½
+        private readonly Dictionary<Type, BaseManager> _managers = new Dictionary<Type, BaseManager>();
 
-    // ¸Å´ÏÀú¸¦ µî·ÏÇÏ´Â ÇÔ¼ö
-    public void RegisterManager(BaseManager manager)
-    {
-        var type = manager.GetType();
-        if (!managers.ContainsKey(type))
-        {
-            managers[type] = manager;
-        }
-        else
-        {
-            Debug.LogError("WARNING! FIND TWO MANAGER : " + manager.name);
-        }
-    }
+        public static SettingManager Setting => GetManager<SettingManager>();
 
-    void Awake()
-    {
-        // ÀÚ±â ÀÚ½ÅÀ» Áï½Ã µî·Ï (°Ë»ö ¾øÀÌ)
-        if (Instance == null)
+        // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
+        public static T GetManager<T>() where T : BaseManager
         {
-            instance = this;
+            // ï¿½ï¿½Å³Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ø´ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½È¯
+            if (_instance._managers.TryGetValue(typeof(T), out var manager))
+            {
+                if (manager is T value)
+                    return value;
+            }
+
+            CustomLog.LogError($"Manager of type {typeof(T)} not found!");
+            return null;
         }
-        else if (Instance != this)
+
+        // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½
+        public void RegisterManager(BaseManager manager)
         {
-            Destroy(gameObject);
-            return;
+            var type = manager.GetType();
+            if (!_managers.TryAdd(type, manager))
+            {
+                Debug.LogError("WARNING! FIND TWO MANAGER : " + manager.name);
+            }
+        }
+
+        private void Awake()
+        {
+            // ï¿½Ú±ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ (ï¿½Ë»ï¿½ ï¿½ï¿½ï¿½ï¿½)
+            if (Instance == null)
+            {
+                _instance = this;
+            }
+            else if (Instance != this)
+            {
+                Destroy(gameObject);
+            }
         }
     }
 }

@@ -1,129 +1,129 @@
 using System.Collections.Generic;
 using System.Linq;
+using BDObject;
+using Manager;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
+namespace Animation
 {
-    public RectTransform rect;
-    public Image outlineImage;
-    public AnimObject animObject;
-
-    Color initColor;
-    Color selectedColor = Color.yellow;
-
-    public bool IsSelected = false;
-    public int Tick;
-    public int interpolation;
-    public string fileName;
-
-    public BDObject info;
-    public Dictionary<string, BDObject> IDDataDict;
-
-    public void Init(string FileName, int tick, int inter, BDObject Info, AnimObject obj)
+    public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
     {
-        //Debug.Log("tick : " + tick);
-        fileName = FileName;
-        animObject = obj;
-        initColor = outlineImage.color;
-        info = Info;
-        Tick = tick;
-        SetInter(inter);
+        public RectTransform rect;
+        public Image outlineImage;
+        public AnimObject animObject;
 
-        UpdatePos();
-        GameManager.GetManager<AnimManager>().Timeline.OnGridChanged += UpdatePos;
+        private Color _initColor;
+        private readonly Color _selectedColor = Color.yellow;
 
-        IDDataDict = BDObjectHelper.SetDictionary(
-            info,
-            obj => obj,
-            obj => obj.children ?? Enumerable.Empty<BDObject>()
-            );
-    }
+        [FormerlySerializedAs("IsSelected")] public bool isSelected;
+        [FormerlySerializedAs("Tick")] public int tick;
+        public int interpolation;
+        public string fileName;
 
-    public int SetTick(int tick)
-    {
-        // 0ÀÌ¸é °íÁ¤
-        if (Tick == 0)
-            return Tick;
-        if (animObject.ChangePos(this, Tick, tick))
+        public BdObject Info;
+        public Dictionary<string, BdObject> IDDataDict;
+
+        public void Init(string initFileName, int initTick, int inter, BdObject info, AnimObject obj)
         {
-            Tick = tick;
+            //Debug.Log("tick : " + tick);
+            fileName = initFileName;
+            animObject = obj;
+            _initColor = outlineImage.color;
+            Info = info;
+            tick = initTick;
+            SetInter(inter);
+
             UpdatePos();
-            return tick;
-        }
-        else
-        {
-            return Tick;
-        }
-    }
+            GameManager.GetManager<AnimManager>().timeline.OnGridChanged += UpdatePos;
 
-    // À§Ä¡ ¾÷µ¥ÀÌÆ®
-    private void UpdatePos()
-    {
-        var line = GameManager.GetManager<AnimManager>().Timeline.GetTickLine(Tick, false);
-        if (line == null)
-        {
-            gameObject.SetActive(false);
+            IDDataDict = BdObjectHelper.SetDictionary(
+                Info,
+                bdObject => bdObject,
+                bdObject => bdObject.Children ?? Enumerable.Empty<BdObject>()
+            );
         }
-        else
-        {
-            gameObject.SetActive(true);
-            rect.anchoredPosition = new Vector2(line.rect.anchoredPosition.x, rect.anchoredPosition.y);
-        }
-    }
 
-    public bool SetInter(int inter)
-    {
-        interpolation = inter;
-        return true;
-    }
+        public int SetTick(int newTick)
+        {
+            // 0ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½
+            if (tick == 0)
+                return tick;
+            if (!animObject.ChangePos(this, tick, newTick)) return tick;
+            
+            tick = newTick;
+            UpdatePos();
+            return newTick;
 
-    public void OnPointerDown(PointerEventData eventData)
-    {
-        if (eventData.button == PointerEventData.InputButton.Left)
-        {
-            IsSelected = true;
-            outlineImage.color = selectedColor;
         }
-        else
-        {
-            GameManager.GetManager<ContextMenuManager>().ShowContextMenu(this);
-        }
-    }
 
-    private void Update()
-    {
-        if (IsSelected)
+        // ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+        private void UpdatePos()
         {
+            var line = GameManager.GetManager<AnimManager>().timeline.GetTickLine(tick, false);
+            if (!line)
+            {
+                gameObject.SetActive(false);
+            }
+            else
+            {
+                gameObject.SetActive(true);
+                rect.anchoredPosition = new Vector2(line.rect.anchoredPosition.x, rect.anchoredPosition.y);
+            }
+        }
+
+        public bool SetInter(int inter)
+        {
+            interpolation = inter;
+            return true;
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Left)
+            {
+                isSelected = true;
+                outlineImage.color = _selectedColor;
+            }
+            else
+            {
+                GameManager.GetManager<ContextMenuManager>().ShowContextMenu(this);
+            }
+        }
+
+        private void Update()
+        {
+            if (!isSelected) return;
+            
             Vector2 mouse = Input.mousePosition;
-            var line = GameManager.GetManager<AnimManager>().Timeline.GetTickLine(mouse);
+            var line = GameManager.GetManager<AnimManager>().timeline.GetTickLine(mouse);
 
             SetTick(line.Tick);
 
             if (Input.GetMouseButtonUp(0))
             {
-                IsSelected = false;
-                outlineImage.color = initColor;
+                isSelected = false;
+                outlineImage.color = _initColor;
             }
         }
-    }
 
-    public void OnPointerUp(PointerEventData eventData)
-    {
-        if (eventData.button == PointerEventData.InputButton.Left)
+        public void OnPointerUp(PointerEventData eventData)
         {
-            IsSelected = false;
-            outlineImage.color = initColor;
+            if (eventData.button != PointerEventData.InputButton.Left) return;
+            
+            isSelected = false;
+            outlineImage.color = _initColor;
         }
-    }
 
-    // ÇÁ·¹ÀÓ Á¦°Å
-    public void RemoveFrame()
-    {
-        GameManager.GetManager<AnimManager>().Timeline.OnGridChanged -= UpdatePos;
-        animObject.RemoveFrame(this);
-    }
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        public void RemoveFrame()
+        {
+            GameManager.GetManager<AnimManager>().timeline.OnGridChanged -= UpdatePos;
+            animObject.RemoveFrame(this);
+        }
 
     
+    }
 }

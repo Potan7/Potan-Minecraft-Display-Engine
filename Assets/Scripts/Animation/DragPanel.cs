@@ -1,71 +1,76 @@
+using CameraMovement;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 
-public class DragPanel : MonoBehaviour, 
-    IPointerDownHandler//, IPointerMoveHandler//, IPointerUpHandler
+namespace Animation
 {
-    bool isDragging = false;
-    public RectTransform AnimPanel;
-    public RectTransform rect;
-
-    public RectTransform canvasRectTransform;
-
-    float lastHeight;
-    float lastPanelSize;
-
-    private void Start()
+    public class DragPanel : MonoBehaviour, 
+        IPointerDownHandler//, IPointerMoveHandler//, IPointerUpHandler
     {
-        lastHeight = canvasRectTransform.rect.height;
-    }
+        private bool _isDragging;
+        [FormerlySerializedAs("AnimPanel")] public RectTransform animPanel;
+        public RectTransform rect;
 
-    private void Update()
-    {
-        if (lastHeight != canvasRectTransform.rect.height)
+        public RectTransform canvasRectTransform;
+
+        private float _lastHeight;
+        private float _lastPanelSize;
+
+        private void Start()
         {
-            //Debug.Log("Canvas Height Changed");
-            SetPanelSize(lastPanelSize);
-            lastHeight = canvasRectTransform.rect.height;
+            _lastHeight = canvasRectTransform.rect.height;
         }
 
-        if (isDragging)
+        private void Update()
         {
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                canvasRectTransform,  // Äµ¹ö½ºÀÇ RectTransform
-                Input.mousePosition,                   // ¸¶¿ì½º À§Ä¡ (Screen Space)
-                null,                    // ÇöÀç »ç¿ëÇÏ´Â Ä«¸Þ¶ó
-                out var localPoint                         // º¯È¯µÈ UI ÁÂÇ¥
-            );
-            Debug.Log(localPoint);
-            Debug.Log(canvasRectTransform.rect.height);
-
-            SetPanelSize((canvasRectTransform.rect.height / 2) + localPoint.y);
-
-            if (Input.GetMouseButtonUp(0))
+            if (!Mathf.Approximately(_lastHeight, canvasRectTransform.rect.height))
             {
-                isDragging = false;
-                BDEngineStyleCameraMovement.CanMoveCamera = true;
+                //Debug.Log("Canvas Height Changed");
+                SetPanelSize(_lastPanelSize);
+                _lastHeight = canvasRectTransform.rect.height;
+            }
+
+            if (_isDragging)
+            {
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    canvasRectTransform,  // Äµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ RectTransform
+                    Input.mousePosition,                   // ï¿½ï¿½ï¿½ì½º ï¿½ï¿½Ä¡ (Screen Space)
+                    null,                    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Ä«ï¿½Þ¶ï¿½
+                    out var localPoint                         // ï¿½ï¿½È¯ï¿½ï¿½ UI ï¿½ï¿½Ç¥
+                );
+                //Debug.Log(localPoint);
+                //Debug.Log(canvasRectTransform.rect.height);
+
+                SetPanelSize(canvasRectTransform.rect.height / 2 + localPoint.y);
+
+                if (Input.GetMouseButtonUp(0))
+                {
+                    _isDragging = false;
+                    BdEngineStyleCameraMovement.CanMoveCamera = true;
+                }
             }
         }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            _isDragging = true;
+            BdEngineStyleCameraMovement.CanMoveCamera = false;
+        }
+
+        public void SetPanelSize(float y)
+        {
+            var height = -(canvasRectTransform.rect.height - y);
+            animPanel.offsetMax = new Vector2(animPanel.offsetMax.x, height);
+            _lastPanelSize = y;
+
+            //rect.position = new Vector3(rect.position.x, y, rect.position.z);
+        }
+
+        //public void OnPointerUp(PointerEventData eventData)
+        //{
+        //    isDragging = false;
+        //    BDEngineStyleCameraMovement.CanMoveCamera = true;
+        //}
     }
-
-    public void OnPointerDown(PointerEventData eventData)
-    {
-        isDragging = true;
-        BDEngineStyleCameraMovement.CanMoveCamera = false;
-    }
-
-    public void SetPanelSize(float y)
-    {
-        float height = -(canvasRectTransform.rect.height - y);
-        AnimPanel.offsetMax = new Vector2(AnimPanel.offsetMax.x, height);
-        lastPanelSize = y;
-
-        //rect.position = new Vector3(rect.position.x, y, rect.position.z);
-    }
-
-    //public void OnPointerUp(PointerEventData eventData)
-    //{
-    //    isDragging = false;
-    //    BDEngineStyleCameraMovement.CanMoveCamera = true;
-    //}
 }

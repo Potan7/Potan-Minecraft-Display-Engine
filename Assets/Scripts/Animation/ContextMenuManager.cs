@@ -1,117 +1,120 @@
-using System;
 using System.Collections.Generic;
+using Manager;
 using TMPro;
 using UnityEngine;
 
-public class ContextMenuManager : BaseManager
+namespace Animation
 {
-    public enum ContextMenuType
+    public class ContextMenuManager : BaseManager
     {
-        NewFrame = 0,
-        Frame
-    }
-
-    [Header("Context Menu")]
-    public ContextMenuType currentType;
-    public GameObject contextMenu;
-    public RectTransform contextMenuContent;
-
-    [Header("Context Menu Buttons")]
-    public List<GameObject> contextMenuBtns;
-
-    public TMP_InputField[] frameInfo;
-    public TextMeshProUGUI frameName;
-
-    [Header("Current Context")]
-    public Frame currentFrame;
-    public AnimObject currentObj;
-    public int animObjectsTick;
-
-    private void Start()
-    {
-        for (int i = 0; i < contextMenuBtns.Count; i++)
+        public enum ContextMenuType
         {
-            contextMenuBtns[i].SetActive(false);
+            NewFrame = 0,
+            Frame
         }
-        contextMenu.SetActive(false);
 
-    }
+        [Header("Context Menu")]
+        public ContextMenuType currentType;
+        public GameObject contextMenu;
+        public RectTransform contextMenuContent;
 
-    // ÇÁ·¹ÀÓ ¼öÁ¤ °¡´ÉÇÑ ¸Þ´º
-    public void ShowContextMenu(Frame thisFrame)
-    {
-        currentType = ContextMenuType.Frame;
-        currentFrame = thisFrame;
+        [Header("Context Menu Buttons")]
+        public List<GameObject> contextMenuBtns;
 
-        frameInfo[0].text = currentFrame.Tick.ToString();
-        frameInfo[1].text = currentFrame.interpolation.ToString();
-        frameName.text = currentFrame.fileName;
+        public TMP_InputField[] frameInfo;
+        public TextMeshProUGUI frameName;
 
-        SetContextMenu();
-    }
+        [Header("Current Context")]
+        public Frame currentFrame;
+        public AnimObject currentObj;
+        public int animObjectsTick;
 
-    // »õ·Î¿î ÇÁ·¹ÀÓ Ãß°¡ °¡´ÉÇÑ ¸Þ´º
-    public void ShowContextMenu(AnimObject obj, int tick)
-    {
-        currentType = ContextMenuType.NewFrame;
-        currentObj = obj;
-        animObjectsTick = tick;
-
-        SetContextMenu();
-    }
-
-    // ¸Þ´º ¿­±â
-    private void SetContextMenu()
-    {
-        Vector2 mousePos = Input.mousePosition;
-        contextMenu.SetActive(true);
-
-        contextMenuContent.anchoredPosition = mousePos;
-        contextMenuBtns[(int)currentType].SetActive(true);
-    }
-
-    // ¸Þ´º ´Ý±â
-    public void CloseContectMenu()
-    {
-        contextMenuBtns[(int)currentType].SetActive(false);
-        contextMenu.SetActive(false);
-    }
-
-    public void OnAddFrameButtonClicked()
-    {
-        GameManager.GetManager<FileManager>().ImportFrame(currentObj, animObjectsTick);
-        CloseContectMenu();
-    }
-
-    public void OnFrameTickChanged(string value)
-    {
-        if (int.TryParse(value, out int tick))
+        private void Start()
         {
-            frameInfo[0].text = currentFrame.SetTick(tick).ToString();
+            for (var i = 0; i < contextMenuBtns.Count; i++)
+            {
+                contextMenuBtns[i].SetActive(false);
+            }
+            contextMenu.SetActive(false);
 
         }
-        else
-        {
-            frameInfo[0].text = currentFrame.Tick.ToString();
-        }
-    }
 
-    public void OnFrameInterChanged(string value)
-    {
-        if (int.TryParse(value, out int inter))
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ´ï¿½
+        public void ShowContextMenu(Frame thisFrame)
         {
-            if (!currentFrame.SetInter(inter))
-                frameInfo[1].text = currentFrame.interpolation.ToString();
-        }
-        else
-        {
+            currentType = ContextMenuType.Frame;
+            currentFrame = thisFrame;
+
+            frameInfo[0].text = currentFrame.tick.ToString();
             frameInfo[1].text = currentFrame.interpolation.ToString();
-        }
-    }
+            frameName.text = currentFrame.fileName;
 
-    public void OnFrameRemoveButton()
-    {
-        currentFrame.RemoveFrame();
-        CloseContectMenu();
+            SetContextMenu();
+        }
+
+        // ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ´ï¿½
+        public void ShowContextMenu(AnimObject obj, int tick)
+        {
+            currentType = ContextMenuType.NewFrame;
+            currentObj = obj;
+            animObjectsTick = tick;
+
+            SetContextMenu();
+        }
+
+        // ï¿½Þ´ï¿½ ï¿½ï¿½ï¿½ï¿½
+        private void SetContextMenu()
+        {
+            Vector2 mousePos = Input.mousePosition;
+            contextMenu.SetActive(true);
+
+            contextMenuContent.anchoredPosition = mousePos;
+            contextMenuBtns[(int)currentType].SetActive(true);
+        }
+
+        // ï¿½Þ´ï¿½ ï¿½Ý±ï¿½
+        public void CloseContectMenu()
+        {
+            contextMenuBtns[(int)currentType].SetActive(false);
+            contextMenu.SetActive(false);
+        }
+
+        public void OnAddFrameButtonClicked()
+        {
+            GameManager.GetManager<FileManager>().ImportFrame(currentObj, animObjectsTick);
+            CloseContectMenu();
+        }
+
+        public void OnFrameTickChanged(string value)
+        {
+            if (int.TryParse(value, out var tick))
+            {
+                frameInfo[0].text = currentFrame.SetTick(tick).ToString();
+
+            }
+            else
+            {
+                frameInfo[0].text = currentFrame.tick.ToString();
+            }
+        }
+
+        public void OnFrameInterChanged(string value)
+        {
+            if (int.TryParse(value, out var inter))
+            {
+                if (!currentFrame.SetInter(inter))
+                    frameInfo[1].text = currentFrame.interpolation.ToString();
+            }
+            else
+            {
+                frameInfo[1].text = currentFrame.interpolation.ToString();
+            }
+        }
+
+        public void OnFrameRemoveButton()
+        {
+            currentFrame.RemoveFrame();
+            CloseContectMenu();
+        }
     }
 }

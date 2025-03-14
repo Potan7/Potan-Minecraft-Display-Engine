@@ -1,158 +1,159 @@
 using System;
 using System.Collections.Generic;
+using Manager;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 
-public class Timeline : MonoBehaviour, IPointerDownHandler
+namespace Animation
 {
-    public TickLine gridPrefab;
-    public List<TickLine> grid;
-    public RectTransform TimeBar;
-    int tick = 0;
-
-    public int GridCount = 100;
-    public event Action OnGridChanged;
-
-    public bool IsClicking = false;
-
-    AnimManager animManager;
-
-    private void Start()
+    public class Timeline : MonoBehaviour, IPointerDownHandler
     {
-        SetTickTexts(0);
-        for (int i = 0; i < GridCount; i++)
+        public TickLine gridPrefab;
+        public List<TickLine> grid;
+        [FormerlySerializedAs("TimeBar")] public RectTransform timeBar;
+        private int _tick;
+
+        [FormerlySerializedAs("GridCount")] public int gridCount = 100;
+        public event Action OnGridChanged;
+
+        [FormerlySerializedAs("IsClicking")] public bool isClicking;
+
+        private AnimManager _animManager;
+
+        private void Start()
         {
-            grid[i].index = i;
-        }
-        AnimManager.TickChanged += OnAnimManagerTickChanged;
-
-        animManager = GameManager.GetManager<AnimManager>();
-        OnAnimManagerTickChanged(animManager.Tick);
-
-    }
-
-    private void OnAnimManagerTickChanged(int Tick)
-    {
-        tick = Tick;
-        TickLine line = GetTickLine(tick, true);
-
-        if (line != null)
-        {
-            TimeBar.anchoredPosition = new Vector2(line.rect.anchoredPosition.x, TimeBar.anchoredPosition.y);
-        }
-    }
-
-    /// <summary>
-    /// Æ½¿¡ ÇØ´çÇÏ´Â ±×¸®µå¸¦ °¡Á®¿Â´Ù.
-    /// </summary>
-    /// <param name="tick"></param>
-    /// <param name="ChangeGrid"> trueÀÏ °æ¿ì tick¿¡ ÇØ´çÇÏµµ·Ï ±×¸®µå¸¦ º¯°æÇÑ´Ù.</param>
-    /// <returns>Ã£À» °æ¿ì : TickLine, ¸øÃ£À» °æ¿ì : null</returns>
-    public TickLine GetTickLine(int tick, bool ChangeGrid)
-    {
-        if (tick < 0)
-        {
-            return null;
-        }
-        // ¹üÀ§ ¹ÛÀÌ¸é ±×¸®µå º¯°æ
-        TickLine line = grid[0];
-        if (tick < line.Tick)
-        {
-            if (!ChangeGrid) return null;
-            SetTickTexts(tick);
-            return GetTickLine(tick, ChangeGrid);
-        }
-
-        line = grid[GridCount-1];
-        if (tick > line.Tick)
-        {
-            if (!ChangeGrid) return null;
-            SetTickTexts(line.Tick + 1);
-            return GetTickLine(tick, ChangeGrid);
-        }
-
-        // ÀÌÁø Å½»öÀ¸·Î Ã£±â
-        int index = grid.BinarySearch(null, Comparer<TickLine>.Create((a, b) => a.Tick.CompareTo(tick)));
-        if (index >= 0)
-        {
-            return grid[index];
-        }
-        return null;
-    }
-
-    // µé¾î¿Â RectTransform°ú °¡Àå °¡±î¿î TickLineÀ» ¹ÝÈ¯ÇÑ´Ù.
-    public TickLine GetTickLine(Vector2 pos)
-    {
-        int max_index = 0;
-        float max = Vector2.Distance(pos, grid[max_index].rect.position);
-        for (int i = 1; i < grid.Count; i++)
-        {
-            float distance = Vector2.Distance(pos, grid[i].rect.position);
-            if (distance < max)
+            SetTickTexts(0);
+            for (var i = 0; i < gridCount; i++)
             {
-                max = distance;
-                max_index = i;
+                grid[i].index = i;
+            }
+            AnimManager.TickChanged += OnAnimManagerTickChanged;
+
+            _animManager = GameManager.GetManager<AnimManager>();
+            OnAnimManagerTickChanged(_animManager.Tick);
+
+        }
+
+        private void OnAnimManagerTickChanged(int tick)
+        {
+            _tick = tick;
+            var line = GetTickLine(_tick, true);
+
+            if (line)
+            {
+                timeBar.anchoredPosition = new Vector2(line.rect.anchoredPosition.x, timeBar.anchoredPosition.y);
             }
         }
-        return grid[max_index];
-    }
 
-    public void ChangeGrid(int move)
-    {
-        GridCount += move;
-        SetTickTexts(grid[0].Tick);
-
-        OnAnimManagerTickChanged(tick);
-    }
-
-    // ±×¸®µå ¼³Á¤ÇÏ±â
-    public void SetTickTexts(int start)
-    {
-        for (int i = 0; i < GridCount; i++)
+        /// <summary>
+        /// Æ½ï¿½ï¿½ ï¿½Ø´ï¿½ï¿½Ï´ï¿½ ï¿½×¸ï¿½ï¿½å¸¦ ï¿½ï¿½ï¿½ï¿½ï¿½Â´ï¿½.
+        /// </summary>
+        /// <param name="tick"></param>
+        /// <param name="changeGrid"> trueï¿½ï¿½ ï¿½ï¿½ï¿½ tickï¿½ï¿½ ï¿½Ø´ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½å¸¦ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.</param>
+        /// <returns>Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½ : TickLine, ï¿½ï¿½Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½ : null</returns>
+        public TickLine GetTickLine(int tick, bool changeGrid)
         {
-            if (grid.Count <= i)
+            if (tick < 0)
             {
-                TickLine newGrid = Instantiate(gridPrefab, transform);
-                grid.Add(newGrid);
-                newGrid.index = i;
+                return null;
             }
-            else
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì¸ï¿½ ï¿½×¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            var line = grid[0];
+            if (tick < line.Tick)
             {
-                grid[i].gameObject.SetActive(true);
+                if (!changeGrid) return null;
+                SetTickTexts(tick);
+                return GetTickLine(tick, changeGrid);
             }
 
-            grid[i].SetTick(start + i, i == 0);
-        }
-        for (int i = GridCount; i < grid.Count; i++)
-        {
-            grid[i].gameObject.SetActive(false);
-        }
-
-        OnGridChanged?.Invoke();
-    }
-
-    public void OnPointerDown(PointerEventData eventData)
-    {
-        if (eventData.button == PointerEventData.InputButton.Left)
-        {
-            IsClicking = true;
-        }
-    }
-
-    private void Update()
-    {
-        if (IsClicking)
-        {
-            Vector2 pos = Input.mousePosition;
-            TickLine line = GetTickLine(pos);
-            if (line != null && line.Tick != animManager.Tick)
+            line = grid[gridCount-1];
+            if (tick > line.Tick)
             {
-                animManager.Tick = line.Tick;
+                if (!changeGrid) return null;
+                SetTickTexts(line.Tick + 1);
+                return GetTickLine(tick, changeGrid);
             }
 
-            if (Input.GetMouseButtonUp(0))
+            // ï¿½ï¿½ï¿½ï¿½ Å½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½
+            var index = grid.BinarySearch(null, Comparer<TickLine>.Create((a, b) => a.Tick.CompareTo(tick)));
+            return index >= 0 ? grid[index] : null;
+        }
+
+        // ï¿½ï¿½ï¿½ï¿½ RectTransformï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ TickLineï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½.
+        public TickLine GetTickLine(Vector2 pos)
+        {
+            var maxIndex = 0;
+            var max = Vector2.Distance(pos, grid[maxIndex].rect.position);
+            for (var i = 1; i < grid.Count; i++)
             {
-                IsClicking = false;
+                var distance = Vector2.Distance(pos, grid[i].rect.position);
+                if (distance < max)
+                {
+                    max = distance;
+                    maxIndex = i;
+                }
+            }
+            return grid[maxIndex];
+        }
+
+        public void ChangeGrid(int move)
+        {
+            gridCount += move;
+            SetTickTexts(grid[0].Tick);
+
+            OnAnimManagerTickChanged(_tick);
+        }
+
+        // ï¿½×¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+        public void SetTickTexts(int start)
+        {
+            for (var i = 0; i < gridCount; i++)
+            {
+                if (grid.Count <= i)
+                {
+                    var newGrid = Instantiate(gridPrefab, transform);
+                    grid.Add(newGrid);
+                    newGrid.index = i;
+                }
+                else
+                {
+                    grid[i].gameObject.SetActive(true);
+                }
+
+                grid[i].SetTick(start + i, i == 0);
+            }
+            for (var i = gridCount; i < grid.Count; i++)
+            {
+                grid[i].gameObject.SetActive(false);
+            }
+
+            OnGridChanged?.Invoke();
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Left)
+            {
+                isClicking = true;
+            }
+        }
+
+        private void Update()
+        {
+            if (isClicking)
+            {
+                Vector2 pos = Input.mousePosition;
+                var line = GetTickLine(pos);
+                if (line && line.Tick != _animManager.Tick)
+                {
+                    _animManager.Tick = line.Tick;
+                }
+
+                if (Input.GetMouseButtonUp(0))
+                {
+                    isClicking = false;
+                }
             }
         }
     }

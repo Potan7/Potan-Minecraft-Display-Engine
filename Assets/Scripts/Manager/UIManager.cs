@@ -1,42 +1,48 @@
+using JetBrains.Annotations;
 using Riten.Native.Cursors;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
-public class UIManger : BaseManager
+namespace Manager
 {
-    FileManager fileManager;
-    BDObjectManager BDObjectManager;
-
-    public GameObject LoadingPanel;
-    int cursorID;
-
-    private void Start()
+    public class UIManger : BaseManager
     {
-        fileManager = GameManager.GetManager<FileManager>();
-        BDObjectManager = GameManager.GetManager<BDObjectManager>();
-    }
+        private FileManager _fileManager;
 
-    public void SetLoadingPanel(bool isOn)
-    {
-        LoadingPanel.SetActive(isOn);
-        if (isOn)
+        [FormerlySerializedAs("LoadingPanel")] public GameObject loadingPanel;
+        private int _cursorID;
+
+        private void Start()
         {
-            cursorID = CursorStack.Push(NTCursors.Busy);
+            _fileManager = GameManager.GetManager<FileManager>();
+            GameManager.GetManager<BdObjectManager>();
         }
-        else
+
+        public void SetLoadingPanel(bool isOn)
         {
-            CursorStack.Pop(cursorID);
+            loadingPanel.SetActive(isOn);
+            if (isOn)
+            {
+                _cursorID = CursorStack.Push(NTCursors.Busy);
+            }
+            else
+            {
+                CursorStack.Pop(_cursorID);
+            }
         }
-    }
 
-    public void OnPressImportButton()
-    {
-        fileManager.ImportFile();
-    }
+        [UsedImplicitly]
+        public void OnPressImportButton()
+        {
+            _fileManager.ImportFile();
+        }
 
-    public void OnRealodButton()
-    {
-        DestroyImmediate(GameManager.Instance.gameObject);
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        [UsedImplicitly]
+        public void OnRealodButton()
+        {
+            DestroyImmediate(GameManager.Instance.gameObject);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
     }
 }

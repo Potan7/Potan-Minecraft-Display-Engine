@@ -1,38 +1,39 @@
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-public class TickLine : MonoBehaviour
+namespace Animation
 {
-    public TextMeshProUGUI text;
-    [SerializeField]
-    int _tick;
-    public int Tick { get => _tick; }
-    public Image image;
-    public RectTransform rect;
-    public int index;
-
-    public void SetTick(int t, bool ForceLarge = false)
+    public class TickLine : MonoBehaviour
     {
-        text.text = t.ToString();
-        _tick = t;
+        public TextMeshProUGUI text;
+        [FormerlySerializedAs("_tick")] [SerializeField] private int tick;
+        public int Tick { get => tick; }
+        public Image image;
+        public RectTransform rect;
+        public int index;
 
-        if (t % 10 == 0 || ForceLarge)
+        public void SetTick(int t, bool forceLarge = false)
         {
-            SetImageVertical(25);
-            text.gameObject.SetActive(true);
-        }
-        else
-        {
-            SetImageVertical(10);
-            text.gameObject.SetActive(false);
-        }
-    }
+            text.text = t.ToString();
+            tick = t;
 
-    public void SetImageVertical(float size)
-    {
-        image.rectTransform.sizeDelta = new Vector2(image.rectTransform.sizeDelta.x, size);
+            if (t % 10 == 0 || forceLarge)
+            {
+                SetImageVertical(25);
+                text.gameObject.SetActive(true);
+            }
+            else
+            {
+                SetImageVertical(10);
+                text.gameObject.SetActive(false);
+            }
+        }
+
+        public void SetImageVertical(float size)
+        {
+            image.rectTransform.sizeDelta = new Vector2(image.rectTransform.sizeDelta.x, size);
+        }
     }
 }

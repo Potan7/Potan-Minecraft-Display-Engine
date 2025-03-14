@@ -1,171 +1,171 @@
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Rendering;
 
-public class ItemModelGenerator : MonoBehaviour
+namespace BDObject
 {
-    public MeshRenderer meshRenderer;
-    public MeshFilter meshFilter;
-    Mesh mesh;
-
-    public Texture2D layer0Textures;
-    public Texture2D layer1Textures = null;
-
-    #region Voxel Data
-    // Á¤À°¸éÃ¼ÀÇ 8°³ ²ÀÁþÁ¡ÀÇ »ó´ëÁÂÇ¥ (¿ø·¡´Â -0.5 ~ 0.5)
-    static readonly float3[] verticePositions =
+    public class ItemModelGenerator : MonoBehaviour
     {
-        new float3(-0.5f,  0.5f, -0.5f), new float3(-0.5f,  0.5f,  0.5f), // 0, 1
-        new float3( 0.5f,  0.5f,  0.5f), new float3( 0.5f,  0.5f, -0.5f), // 2, 3
-        new float3(-0.5f, -0.5f, -0.5f), new float3(-0.5f, -0.5f,  0.5f), // 4, 5
-        new float3( 0.5f, -0.5f,  0.5f), new float3( 0.5f, -0.5f, -0.5f), // 6, 7
-    };
+        public MeshRenderer meshRenderer;
+        public MeshFilter meshFilter;
+        private Mesh _mesh;
 
-    // °¢ ¸éÀÌ °¡Áö´Â Á¤Á¡ÀÇ ÀÎµ¦½º (verticePositions ¹è¿­ ±âÁØ)
-    static readonly int4[] faceVertices =
-    {
-        new int4(1, 2, 3, 0),   // up
-        new int4(6, 5, 4, 7),   // down
-        new int4(2, 1, 5, 6),   // front
-        new int4(0, 3, 7, 4),   // back
-        new int4(3, 2, 6, 7),   // right
-        new int4(1, 0, 4, 5)    // left
-    };
+        public Texture2D layer0Textures;
+        public Texture2D layer1Textures;
 
-    // »ï°¢Çü ÀÎµ¦½º (Á¤»ç°¢Çü ¸éÀ» µÎ °³ÀÇ »ï°¢ÇüÀ¸·Î ºÐÇÒ)
-    static readonly int[] triangleVertices = { 0, 1, 2, 0, 2, 3 };
-
-    // UV ÁÂÇ¥ (¿ÞÂÊ À§, ¿À¸¥ÂÊ À§, ¿À¸¥ÂÊ ¾Æ·¡, ¿ÞÂÊ ¾Æ·¡)
-    static readonly int2[] dUV =
-    {
-        new int2(0, 1),
-        new int2(1, 1),
-        new int2(1, 0),
-        new int2(0, 0)
-    };
-    #endregion
-
-    List<float3> vertices = new List<float3>();
-    List<int> triangles = new List<int>();
-    List<float2> uvs = new List<float2>();
-    List<Color> colors = new List<Color>();
-
-    public void Init(Texture2D layer0, Texture2D layer1 = null)
-    {
-        mesh = new Mesh();
-        meshFilter.sharedMesh = mesh;
-
-        layer0Textures = layer0;
-        layer1Textures = layer1;
-
-        Generate();
-    }
-
-    Color GetPixel(int x, int y)
-    {
-        if (layer1Textures == null) return layer0Textures.GetPixel(x, y);
-
-        Color color = layer1Textures.GetPixel(x, y);
-        if (color.a == 0)
+        #region Voxel Data
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ 8ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç¥ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ -0.5 ~ 0.5)
+        private static readonly float3[] verticePositions =
         {
-            color = layer0Textures.GetPixel(x, y);
+            new(-0.5f,  0.5f, -0.5f), new(-0.5f,  0.5f,  0.5f), // 0, 1
+            new( 0.5f,  0.5f,  0.5f), new( 0.5f,  0.5f, -0.5f), // 2, 3
+            new(-0.5f, -0.5f, -0.5f), new(-0.5f, -0.5f,  0.5f), // 4, 5
+            new( 0.5f, -0.5f,  0.5f), new( 0.5f, -0.5f, -0.5f) // 6, 7
+        };
+
+        // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ (verticePositions ï¿½è¿­ ï¿½ï¿½ï¿½ï¿½)
+        private static readonly int4[] faceVertices =
+        {
+            new(1, 2, 3, 0),   // up
+            new(6, 5, 4, 7),   // down
+            new(2, 1, 5, 6),   // front
+            new(0, 3, 7, 4),   // back
+            new(3, 2, 6, 7),   // right
+            new(1, 0, 4, 5)    // left
+        };
+
+        // ï¿½ï°¢ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ç°¢ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï°¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
+        private static readonly int[] triangleVertices = { 0, 1, 2, 0, 2, 3 };
+
+        // UV ï¿½ï¿½Ç¥ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Æ·ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½Æ·ï¿½)
+        private static readonly int2[] dUV =
+        {
+            new(0, 1),
+            new(1, 1),
+            new(1, 0),
+            new(0, 0)
+        };
+        #endregion
+
+        private List<float3> _vertices = new();
+        private List<int> _triangles = new();
+        private List<float2> _uvs = new();
+        private List<Color> _colors = new();
+
+        public void Init(Texture2D layer0, Texture2D layer1 = null)
+        {
+            _mesh = new Mesh();
+            meshFilter.sharedMesh = _mesh;
+
+            layer0Textures = layer0;
+            layer1Textures = layer1;
+
+            Generate();
         }
-        return color;
-    }
 
-    public void Generate()
-    {
-        int width = layer0Textures.width;
-        int height = layer0Textures.height;
-
-        // ÅØ½ºÃ³ÀÇ °¢ ÇÈ¼¿À» ¼øÈ¸ÇÏ¿© ¾ËÆÄ°¡ 0ÀÌ ¾Æ´Ñ ÇÈ¼¿¿¡ ´ëÇØ º¹¼¿ ºí·Ï »ý¼º
-        for (int y = 0; y < height; y++)
+        private Color GetPixel(int x, int y)
         {
-            for (int x = 0; x < width; x++)
+            if (!layer1Textures) return layer0Textures.GetPixel(x, y);
+
+            var color = layer1Textures.GetPixel(x, y);
+            if (color.a == 0)
             {
-                Color pixelColor = GetPixel(x, y);
-                if (pixelColor.a == 0) continue;
-
-                // ¾Õ/µÚ¸éÀº ¹«Á¶°Ç Ãß°¡
-                AddFace(new int3(x, y, 0), 2, pixelColor);
-                AddFace(new int3(x, y, 0), 3, pixelColor);
-
-                // ÁÖº¯¿¡ ÇÈ¼¿ÀÌ ¾øÀ¸¸é ÇØ´ç ¹æÇâÀÇ ¸éÀ» Ãß°¡
-                if (x == 0 || GetPixel(x - 1, y).a == 0)
-                    AddFace(new int3(x, y, 0), 5, pixelColor);
-
-                if (x == width - 1 || GetPixel(x + 1, y).a == 0)
-                    AddFace(new int3(x, y, 0), 4, pixelColor);
-
-                if (y == 0 || GetPixel(x, y - 1).a == 0)
-                    AddFace(new int3(x, y, 0), 1, pixelColor);
-
-                if (y == height - 1 || GetPixel(x, y + 1).a == 0)
-                    AddFace(new int3(x, y, 0), 0, pixelColor);
+                color = layer0Textures.GetPixel(x, y);
             }
+            return color;
         }
 
-        // === ¸Þ½ÃÀÇ Á¤Á¡À» ¸ðµÎ Áß¾ÓÀ¸·Î ¿ÀÇÁ¼Â ===
-        if (vertices.Count > 0)
+        private void Generate()
         {
-            // ÃÖ¼Ò, ÃÖ´ë ÁÂÇ¥ °è»ê
-            float3 min = new float3(float.MaxValue, float.MaxValue, float.MaxValue);
-            float3 max = new float3(float.MinValue, float.MinValue, float.MinValue);
-            foreach (var v in vertices)
+            var width = layer0Textures.width;
+            var height = layer0Textures.height;
+
+            // ï¿½Ø½ï¿½Ã³ï¿½ï¿½ ï¿½ï¿½ ï¿½È¼ï¿½ï¿½ï¿½ ï¿½ï¿½È¸ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½Ä°ï¿½ 0ï¿½ï¿½ ï¿½Æ´ï¿½ ï¿½È¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            for (var y = 0; y < height; y++)
             {
-                min = math.min(min, v);
-                max = math.max(max, v);
+                for (var x = 0; x < width; x++)
+                {
+                    var pixelColor = GetPixel(x, y);
+                    if (pixelColor.a == 0) continue;
+
+                    // ï¿½ï¿½/ï¿½Ú¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
+                    AddFace(new int3(x, y, 0), 2, pixelColor);
+                    AddFace(new int3(x, y, 0), 3, pixelColor);
+
+                    // ï¿½Öºï¿½ï¿½ï¿½ ï¿½È¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
+                    if (x == 0 || GetPixel(x - 1, y).a == 0)
+                        AddFace(new int3(x, y, 0), 5, pixelColor);
+
+                    if (x == width - 1 || GetPixel(x + 1, y).a == 0)
+                        AddFace(new int3(x, y, 0), 4, pixelColor);
+
+                    if (y == 0 || GetPixel(x, y - 1).a == 0)
+                        AddFace(new int3(x, y, 0), 1, pixelColor);
+
+                    if (y == height - 1 || GetPixel(x, y + 1).a == 0)
+                        AddFace(new int3(x, y, 0), 0, pixelColor);
+                }
             }
-            // Áß¾Ó°ª °è»ê
-            float3 center = (min + max) / 2f;
-            // ¸ðµç Á¤Á¡À» Áß¾Ó ±âÁØÀ¸·Î ÀÌµ¿
-            for (int i = 0; i < vertices.Count; i++)
+
+            // === ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ß¾ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ===
+            if (_vertices.Count > 0)
             {
-                vertices[i] -= center;
+                // ï¿½Ö¼ï¿½, ï¿½Ö´ï¿½ ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½
+                var min = new float3(float.MaxValue, float.MaxValue, float.MaxValue);
+                var max = new float3(float.MinValue, float.MinValue, float.MinValue);
+                foreach (var v in _vertices)
+                {
+                    min = math.min(min, v);
+                    max = math.max(max, v);
+                }
+                // ï¿½ß¾Ó°ï¿½ ï¿½ï¿½ï¿½
+                var center = (min + max) / 2f;
+                // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
+                for (var i = 0; i < _vertices.Count; i++)
+                {
+                    _vertices[i] -= center;
+                }
             }
-        }
-        // ====================================
+            // ====================================
 
-        meshFilter.sharedMesh.Clear();
-        meshFilter.sharedMesh.SetVertices(vertices.ConvertAll(v => (Vector3)v));
-        meshFilter.sharedMesh.SetTriangles(triangles, 0);
-        meshFilter.sharedMesh.SetUVs(0, uvs.ConvertAll(v => new Vector2(v.x, v.y)));
-        meshFilter.sharedMesh.SetColors(colors);
+            meshFilter.sharedMesh.Clear();
+            meshFilter.sharedMesh.SetVertices(_vertices.ConvertAll(v => (Vector3)v));
+            meshFilter.sharedMesh.SetTriangles(_triangles, 0);
+            meshFilter.sharedMesh.SetUVs(0, _uvs.ConvertAll(v => new Vector2(v.x, v.y)));
+            meshFilter.sharedMesh.SetColors(_colors);
 
-        meshFilter.sharedMesh.RecalculateNormals();
-        meshFilter.sharedMesh.RecalculateTangents();
+            meshFilter.sharedMesh.RecalculateNormals();
+            meshFilter.sharedMesh.RecalculateTangents();
 
-        // »ý¼º ÈÄ ¸®½ºÆ® ÃÊ±âÈ­
-        vertices.Clear();
-        triangles.Clear();
-        uvs.Clear();
-        colors.Clear();
-    }
-
-    void AddFace(int3 p, int dir, Color color)
-    {
-        int vc = vertices.Count;
-
-        for (int i = 0; i < 4; i++)
-        {
-            // ¿ø·¡ÀÇ ºí·Ï Å©±â ´ë½Å voxelScaleÀ» °öÇØ Å©±â¸¦ ÁÙÀÓ.
-            float3 dp = verticePositions[faceVertices[dir][i]];// * voxelScale;
-            vertices.Add(p + dp);
-            // ¾ËÆÄ°ªÀ» 1·Î ¸¸µé¾î Åõ¸íÇÏÁö ¾Ê°Ô ¼³Á¤
-            colors.Add(color);
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ê±ï¿½È­
+            _vertices.Clear();
+            _triangles.Clear();
+            _uvs.Clear();
+            _colors.Clear();
         }
 
-        for (int i = 0; i < 6; i++)
+        private void AddFace(int3 p, int dir, Color color)
         {
-            triangles.Add(vc + triangleVertices[i]);
-        }
+            var vc = _vertices.Count;
 
-        for (int i = 0; i < 4; i++)
-        {
-            uvs.Add(new float2(dUV[i].x, dUV[i].y));
+            for (var i = 0; i < 4; i++)
+            {
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ voxelScaleï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Å©ï¿½â¸¦ ï¿½ï¿½ï¿½ï¿½.
+                var dp = verticePositions[faceVertices[dir][i]];// * voxelScale;
+                _vertices.Add(p + dp);
+                // ï¿½ï¿½ï¿½Ä°ï¿½ï¿½ï¿½ 1ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ ï¿½ï¿½ï¿½ï¿½
+                _colors.Add(color);
+            }
+
+            for (var i = 0; i < 6; i++)
+            {
+                _triangles.Add(vc + triangleVertices[i]);
+            }
+
+            for (var i = 0; i < 4; i++)
+            {
+                _uvs.Add(new float2(dUV[i].x, dUV[i].y));
+            }
         }
     }
 }

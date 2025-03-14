@@ -3,24 +3,24 @@ using UnityEngine;
 public class GridDrawer : MonoBehaviour
 {
     public int gridSize = 100; // 그리드 크기
-    public float gridSpacing = 1.0f; // 그리드 간격
+    //public float gridSpacing = 1.0f; // 그리드 간격
 
     public GameObject cube;
 
     private void Start()
     {
-        drawGrid();
+        DrawGrid();
     }
 
-    void drawGrid()
+    private void DrawGrid()
     {
-        drawLine(Vector3.zero, new Vector3(gridSize, 0.02f, 0.02f), Color.red);
-        drawLine(Vector3.zero, new Vector3(0.02f, 0.02f, gridSize), Color.blue);
-        drawLine(Vector3.zero, new Vector3(0.02f, gridSize, 0.02f), Color.green);
+        DrawLine(Vector3.zero, new Vector3(gridSize, 0.02f, 0.02f), Color.red);
+        DrawLine(Vector3.zero, new Vector3(0.02f, 0.02f, gridSize), Color.blue);
+        DrawLine(Vector3.zero, new Vector3(0.02f, gridSize, 0.02f), Color.green);
 
     }
 
-    void drawLine(Vector3 pos, Vector3 size, Color color)
+    private void DrawLine(Vector3 pos, Vector3 size, Color color)
     {
         var obj = Instantiate(cube, pos, Quaternion.identity, transform);
         obj.transform.localScale = size;
