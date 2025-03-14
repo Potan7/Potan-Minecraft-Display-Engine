@@ -23,7 +23,7 @@ namespace BDObject
             None
         }
 
-        private const string DefaultTexturePath = "textures/entity/";
+        private const string DefaultTexturePath = "entity/";
 
         public HeadType headType;
         public Texture2D headTexture;

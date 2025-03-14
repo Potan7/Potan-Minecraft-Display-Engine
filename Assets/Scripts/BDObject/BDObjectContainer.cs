@@ -5,6 +5,8 @@ namespace BDObject
 {
     public class BdObjectContainer : MonoBehaviour
     {
+        public string bdObjectID;
+        
         public BdObject BdObject;
         public DisplayObject displayObj;
 
@@ -17,6 +19,7 @@ namespace BDObject
             // 기본 정보 설정
             BdObject = bdObject;
             gameObject.name = bdObject.Name;
+            bdObjectID = bdObject.ID;
 
             // 그룹과 디스플레이 구분 
             if (!bdObject.IsBlockDisplay && !bdObject.IsItemDisplay && !bdObject.IsTextDisplay) return;

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using UnityEngine.Serialization;
 
 namespace Minecraft
 {
@@ -18,7 +19,7 @@ namespace Minecraft
             [UsedImplicitly] South = 1
         }
         
-        private string _parent;
+        public string Parent;
         
         //public string gui_light;
         //public JObject display;
@@ -31,18 +32,18 @@ namespace Minecraft
         public MinecraftModelData UnpackParent()
         {
 
-            if (string.IsNullOrEmpty(_parent)) return this;
+            if (string.IsNullOrEmpty(Parent)) return this;
 
-            if (_parent == "builtin/generated") return this;
+            if (Parent == "builtin/generated") return this;
 
             var parentData =
-                MinecraftFileManager.GetModelData("models/" + MinecraftFileManager.RemoveNamespace(_parent) + ".json")
+                MinecraftFileManager.GetModelData("models/" + MinecraftFileManager.RemoveNamespace(Parent) + ".json")
                 .UnpackParent();
 
             MergeJObject(ref Textures, parentData.Textures);
             MergeList(ref Elements, parentData.Elements);
 
-            _parent = null;
+            Parent = null;
             return this;
         }
 

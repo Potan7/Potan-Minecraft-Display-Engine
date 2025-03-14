@@ -38,7 +38,30 @@ namespace BDObject
             if (!string.IsNullOrEmpty(tag))
             {
                 ID = tag;
+                return;
             }
+
+            ID = GetID();
+        }
+
+        public string GetID()
+        {
+            if (!string.IsNullOrEmpty(ID)) return ID;
+
+            if (Children == null) ID = Name;
+            else
+            {
+                var childSum = "";
+                foreach (var child in Children)
+                {
+                    childSum += child.GetID();
+                }
+
+                if (Children.Length <= 1) childSum += Name;
+                ID = childSum;
+            }
+            
+            return ID;
         }
     }
 }

@@ -48,6 +48,7 @@ namespace BDObject
             // �ҷ��� ���� �������� �����ϱ�
             modelLocation = MinecraftFileManager.RemoveNamespace(modelLocation);
             ModelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
+            //Debug.Log(ModelData);
             var bdManager = GameManager.GetManager<BdObjectManager>();
 
             //Debug.Log("Model Data: " + modelData);

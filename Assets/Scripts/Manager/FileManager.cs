@@ -48,7 +48,7 @@ namespace Manager
         // ReSharper disable Unity.PerformanceAnalysis
         private IEnumerator ShowLoadDialogCoroutine(Action<List<string>> callback)
         {
-            // ���� �������� ���� ����ڰ� ������ �����ϰų� ����� ������ ���
+            // Get file path
             yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.FilesAndFolders, true, null, null, "Select Files", "Load");
 
             // ���� �������� ������ �ҷ����� �ݹ� �Լ� ȣ��
@@ -61,14 +61,15 @@ namespace Manager
 
                 foreach (var t in result)
                 {
-                    // ���� �� ��� ���ϵ� ����Ʈ�� �߰�
+                    // if t is a folder
                     if (Directory.Exists(t))
                     {
+                        // load all bdengine files in the folder
                         var folderFiles = Directory.GetFiles(t, "*.bdengine", SearchOption.TopDirectoryOnly);
 
                         var settingManager = GameManager.GetManager<SettingManager>();
 
-                        // frame.txt ������ �ִ��� Ȯ��
+                        // if using frame.txt
                         if (settingManager.UseFrameTxtFile)
                         {
                             var frameFile = Directory.GetFiles(t, "frame.txt", SearchOption.TopDirectoryOnly).FirstOrDefault();
@@ -83,9 +84,14 @@ namespace Manager
                     }
                     else
                     {
-                        // �ƴ϶�� �׳� �߰�
+                        // if t is a file
                         files.Add(t);
                     }
+                }
+                if (files.Count < 1)
+                {
+                    CustomLog.Log("No file selected");
+                    yield break;
                 }
 
                 callback?.Invoke(files); 
@@ -97,9 +103,10 @@ namespace Manager
         
         }
 
+        // Frame.txt를 사용해 tick과 interpolation 설정하기
         private void SetDictByFrameTxt(SettingManager settingManager, string frameFile)
         {
-            CustomLog.Log("Frame.txt ���� ã�� : " + frameFile);
+            CustomLog.Log("Frame.txt Detected : " + frameFile);
             FrameInfo.Clear();
 
             // ���� �б�
@@ -169,7 +176,7 @@ namespace Manager
         {
             GameManager.GetManager<UIManger>().SetLoadingPanel(true);
 
-            var settingManager = GameManager.GetManager<SettingManager>();
+            var settingManager = GameManager.Setting;
             if (settingManager.UseFrameTxtFile || settingManager.UseNameInfoExtract)
             {
                 // ���ϸ� ������ ����

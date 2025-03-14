@@ -52,7 +52,7 @@ namespace Animation
             }
             importButton.anchoredPosition = new Vector2(importButton.anchoredPosition.x, importButton.anchoredPosition.y + jump);
 
-            CustomLog.Log("�ִϸ��̼� ���� ������: " + obj.bdFileName);
+            CustomLog.Log("Line Removed: " + obj.bdFileName);
         }
     }
 }

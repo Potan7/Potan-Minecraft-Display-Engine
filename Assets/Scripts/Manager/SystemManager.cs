@@ -1,6 +1,8 @@
 //using B83.Win32;
 
 using System;
+using System.IO;
+using UnityEditor;
 using UnityEngine;
 
 namespace Manager
@@ -89,6 +91,31 @@ namespace Manager
                 Debug.LogError(e);
 #endif
             }
+        }
+        
+        public void ExportPrefab(int idx)
+        {
+            var bdObjParent = GameManager.GetManager<BdObjectManager>().bdObjectParent;
+            if (idx >= bdObjParent.childCount) return;
+            
+            var prefab = bdObjParent.GetChild(idx).gameObject;
+            
+            if (!prefab)
+            {
+                Debug.LogError("Target object is null. Assign a GameObject.");
+                return;
+            }
+
+            const string directory = "Assets/RuntimePrefabs";
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var prefabPath = $"{directory}/{prefab.name}.prefab";
+
+            // 프리팹 저장
+            PrefabUtility.SaveAsPrefabAsset(prefab, prefabPath);
         }
     }
 }

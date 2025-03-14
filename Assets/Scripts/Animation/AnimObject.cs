@@ -86,7 +86,7 @@ namespace Animation
 
         }
 
-        // ���� ���� �״�� ����
+        // 보간 없이 transformation 적용하기 
         private void SetObjectTransformation(string id, BdObject obj)
         {
             if (!_idDict.TryGetValue(id, out var target))
@@ -101,12 +101,12 @@ namespace Animation
 
             target.SetTransformation(obj.Transforms);
 
-            if (obj.Children != null)
+            if (obj.Children == null) return;
+            
+            // 자식에 대해 순회
+            foreach (var child in obj.Children)
             {
-                foreach (var child in obj.Children)
-                {
-                    SetObjectTransformation(child.ID, child);
-                }
+                SetObjectTransformation(child.ID, child);
             }
         }
 
@@ -150,6 +150,7 @@ namespace Animation
 
             var processedKeys = new HashSet<string>();
 
+            // aDict 순회하면서 일치하는 거 보간
             foreach (var key in aDict.Keys)
             {
                 if (bDict.TryGetValue(key, out var bChild) && aDict[key] != null)
@@ -163,17 +164,17 @@ namespace Animation
                     }
                 }
             }
-
+        
+            // key 순회하면서 일치하는거 보간 
             foreach (var key in bDict.Keys)
             {
-                if (!processedKeys.Contains(key) && aDict.TryGetValue(key, out var aChild))
-                {
-                    var bChild = bDict[key];
+                if (processedKeys.Contains(key) || !aDict.TryGetValue(key, out var aChild)) continue;
+                
+                var bChild = bDict[key];
 
-                    if (_idDict.ContainsKey(key))
-                    {
-                        SetObjectTransformationInter(key, t, aChild, bChild, aDict, bDict, visitedNodes);
-                    }
+                if (_idDict.ContainsKey(key))
+                {
+                    SetObjectTransformationInter(key, t, aChild, bChild, aDict, bDict, visitedNodes);
                 }
             }
         }

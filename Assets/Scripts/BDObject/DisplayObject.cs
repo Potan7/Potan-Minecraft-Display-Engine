@@ -40,7 +40,7 @@ namespace BDObject
                     continue;
                 }
 
-                return "textures/" + MinecraftFileManager.RemoveNamespace(path) + ".png";
+                return MinecraftFileManager.RemoveNamespace(path) + ".png";
             }
         }
     }

@@ -55,11 +55,6 @@ namespace BDObject
                 var obj = queue.Dequeue();
                 var bdObj = getBdObj(obj);
 
-                if (string.IsNullOrEmpty(bdObj.ID))
-                {
-                    bdObj.ID = bdObj.Name;
-                }
-
                 idDataDict[bdObj.ID] = obj;
 
 

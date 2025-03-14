@@ -75,14 +75,14 @@ namespace Minecraft
 
         public static JObject GetJsonData(string path)
         {
-            Debug.Log(path);
+            //Debug.Log(path);
             if (path.Contains("bed") && !path.Contains("items"))
             {
                 //CustomLog.Log("Bed: " + path);
                 var bed = Resources.Load<TextAsset>("hardcoded/" + path.Replace(".json", ""));
                 return JObject.Parse(bed.text);
             }
-            Debug.Log(_instance._jsonFiles.ContainsKey(path));
+            //Debug.Log(_instance._jsonFiles.ContainsKey(path));
             
             return _instance._jsonFiles.TryGetValue(path, out var file) ? JObject.Parse(file) : null;
         }
@@ -297,11 +297,14 @@ namespace Minecraft
             //}
         }
 
+        public List<string> fileNames = new List<string>();
         // �ؽ������� ����Ʈ �ڵ�� �����ϱ�
         private void SavePNGData(string path, byte[] fileData)
         {
-            path = path.Replace("assets/minecraft/", "");
+            path = path.Replace("assets/minecraft/textures/", "");
             _textureFiles[path] = fileData;
+            
+            fileNames.Add(path);
 
             //lock (textureFiles) // Lock because textureFiles is a shared resource
             //{

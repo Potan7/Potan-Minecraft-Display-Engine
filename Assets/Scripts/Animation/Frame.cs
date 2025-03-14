@@ -63,7 +63,7 @@ namespace Animation
         private void UpdatePos()
         {
             var line = GameManager.GetManager<AnimManager>().timeline.GetTickLine(tick, false);
-            if (!line)
+            if (line is null)
             {
                 gameObject.SetActive(false);
             }
@@ -108,14 +108,7 @@ namespace Animation
                 outlineImage.color = _initColor;
             }
         }
-
-        public void OnPointerUp(PointerEventData eventData)
-        {
-            if (eventData.button != PointerEventData.InputButton.Left) return;
-            
-            isSelected = false;
-            outlineImage.color = _initColor;
-        }
+        
 
         // ������ ����
         public void RemoveFrame()
