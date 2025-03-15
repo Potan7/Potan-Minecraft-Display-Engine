@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Animation;
-using BDObject;
+using BDObjectSystem;
 using Newtonsoft.Json;
 using SimpleFileBrowser;
 using UnityEngine;
@@ -19,27 +19,28 @@ namespace Manager
     {
         public BdObjectManager bdObjManager;
         public AnimObjList animObjList;
-        public HashSet<HeadGenerator> WorkingGenerators = new HashSet<HeadGenerator>();
+        public readonly HashSet<HeadGenerator> WorkingGenerators = new HashSet<HeadGenerator>();
 
-        public Dictionary<string, (int, int)> FrameInfo = new Dictionary<string, (int, int)>();
+        public readonly Dictionary<string, (int, int)> FrameInfo = new Dictionary<string, (int, int)>();
 
         private void Start()
         {
             bdObjManager = GameManager.GetManager<BdObjectManager>();
 
-            // .bdengine, .bdstudio Ȯ���ڸ� ���͸�
+            // filtering .bdengine, .bdstudio
             FileBrowser.SetFilters(false,
                 new FileBrowser.Filter("Files", ".bdengine", ".bdstudio"));
 
-            // ��ó ��� �߰�
+            // add launcher folder to shortcut
 #if UNITY_EDITOR
             FileBrowser.AddQuickLink("Launcher Folder", Application.dataPath);
 #else
         FileBrowser.AddQuickLink("Launcher Folder", Application.dataPath + "/../");
-#endif
-
-            // �ٿ�ε� ���� �߰�
+#endif 
+            
+            // add download folder to shortcut
             var download = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal));
+            // ReSharper disable once AssignNullToNotNullAttribute
             download = Path.Combine(download, "Downloads");
 
             FileBrowser.AddQuickLink("Downloads", download);
@@ -51,11 +52,10 @@ namespace Manager
             // Get file path
             yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.FilesAndFolders, true, null, null, "Select Files", "Load");
 
-            // ���� �������� ������ �ҷ����� �ݹ� �Լ� ȣ��
+            // if not success, result is null
             if (FileBrowser.Success)
-                // ���� Success�� false��� Result�� null�� �ȴ�.
             { 
-                // ���� �и��ϱ�
+                // get files
                 var files = new List<string>();
                 var result = FileBrowser.Result;
 
@@ -88,6 +88,7 @@ namespace Manager
                         files.Add(t);
                     }
                 }
+                // if no file selected
                 if (files.Count < 1)
                 {
                     CustomLog.Log("No file selected");
@@ -108,8 +109,7 @@ namespace Manager
         {
             CustomLog.Log("Frame.txt Detected : " + frameFile);
             FrameInfo.Clear();
-
-            // ���� �б�
+            
             var lines = File.ReadLines(frameFile);
 
             foreach (var line in lines)
@@ -149,15 +149,17 @@ namespace Manager
             }
         }
 
-        // ���� ����Ʈ
+        // file import
         public void ImportFile() => StartCoroutine(ShowLoadDialogCoroutine(AfterLoadFile));
 
-        // ������ ����Ʈ
+        // frame import
         public void ImportFrame(AnimObject target, int tick) => StartCoroutine(FrameImportCoroutine(target, tick));
 
+        // ReSharper disable Unity.PerformanceAnalysis
         private IEnumerator FrameImportCoroutine(AnimObject target, int tick)
         {
-            // ���� �������� ���� ����ڰ� ������ �����ϰų� ����� ������ ���
+            
+            // Get file path
             yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files);
 
             if (FileBrowser.Success)
@@ -171,101 +173,90 @@ namespace Manager
             }
         }
 
-        // ���� �ҷ��ͼ� ���÷��� �����ϱ�
-        public async void AfterLoadFile(List<string> filepaths)
+        // make display and frames from files
+        // ReSharper disable once AsyncVoidMethod
+        private async void AfterLoadFile(List<string> filePaths)
         {
             GameManager.GetManager<UIManger>().SetLoadingPanel(true);
 
             var settingManager = GameManager.Setting;
             if (settingManager.UseFrameTxtFile || settingManager.UseNameInfoExtract)
             {
-                // ���ϸ� ������ ����
-                filepaths = SortFiles(filepaths);
-                //Debug.Log("Sorted Files : ");
-                //for (int i = 0; i < filepaths.Count; i++)
-                //{
-                //    Debug.Log(filepaths[i]);
-                //}
+                // sort files by f<number>
+                filePaths = SortFiles(filePaths);
             }
 
-            // ù��° ���Ϸ� ���÷��� ����
-            var animObject = await MakeDisplay(filepaths[0]);
+            // generate display using first file
+            var animObject = await MakeDisplay(filePaths[0]);
 
-            // ���� ���Ϻ��ʹ� ������ �߰��ϱ�
-            for (var i = 1; i < filepaths.Count; i++)
+            // reading files and adding frames
+            for (var i = 1; i < filePaths.Count; i++)
             {
-                var bdObjects = await ProcessFileAsync(filepaths[i]);
-                animObject.AddFrame(bdObjects[0], Path.GetFileNameWithoutExtension(filepaths[i]));
+                var bdObject = await ProcessFileAsync(filePaths[i]);
+                animObject.AddFrame(bdObject, Path.GetFileNameWithoutExtension(filePaths[i]));
             }
+            // wait until all generators are done
             while (WorkingGenerators.Count > 0) await Task.Delay(500);
-
-
-            //for (int i = 0; i < filepaths.Count; i++)
-            //{
-            //    runningTasks.Add(MakeDisplay(filepaths[i]));
-            //    // ���� ������ �ʹ� ������ ������ �۾�
-            //    if (runningTasks.Count >= batch)
-            //    {
-            //        await Task.WhenAll(runningTasks);
-            //        runningTasks.Clear();
-            //    }
-            //}
-            //if (runningTasks.Count > 0)
-            //{
-            //    await Task.WhenAll(runningTasks);
-            //}
 
             GameManager.GetManager<UIManger>().SetLoadingPanel(false);
 
             CustomLog.Log($"Import is Done! BDObject Count: {GameManager.GetManager<BdObjectManager>().bdObjectCount}");
         }
 
-        // ���� �ҷ��ͼ� ������ �����ϱ�
-        public async void AfterLoadFrame(string filepath, AnimObject target, int tick)
+        // make frame from file
+        // ReSharper disable Unity.PerformanceAnalysis
+        // ReSharper disable once AsyncVoidMethod
+        private async void AfterLoadFrame(string filepath, AnimObject target, int tick)
         {
             GameManager.GetManager<UIManger>().SetLoadingPanel(true);
 
-            var bdObjects = await ProcessFileAsync(filepath);
-            target.AddFrame(Path.GetFileNameWithoutExtension(filepath), bdObjects[0], tick, GameManager.Setting.defaultInterpolation);
+            var bdObject = await ProcessFileAsync(filepath);
+            target.AddFrame(Path.GetFileNameWithoutExtension(filepath), bdObject, tick, GameManager.Setting.defaultInterpolation);
 
             GameManager.GetManager<UIManger>().SetLoadingPanel(false);
         }
 
-        // ���� ���� ó�� �񵿱� �Լ�
-        private static async Task<BdObject[]> ProcessFileAsync(string filepath)
+        // get bdObjects from file
+        private async Task<BdObject> ProcessFileAsync(string filepath)
         {
             return await Task.Run(() =>
             {
-                // ���� �б�(�ؽ�Ʈ)
+                // read base64 text from file
                 var base64Text = FileBrowserHelpers.ReadTextFromFile(filepath);
 
-                // Base64 �� gzipData
+                // Base64 to gzipData
                 var gzipData = Convert.FromBase64String(base64Text);
 
-                // gzip ���� �� json
+                // gzip to json
                 var jsonData = DecompressGzip(gzipData);
 
 #if UNITY_EDITOR
                 Debug.Log(jsonData);
 #endif
 
-                // BDObject[] ������ȭ
-                return JsonConvert.DeserializeObject<BdObject[]>(jsonData);
+                // json to BdObject[]
+                var bdObjects = JsonConvert.DeserializeObject<BdObject[]>(jsonData);
+                BdObjectHelper.SetParent(null, bdObjects[0]);
+                return bdObjects[0];
             });
         }
 
-        // ���÷��� �����
+        // making display from file
+        // ReSharper disable Unity.PerformanceAnalysis
         public async Task<AnimObject> MakeDisplay(string filepath)
         {
-            var bdObjects = await ProcessFileAsync(filepath);
+            // get file
+            var bdObject = await ProcessFileAsync(filepath);
 
             var fileName = Path.GetFileNameWithoutExtension(filepath);
-            await bdObjManager.AddObject(bdObjects[0], fileName);
+            // add gameobject
+            await bdObjManager.AddObject(bdObject, fileName);
+            // add anim object
             return animObjList.AddAnimObject(fileName);
         }
 
-        // gzipData�� string���� ��ȯ�ϱ�
-        private static string DecompressGzip(byte[] gzipData)
+        // gzipData to json string file
+        private string DecompressGzip(byte[] gzipData)
         {
             using var compressedStream = new MemoryStream(gzipData);
             using var gzipStream = new GZipStream(compressedStream, CompressionMode.Decompress);
@@ -273,9 +264,9 @@ namespace Manager
             return reader.ReadToEnd();
         }
 
-        public List<string> SortFiles(IEnumerable<string> fileNames)
+        private List<string> SortFiles(IEnumerable<string> fileNames)
         {
-            // "f" �ڿ� ���� ���ڸ� �����ϴ� ���Խ� (��γ� �����ڿ� �����ϰ�)
+            // if UseNameInfoExtract is true, sort files by f<number>
             var regex = new Regex(@"f(\d+)", RegexOptions.IgnoreCase);
 
             var matchedFiles = new List<(string fileName, int number)>();
@@ -284,7 +275,7 @@ namespace Manager
             foreach (var fileName in fileNames)
             {
                 var match = regex.Match(fileName);
-                // f ���� ���ڸ� ����
+                // find f<number> in the file name
                 if (match.Success && int.TryParse(match.Groups[1].Value, out var number))
                 {
                     matchedFiles.Add((fileName, number));
@@ -295,10 +286,10 @@ namespace Manager
                 }
             }
 
-            // "f����"�� �ִ� ������ ���� �������� ����
+            // sort matched files by number
             matchedFiles.Sort((a, b) => a.number.CompareTo(b.number));
 
-            // ���ĵ� ����Ʈ + ������ ���� ������ �ڿ� �߰�
+            // add unmatched files to the end
             var sortedFiles = matchedFiles.Select(x => x.fileName).ToList();
             sortedFiles.AddRange(unmatchedFiles);
 

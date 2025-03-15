@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using BDObject;
+using BDObjectSystem;
 using Manager;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 
 namespace Animation
 {
@@ -14,27 +13,20 @@ namespace Animation
         public RectTransform rect;
         public TextMeshProUGUI title;
         public Frame firstFrame;
+        
         private SortedList<int, Frame> _frames = new SortedList<int, Frame>();
-        [FormerlySerializedAs("fileName")] public string bdFileName;
+        public string bdFileName;
 
         private readonly HashSet<string> _noID = new HashSet<string>();
 
-        private int MaxTick
-        {
-            get
-            {
-                if (_frames.Count == 0)
-                {
-                    return 0;
-                }
-                return _frames.Values[_frames.Count - 1].tick;
-            }
-        }
+        private int MaxTick => _frames.Count == 0 ? 0 : _frames.Values[_frames.Count - 1].tick;
 
         private AnimObjList _manager;
 
         private BdObjectContainer _root;
-        private Dictionary<string, BdObjectContainer> _idDict;
+        // private Dictionary<string, BdObjectContainer> _idDict;
+        private List<BdObjectContainer> _displayList;
+        private readonly HashSet<string> _visitedNodes = new HashSet<string>();
 
         public void Init(string fileName, AnimObjList list)
         {
@@ -44,16 +36,15 @@ namespace Animation
 
             var bdObject = GameManager.GetManager<BdObjectManager>().BdObjects[fileName];
             _root = bdObject.Item1;
-            _idDict = bdObject.Item2;
-
+            // _idDict = bdObject.Item2;
+            _displayList = bdObject.Item2;
+            
             GetTickAndInterByFileName(bdFileName, out _, out var inter);
-            firstFrame.Init(bdFileName, 0, inter, _root.BdObject, this);
-
+            firstFrame.Init(bdFileName, 0, inter, _root.BdObject, this, _manager.timeline);
 
             _frames[0] = firstFrame;
 
             AnimManager.TickChanged += OnTickChanged;
-
         }
 
         #region Transform
@@ -63,151 +54,215 @@ namespace Animation
             if (tick == 0)
                 _noID.Clear();
 
-            // ƽ�� �´� �������� ã��
+            // get left frame
             var left = GetLeftFrame(tick);
             if (left < 0) return;
             var leftFrame = _frames.Values[left];
 
-            // ù��° �������� ������ ������
+            // no interpolation
             if (leftFrame.interpolation == 0 || leftFrame.tick + leftFrame.interpolation <= tick || left == 0) 
             {
-
-                // ���� ���� ����
-                SetObjectTransformation(_root.BdObject.ID, leftFrame.Info);
+                // SetObjectTransformation(_root.BdObject.ID, leftFrame.Info);
+                SetObjectTransformation(leftFrame);
             }
             else
             {
-                // ���� On
+                // interpolation ratio
                 var t = (float)(tick - leftFrame.tick) / leftFrame.interpolation;
 
+                // get before frame
                 var before = _frames.Values[left - 1];
-                SetObjectTransformationInter(t, before, leftFrame);
-            }
-
-        }
-
-        // 보간 없이 transformation 적용하기 
-        private void SetObjectTransformation(string id, BdObject obj)
-        {
-            if (!_idDict.TryGetValue(id, out var target))
-            {
-                if (!_noID.Contains(id))
-                {
-                    CustomLog.LogError("Target not found, name : " + id);
-                    _noID.Add(id);
-                }
-                return;
-            }
-
-            target.SetTransformation(obj.Transforms);
-
-            if (obj.Children == null) return;
-            
-            // 자식에 대해 순회
-            foreach (var child in obj.Children)
-            {
-                SetObjectTransformation(child.ID, child);
+                SetObjectTransformationInterpolation(t, before, leftFrame);
             }
         }
 
+        /// <summary>
+        /// 기존에는 모든 BDObj가 Dict에 ID를 key로 저장되서 Root부터 children을 돌며 내려감
+        /// 하지만 지금은 dict에 최하단 leaf 노드만 저장됨
+        /// dict를 순회하면서 위로 올라가는 방식
+        /// 그러면 그냥 list로 바꿔도 될듯?
+        /// </summary>
         
-        // ReSharper disable Unity.PerformanceAnalysis
-        public void SetObjectTransformationInter(float t, Frame a, Frame b)
-            => SetObjectTransformationInter(
-                _root.BdObject.ID, t, 
-                a.Info, b.Info, 
-                a.IDDataDict, b.IDDataDict,
-                new HashSet<string>());
-        
-        // target�� a, b�� t ������ �����Ͽ� ����
-        private void SetObjectTransformationInter(
-            string targetName, float t, 
-            BdObject a, BdObject b, 
-            Dictionary<string, BdObject> aDict, Dictionary<string, BdObject> bDict,
-            HashSet<string> visitedNodes
-        )
+         // 보간 없이, 단일 Frame에서 변환 적용
+        private void SetObjectTransformation(Frame frame)
         {
-            if (!visitedNodes.Add(targetName)) return;
-
-            if (!_idDict.TryGetValue(targetName, out var target))
+            foreach (var display in _displayList)
             {
-                CustomLog.Log("Target not found, name : " + targetName);
-                return;
-            }
-
-            // 1. transforms(4x4 ���, float[16])�� t ������ ����
-            var result = new float[16];
-            for (var i = 0; i < 16; i++)
-            {
-                result[i] = a.Transforms[i] * (1f - t) + b.Transforms[i] * t;
-            }
-
-            // 2. ������ ����� target�� ����
-            target.SetTransformation(result);
-
-            // �ڽ��� ������ ����
-            if (a.Children == null && b.Children == null) return;
-
-            var processedKeys = new HashSet<string>();
-
-            // aDict 순회하면서 일치하는 거 보간
-            foreach (var key in aDict.Keys)
-            {
-                if (bDict.TryGetValue(key, out var bChild) && aDict[key] != null)
+                // 1) 현재 display에 해당하는 데이터 찾기
+                if (!frame.IDDataDict.TryGetValue(display.bdObjectID, out var idData))
                 {
-                    var aChild = aDict[key];
-                    processedKeys.Add(key);
+                    // 한 번도 없는 bdObjectID라면 로그만 찍고 넘어감
+                    if (_noID.Contains(display.bdObjectID)) 
+                        continue;
 
-                    if (_idDict.ContainsKey(key))
-                    {
-                        SetObjectTransformationInter(key, t, aChild, bChild, aDict, bDict, visitedNodes);
-                    }
+                    CustomLog.LogError("Target not found, name : " + display.bdObjectID);
+                    _noID.Add(display.bdObjectID);
+                    continue;
                 }
+
+                // 2) 현재 display의 변환 적용
+                display.SetTransformation(idData.Transforms);
+
+                // 3) 부모 노드 변환 순차 적용
+                ApplyChainTransformations(idData.Parent, display.Parent, _visitedNodes);
             }
-        
-            // key 순회하면서 일치하는거 보간 
-            foreach (var key in bDict.Keys)
-            {
-                if (processedKeys.Contains(key) || !aDict.TryGetValue(key, out var aChild)) continue;
-                
-                var bChild = bDict[key];
 
-                if (_idDict.ContainsKey(key))
-                {
-                    SetObjectTransformationInter(key, t, aChild, bChild, aDict, bDict, visitedNodes);
-                }
+            _visitedNodes.Clear();
+        }
+
+        // 부모 체인을 따라가며 변환을 적용하는 유틸 메서드
+        private static void ApplyChainTransformations(BdObject parentData, BdObjectContainer parentDisplay, HashSet<string> visited)
+        {
+            while (parentData != null && parentDisplay is not null)
+            {
+                // 이미 방문한 부모 노드면 중단 (중복 처리 방지)
+                if (visited.Contains(parentData.ID))
+                    break;
+
+                // 부모 변환 적용
+                parentDisplay.SetTransformation(parentData.Transforms);
+
+                // 방문 표시
+                visited.Add(parentData.ID);
+
+                // 한 칸 더 위로
+                parentData = parentData.Parent;
+                parentDisplay = parentDisplay.Parent;
             }
         }
 
-
-        private int GetLeftFrame(int tick)
+        // -----------------------------------------------------------
+        // 두 Frame(a, b) 사이에서 t만큼 보간하여 변환 적용
+        private void SetObjectTransformationInterpolation(float t, Frame a, Frame b)
         {
-
-            // 1. ���� ���� �����Ӻ��� tick�� ������ null ��ȯ
-            if (_frames.Values[0].tick > tick)
-                return -1;
-
-            var left = 0;
-            var right = _frames.Count - 1;
-            var keys = _frames.Keys;
-            var idx = -1; // �ʱ갪�� -1�� ���� (��ȿ�� �ε����� ���� ��� ���)
-
-            // 2. ���� Ž������ left ������ ã��
-            while (left <= right)
+            foreach (var display in _displayList)
             {
-                var mid = (left + right) / 2;
-                if (keys[mid] <= tick) // "<" ��� "<=" ����Ͽ� ��Ȯ�� tick�� ��� mid�� idx�� ����
+                var aContains = a.IDDataDict.TryGetValue(display.bdObjectID, out var aData);
+                var bContains = b.IDDataDict.TryGetValue(display.bdObjectID, out var bData);
+
+                // a, b 어느 쪽에도 없으면 스킵
+                if (!aContains && !bContains)
                 {
-                    idx = mid; // ���� mid�� left �ĺ�
-                    left = mid + 1; // �� ū �� Ž��
+                    if (_noID.Contains(display.bdObjectID)) 
+                        continue;
+
+                    CustomLog.LogError("Target not found, name : " + display.bdObjectID);
+                    _noID.Add(display.bdObjectID);
+                    continue;
+                }
+
+                // 1) 자식(현재 display) 자체 변환 계산
+                float[] childTransform;
+                if (!aContains)
+                {
+                    // aFrame에는 없고 bFrame에만 있다면 bTransform 그대로
+                    childTransform = bData.Transforms;
+                }
+                else if (!bContains)
+                {
+                    // bFrame에는 없고 aFrame에만 있다면 aTransform 그대로
+                    childTransform = aData.Transforms;
                 }
                 else
                 {
-                    right = mid - 1; // �� ���� �� Ž��
+                    // a, b 모두 있으니 보간
+                    childTransform = InterpolateTransforms(aData.Transforms, bData.Transforms, t);
+                }
+
+                // display에 설정
+                display.SetTransformation(childTransform);
+
+                // 2) 부모 노드 보간 적용
+                var aParent = aData?.Parent;
+                var bParent = bData?.Parent;
+                ApplyChainTransformationsInterpolation(t, aParent, bParent, display.Parent, _visitedNodes);
+            }
+
+            _visitedNodes.Clear();
+        }
+
+        // 부모 체인을 따라가며 보간 변환을 적용하는 유틸 메서드
+        private static void ApplyChainTransformationsInterpolation(float t, BdObject aParent, BdObject bParent, BdObjectContainer parentDisplay, HashSet<string> visited)
+        {
+            while ((aParent != null || bParent != null) && parentDisplay is not null)
+            {
+                // 부모 노드 ID를 구한다. (하나라도 있으면 그걸로)
+                // - 보통 aParent.ID == bParent.ID라 가정
+                var parentId = aParent?.ID ?? bParent?.ID;
+                if (parentId != null && visited.Contains(parentId))
+                    break;
+
+                float[] finalTransform;
+                if (aParent != null && bParent != null)
+                {
+                    finalTransform = InterpolateTransforms(aParent.Transforms, bParent.Transforms, t);
+                }
+                else if (aParent != null)
+                {
+                    finalTransform = aParent.Transforms;
+                }
+                else
+                {
+                    // bParent != null 인 경우
+                    finalTransform = bParent.Transforms;
+                }
+
+                // 부모 Display에 설정
+                parentDisplay.SetTransformation(finalTransform);
+
+                if (parentId != null)
+                    visited.Add(parentId);
+
+                // 체인 업
+                aParent = aParent?.Parent;
+                bParent = bParent?.Parent;
+                parentDisplay = parentDisplay.Parent;
+            }
+        }
+
+        // -----------------------------------------------------------
+        // 행렬(혹은 float[16]) 보간 메서드
+        private static float[] InterpolateTransforms(float[] aMatrix, float[] bMatrix, float t)
+        {
+            // 길이 16의 두 행렬 a, b를 원소별 선형 보간
+            var result = new float[16];
+            var invT = 1f - t;
+            for (var i = 0; i < 16; i++)
+            {
+                result[i] = aMatrix[i] * invT + bMatrix[i] * t;
+            }
+            return result;
+        }
+
+        // find left frame by tick
+        private int GetLeftFrame(int tick)
+        {
+
+            // 1. if tick is smaller than first frame (<0)
+            if (_frames.Values[0].tick > tick)
+                return -1;
+
+            // 2. binary search
+            var left = 0;
+            var right = _frames.Count - 1;
+            var keys = _frames.Keys;
+            var idx = -1;
+            
+            while (left <= right)
+            {
+                var mid = (left + right) / 2;
+                if (keys[mid] <= tick)
+                {
+                    idx = mid; 
+                    left = mid + 1;
+                }
+                else
+                {
+                    right = mid - 1;
                 }
             }
 
-            // 3. leftIdx ���� (idx�� -1�� ��쵵 ���)
+            // 3. return found index
             if (idx >= 0)
             {
                 return idx;
@@ -220,9 +275,10 @@ namespace Animation
 
         #region EditFrame
 
-        // Ŭ������ �� 
+        // mouse click event
         public void OnEventTriggerClick(BaseEventData eventData)
         {
+            // right click
             if (eventData is PointerEventData { button: PointerEventData.InputButton.Right } pointerData)
             {
                 //Debug.Log("Right Click");
@@ -231,24 +287,24 @@ namespace Animation
             }
         }
 
-        // tick ��ġ�� ������ �߰��ϱ�. ���� tick�� �̹� �������� �ִٸ� tick�� �׸�ŭ �ڷ� �̷�
-        // ���� �Է����� ���� BDObject�� firstFrame�� �ٸ� ���¶�� �ź�
+        // add frame with tick and inter
         public void AddFrame(string fileName, BdObject frameInfo, int tick, int inter)
         {
             //Debug.Log("fileName : " + fileName + ", tick : " + tick + ", inter : " + inter);
 
             var frame = Instantiate(_manager.framePrefab, transform.GetChild(0));
 
+            // if already exists, tick increment
             while (_frames.ContainsKey(tick))
             {
                 tick++;
             }
 
             _frames.Add(tick, frame);
-            frame.Init(fileName, tick, inter, frameInfo, this);
+            frame.Init(fileName, tick, inter, frameInfo, this, _manager.timeline);
         }
 
-        // �̸����� s, i ���� �����Ͽ� ������ �߰��ϱ�
+        // add frame with fileName
         public void AddFrame(BdObject frameInfo, string fileName)
         {
             CustomLog.Log("AddFrame : " + fileName);    
@@ -256,10 +312,12 @@ namespace Animation
             AddFrame(fileName, frameInfo, tick, inter);
         }
 
+        // get tick and inter from fileName
         private void GetTickAndInterByFileName(string fileName, out int tick, out int inter)
         {
             var setting = GameManager.Setting;
 
+            // default setting
             tick = MaxTick;
             inter = setting.defaultInterpolation;
 
@@ -280,9 +338,10 @@ namespace Animation
                 }
             }
 
+            // if using name info extract
             if (setting.UseNameInfoExtract)
             {
-                var sValue = BdObjectHelper.ExtractNumber(fileName, "s");
+                var sValue = BdObjectHelper.ExtractNumber(fileName, "s", setting.defaultTickInterval);
                 inter = BdObjectHelper.ExtractNumber(fileName, "i", inter);
 
                 if (sValue > 0)
@@ -290,11 +349,12 @@ namespace Animation
             }
             else
             {
+                // using default setting
                 tick += setting.defaultTickInterval;
             }
         }
 
-        // ������ �����ϱ�
+        // remove frame
         public void RemoveFrame(Frame frame)
         {
             if (_frames == null) return;
@@ -313,7 +373,7 @@ namespace Animation
 
         }
 
-        // �ִϸ��̼� ������Ʈ �����ϱ�
+        // remove self
         public void RemoveAnimObj()
         {
             AnimManager.TickChanged -= OnTickChanged;
@@ -328,11 +388,13 @@ namespace Animation
             _manager.RemoveAnimObject(this);
         }
 
-        // ��ġ�� ���� �������� Ȯ���ϰ� ���� �����ϸ� frames �����ϰ� true ��ȯ
+        // change frame's tick
         public bool ChangePos(Frame frame, int firstTick, int changedTick)
         {
             //Debug.Log("firstTick : " + firstTick + ", changedTick : " +  changedTick);
             if (firstTick == changedTick) return true;
+            
+            // if already exists, return false
             if (_frames.ContainsKey(changedTick)) return false;
 
             _frames.Remove(firstTick);

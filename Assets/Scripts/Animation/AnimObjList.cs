@@ -15,7 +15,9 @@ namespace Animation
         public Frame framePrefab;
         public List<AnimObject> animObjects = new();
 
-        [FormerlySerializedAs("Timeline")] public Timeline timeline;
+        public Timeline timeline;
+        public Transform frameParent;
+        
 
         private void Start()
         {
@@ -28,9 +30,9 @@ namespace Animation
         {
             //Debug.Log("EndAddObject: " + obj.name);
 
-            var animObject = Instantiate(animObjectPrefab, transform);
+            var animObject = Instantiate(animObjectPrefab, frameParent);
             animObject.Init(fileName, this);
-            animObject.rect.anchoredPosition = importButton.anchoredPosition;
+            animObject.rect.anchoredPosition = new Vector2(animObject.rect.anchoredPosition.x, importButton.anchoredPosition.y - 60f);
             animObjects.Add(animObject);
 
             importButton.anchoredPosition = new Vector2(importButton.anchoredPosition.x, importButton.anchoredPosition.y - jump);

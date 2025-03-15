@@ -9,7 +9,7 @@ namespace Animation
     {
         public TextMeshProUGUI text;
         [FormerlySerializedAs("_tick")] [SerializeField] private int tick;
-        public int Tick { get => tick; }
+        public int Tick => tick;
         public Image image;
         public RectTransform rect;
         public int index;

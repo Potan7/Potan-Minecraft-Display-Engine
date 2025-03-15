@@ -3,7 +3,7 @@ using Manager;
 using Minecraft;
 using Newtonsoft.Json.Linq;
 
-namespace BDObject
+namespace BDObjectSystem
 {
     public class BlockDisplay : ModelDisPlayObject
     {

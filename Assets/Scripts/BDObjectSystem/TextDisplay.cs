@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 using TMPro;
 using UnityEngine;
 
-namespace BDObject
+namespace BDObjectSystem
 {
     public class TextDisplay : DisplayObject
     {

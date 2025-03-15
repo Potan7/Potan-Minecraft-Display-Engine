@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace BDObject
+namespace BDObjectSystem
 {
     public class HeadGenerator : BlockModelGenerator
     {

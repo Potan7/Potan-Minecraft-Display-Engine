@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BDObject;
+using BDObjectSystem;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -10,7 +10,7 @@ namespace Manager
 {
     public class BdObjectManager : BaseManager
     {
-        // ���÷��� ������
+        // BDObjects Property
         [FormerlySerializedAs("BDObjTransportMaterial")] public Material bdObjTransportMaterial;
         [FormerlySerializedAs("BDObjHeadMaterial")] [UsedImplicitly]
         public Material bdObjHeadMaterial;
@@ -19,8 +19,9 @@ namespace Manager
         [FormerlySerializedAs("BDObjectPrefab")] public BdObjectContainer bdObjectPrefab;
 
         [FormerlySerializedAs("BDObjectCount")] public int bdObjectCount;
-        public readonly Dictionary<string, (BdObjectContainer, Dictionary<string, BdObjectContainer>)> BdObjects = new();
-
+        // public readonly Dictionary<string, (BdObjectContainer, Dictionary<string, BdObjectContainer>)> BdObjects = new();
+        public readonly Dictionary<string, (BdObjectContainer, List<BdObjectContainer>)> BdObjects = new();
+        
         [Header("Prefabs")]
         public BlockDisplay blockDisplay;
         public ItemDisplay itemDisplay;
@@ -40,19 +41,22 @@ namespace Manager
             var rootObj = await CreateObjectHierarchyAsync(bdObject, bdObjectParent);
 
             // �ֻ��� ������Ʈ�� Dictionary�� ���
-            var idDict = BdObjectHelper.SetDictionary(
-                rootObj,
-                obj => obj.BdObject,
-                obj => obj.children ?? Enumerable.Empty<BdObjectContainer>()
-            );
-            BdObjects[fileName] = (rootObj, idDict);
+            // var idDict = BdObjectHelper.SetDictionary(
+            //     rootObj,
+            //     obj => obj.BdObject,
+            //     obj => obj.children ?? Enumerable.Empty<BdObjectContainer>()
+            // );
+            var displayList = BdObjectHelper.SetDisplayList(rootObj);
+            // BdObjects[fileName] = (rootObj, idDict);
+            BdObjects[fileName] = (rootObj, displayList);
         }
 
         // bdObject �ϳ��� �޾� �ڽ��� GameObject�� �����ϰ�, �� �ڽĵ鵵 ��������� �����Ѵ�.
-        private async Task<BdObjectContainer> CreateObjectHierarchyAsync(BdObject bdObject, Transform parent, int batchSize = 10)
+        private async Task<BdObjectContainer> CreateObjectHierarchyAsync(BdObject bdObject, Transform parent, BdObjectContainer parentBdobj = null, int batchSize = 10)
         {
             // BDObjectPrefab ������� �ν��Ͻ� ����
             var newObj = Instantiate(bdObjectPrefab, parent);
+            newObj.Parent = parentBdobj;
 
             // �ʱ�ȭ
             newObj.Init(bdObject, this);
@@ -65,7 +69,7 @@ namespace Manager
                 children = new BdObjectContainer[bdObject.Children.Length];
                 for (var i = 0; i < bdObject.Children.Length; i++)
                 {
-                    children[i] = await CreateObjectHierarchyAsync(bdObject.Children[i], newObj.transform, batchSize);
+                    children[i] = await CreateObjectHierarchyAsync(bdObject.Children[i], newObj.transform, newObj, batchSize);
 
                     // ���� �������� �� �����Ӿ� ���
                     if (i % batchSize == 0)

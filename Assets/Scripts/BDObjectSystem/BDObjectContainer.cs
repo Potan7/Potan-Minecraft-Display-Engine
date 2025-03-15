@@ -1,7 +1,7 @@
 using Manager;
 using UnityEngine;
 
-namespace BDObject
+namespace BDObjectSystem
 {
     public class BdObjectContainer : MonoBehaviour
     {
@@ -11,6 +11,7 @@ namespace BDObject
         public DisplayObject displayObj;
 
         public BdObjectContainer[] children;
+        public BdObjectContainer Parent;
 
         public Matrix4x4 transformation;
 

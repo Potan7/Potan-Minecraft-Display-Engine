@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using BDObject;
+using BDObjectSystem;
 using Manager;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -25,8 +25,11 @@ namespace Animation
 
         public BdObject Info;
         public Dictionary<string, BdObject> IDDataDict;
+        private Timeline _timeline;
+        
+        public TickLine tickLine;
 
-        public void Init(string initFileName, int initTick, int inter, BdObject info, AnimObject obj)
+        public void Init(string initFileName, int initTick, int inter, BdObject info, AnimObject obj, Timeline timeLine)
         {
             //Debug.Log("tick : " + tick);
             fileName = initFileName;
@@ -35,15 +38,17 @@ namespace Animation
             Info = info;
             tick = initTick;
             SetInter(inter);
+            _timeline = timeLine;
 
             UpdatePos();
-            GameManager.GetManager<AnimManager>().timeline.OnGridChanged += UpdatePos;
+            _timeline.OnGridChanged += UpdatePos;
 
-            IDDataDict = BdObjectHelper.SetDictionary(
-                Info,
-                bdObject => bdObject,
-                bdObject => bdObject.Children ?? Enumerable.Empty<BdObject>()
-            );
+            IDDataDict = BdObjectHelper.SetDisplayIDDictionary(info);
+            // IDDataDict = BdObjectHelper.SetDictionary(
+            //     Info,
+            //     bdObject => bdObject,
+            //     bdObject => bdObject.Children ?? Enumerable.Empty<BdObject>()
+            // );
         }
 
         public int SetTick(int newTick)
@@ -59,10 +64,11 @@ namespace Animation
 
         }
 
-        // ��ġ ������Ʈ
+        // 변경된 Grid에 맞추어 위치 변경 
         private void UpdatePos()
         {
-            var line = GameManager.GetManager<AnimManager>().timeline.GetTickLine(tick, false);
+            var line = _timeline.GetTickLine(tick, false);
+            tickLine = line;
             if (line is null)
             {
                 gameObject.SetActive(false);
@@ -98,7 +104,7 @@ namespace Animation
             if (!isSelected) return;
             
             Vector2 mouse = Input.mousePosition;
-            var line = GameManager.GetManager<AnimManager>().timeline.GetTickLine(mouse);
+            var line = _timeline.GetTickLine(mouse);
 
             SetTick(line.Tick);
 
@@ -113,7 +119,7 @@ namespace Animation
         // ������ ����
         public void RemoveFrame()
         {
-            GameManager.GetManager<AnimManager>().timeline.OnGridChanged -= UpdatePos;
+            _timeline.OnGridChanged -= UpdatePos;
             animObject.RemoveFrame(this);
         }
 

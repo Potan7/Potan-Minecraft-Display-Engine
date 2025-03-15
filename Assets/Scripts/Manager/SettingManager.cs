@@ -13,14 +13,14 @@ namespace Manager
         public bool UseNameInfoExtract { get; set; } = true;
         public bool UseFrameTxtFile { get; set; } = true;
 
-        [FormerlySerializedAs("UseFindMode")] public bool useFindMode = true;
-        [FormerlySerializedAs("FakePlayer")] public string fakePlayer = "anim";
-        [FormerlySerializedAs("ScoreboardName")] public string scoreboardName = "anim";
-        [FormerlySerializedAs("StartTick")] public int startTick;
-        [FormerlySerializedAs("Namespace")] public string @namespace = "PotanAnim";
-        [FormerlySerializedAs("FrameFileName")] public string frameFileName = "frame";
-        [FormerlySerializedAs("FrameFilePath")] public string frameFilePath = "result";
-        [FormerlySerializedAs("ResultPath")] public string resultPath = "result";
+        public bool useFindMode = true;
+        public string fakePlayer = "anim";
+        public string scoreboardName = "anim";
+        public int startTick;
+        public string @namespace = "PotanAnim";
+        public string frameFileName = "frame";
+        public string frameFilePath = "result";
+        public string resultPath = "result";
 
         [FormerlySerializedAs("FindModeToggle")] public Toggle findModeToggle;
         public TMP_InputField[] inputFields;

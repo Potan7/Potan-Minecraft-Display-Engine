@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace BDObject
+namespace BDObjectSystem
 {
     public class ItemModelGenerator : MonoBehaviour
     {

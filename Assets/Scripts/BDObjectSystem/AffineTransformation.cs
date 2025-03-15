@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace BDObject
+namespace BDObjectSystem
 {
     public static class AffineTransformation
     {

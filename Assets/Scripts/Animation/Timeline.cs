@@ -45,13 +45,7 @@ namespace Animation
                 timeBar.anchoredPosition = new Vector2(line.rect.anchoredPosition.x, timeBar.anchoredPosition.y);
             }
         }
-
-        /// <summary>
-        /// ƽ�� �ش��ϴ� �׸��带 �����´�.
-        /// </summary>
-        /// <param name="tick"></param>
-        /// <param name="changeGrid"> true�� ��� tick�� �ش��ϵ��� �׸��带 �����Ѵ�.</param>
-        /// <returns>ã�� ��� : TickLine, ��ã�� ��� : null</returns>
+        
         public TickLine GetTickLine(int tick, bool changeGrid)
         {
             if (tick < 0)
@@ -63,16 +57,18 @@ namespace Animation
             if (tick < line.Tick)
             {
                 if (!changeGrid) return null;
+                
                 SetTickTexts(tick);
-                return GetTickLine(tick, changeGrid);
+                return GetTickLine(tick, true);
             }
 
             line = grid[gridCount-1];
             if (tick > line.Tick)
             {
                 if (!changeGrid) return null;
+                
                 SetTickTexts(line.Tick + 1);
-                return GetTickLine(tick, changeGrid);
+                return GetTickLine(tick, true);
             }
 
             // ���� Ž������ ã��
@@ -104,8 +100,8 @@ namespace Animation
 
             OnAnimManagerTickChanged(_tick);
         }
-
-        // �׸��� �����ϱ�
+        
+        
         public void SetTickTexts(int start)
         {
             for (var i = 0; i < gridCount; i++)
@@ -121,7 +117,15 @@ namespace Animation
                     grid[i].gameObject.SetActive(true);
                 }
 
-                grid[i].SetTick(start + i, i == 0);
+                if (gridCount < 51)
+                {
+                    grid[i].SetTick(start + i, i == 0 || i % 5 == 0);
+                }
+                else
+                {
+                    grid[i].SetTick(start + i, i == 0);
+                }
+                
             }
             for (var i = gridCount; i < grid.Count; i++)
             {
