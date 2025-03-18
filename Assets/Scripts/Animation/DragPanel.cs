@@ -1,4 +1,5 @@
 using CameraMovement;
+using Riten.Native.Cursors.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
@@ -14,12 +15,22 @@ namespace Animation
 
         public RectTransform canvasRectTransform;
 
+        private OnHoverCursor _onHoverCursor;
+        private bool isOnOff;
+
         private float _lastHeight;
         private float _lastPanelSize;
 
         private void Start()
         {
             _lastHeight = canvasRectTransform.rect.height;
+            _onHoverCursor = GetComponent<OnHoverCursor>();
+        }
+
+        public void SetDragPanel(bool isOn)
+        {
+            isOnOff = isOn;
+            _onHoverCursor.enabled = isOn;
         }
 
         private void Update()
@@ -54,6 +65,8 @@ namespace Animation
 
         public void OnPointerDown(PointerEventData eventData)
         {
+            if (!isOnOff) return;
+
             _isDragging = true;
             BdEngineStyleCameraMovement.CanMoveCamera = false;
         }

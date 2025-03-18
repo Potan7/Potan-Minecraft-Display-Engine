@@ -3,7 +3,6 @@ using CameraMovement;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Animation
@@ -16,7 +15,7 @@ namespace Animation
         public RectTransform animPanel;
         private Vector2 _initPos;
         private bool _isHiding;
-        [FormerlySerializedAs("IsMouseEnter")] public bool isMouseEnter;
+        public bool isMouseEnter;
 
         public TextMeshProUGUI totalTickText;
         public TMP_InputField tickField;
@@ -34,11 +33,13 @@ namespace Animation
             AnimManager.TickChanged += AnimManager_TickChanged;
 
             _isHiding = true;
+            dragPanel.SetDragPanel(!_isHiding);
             dragPanel.SetPanelSize(0);
         }
 
         private void Update()
         {
+            // 마우스가 패널 안에 있으면 카메라 이동 불가능
             if (RectTransformUtility.RectangleContainsScreenPoint(
                     animPanel, Input.mousePosition, null
                 ))
@@ -96,18 +97,22 @@ namespace Animation
             _manager.IsPlaying = !_manager.IsPlaying;
         }
 
+        // 패널 토글 버튼 
         public void TogglePanel()
         {
             if (_isHiding)
             {
+                // 위로 올리기
                 StopAllCoroutines();
                 StartCoroutine(MovePanelCoroutine(_initPos.y));
             }
             else
             {
+                // 아래로 내리기 
                 StopAllCoroutines();
                 StartCoroutine(MovePanelCoroutine(0));
             }
+            dragPanel.SetDragPanel(_isHiding);
 
             _isHiding = !_isHiding;
         }
@@ -155,6 +160,7 @@ namespace Animation
         {
             if (callback.started)
                 _manager.TickAdd(-1);
+            
         }
 
         public void MoveTickRight(InputAction.CallbackContext callback)

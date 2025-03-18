@@ -7,7 +7,8 @@ namespace Animation
 {
     public class AnimManager : BaseManager
     {
-        [FormerlySerializedAs("_tick")] [SerializeField]
+        // 현재 애니메이션 틱 
+        [SerializeField]
         private int tick;
         public int Tick
         {
@@ -23,7 +24,7 @@ namespace Animation
             }
         }
 
-        [FormerlySerializedAs("_tickSpeed")] [SerializeField]
+        // 애니메이션 틱 속도
         private float tickSpeed = 20.0f;
         public float TickSpeed
         {
@@ -66,5 +67,12 @@ namespace Animation
         {
             Tick += value;
         }
+
+        private void OnDestroy()
+        {
+            TickChanged = null;
+        }
+
+        
     }
 }

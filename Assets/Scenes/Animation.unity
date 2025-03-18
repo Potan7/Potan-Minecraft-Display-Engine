@@ -3935,7 +3935,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &312444415
 RectTransform:
   m_ObjectHideFlags: 0
@@ -18235,7 +18235,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tick: 0
-  tickSpeed: 20
   timeline: {fileID: 1656234113}
 --- !u!114 &1481496112
 MonoBehaviour:

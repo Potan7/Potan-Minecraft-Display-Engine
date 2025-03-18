@@ -4,6 +4,7 @@ using Manager;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 namespace Animation
 {
@@ -14,15 +15,17 @@ namespace Animation
         [FormerlySerializedAs("TimeBar")] public RectTransform timeBar;
         private int _tick;
 
-        [FormerlySerializedAs("GridCount")] public int gridCount = 100;
+        public int gridCount = 100;
         public event Action OnGridChanged;
 
-        [FormerlySerializedAs("IsClicking")] public bool isClicking;
+        public bool isClicking;
 
         private AnimManager _animManager;
+        RectTransform _rectTransform;
 
         private void Start()
         {
+            _rectTransform = GetComponent<RectTransform>();
             SetTickTexts(0);
             for (var i = 0; i < gridCount; i++)
             {
@@ -101,7 +104,7 @@ namespace Animation
             OnAnimManagerTickChanged(_tick);
         }
         
-        
+        // TickLine Grid 변경됨 
         public void SetTickTexts(int start)
         {
             for (var i = 0; i < gridCount; i++)
@@ -131,6 +134,8 @@ namespace Animation
             {
                 grid[i].gameObject.SetActive(false);
             }
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_rectTransform);
 
             OnGridChanged?.Invoke();
         }

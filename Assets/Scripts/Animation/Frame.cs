@@ -18,8 +18,8 @@ namespace Animation
         private Color _initColor;
         private readonly Color _selectedColor = Color.yellow;
 
-        [FormerlySerializedAs("IsSelected")] public bool isSelected;
-        [FormerlySerializedAs("Tick")] public int tick;
+        public bool isSelected;
+        public int tick;
         public int interpolation;
         public string fileName;
 
@@ -68,7 +68,6 @@ namespace Animation
         private void UpdatePos()
         {
             var line = _timeline.GetTickLine(tick, false);
-            tickLine = line;
             if (line is null)
             {
                 gameObject.SetActive(false);
@@ -76,7 +75,10 @@ namespace Animation
             else
             {
                 gameObject.SetActive(true);
-                rect.anchoredPosition = new Vector2(line.rect.anchoredPosition.x, rect.anchoredPosition.y);
+                //var pos = line.rect.anchoredPosition.x;
+                //rect.anchoredPosition = new Vector2(line.rect.anchoredPosition.x, rect.anchoredPosition.y);
+                rect.position = new Vector2(line.rect.position.x, rect.position.y);
+                tickLine = line;
             }
         }
 
