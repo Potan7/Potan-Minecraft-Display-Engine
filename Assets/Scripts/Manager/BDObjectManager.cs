@@ -49,6 +49,11 @@ namespace Manager
             var displayList = BdObjectHelper.SetDisplayList(rootObj);
             // BdObjects[fileName] = (rootObj, idDict);
             BdObjects[fileName] = (rootObj, displayList);
+
+            for (int i = 0; i < displayList.Count; i++)
+            {
+                displayList[i].transform.SetParent(bdObjectParent);
+            }
         }
 
         // bdObject �ϳ��� �޾� �ڽ��� GameObject�� �����ϰ�, �� �ڽĵ鵵 ��������� �����Ѵ�.

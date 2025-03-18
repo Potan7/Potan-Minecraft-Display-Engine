@@ -11,6 +11,7 @@ namespace Animation
 {
     public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
     {
+        [Header("Frame Components")]
         public RectTransform rect;
         public Image outlineImage;
         public AnimObject animObject;
@@ -18,16 +19,19 @@ namespace Animation
         private Color _initColor;
         private readonly Color _selectedColor = Color.yellow;
 
+        [Header("Frame Info")]
         public bool isSelected;
         public int tick;
         public int interpolation;
         public string fileName;
+        public TickLine tickLine;
 
+        [Header("BDObject Info")]
         public BdObject Info;
         public Dictionary<string, BdObject> IDDataDict;
+        public Dictionary<string, float[]> worldTransforms = new Dictionary<string, float[]>();
         private Timeline _timeline;
         
-        public TickLine tickLine;
 
         public void Init(string initFileName, int initTick, int inter, BdObject info, AnimObject obj, Timeline timeLine)
         {
@@ -44,11 +48,12 @@ namespace Animation
             _timeline.OnGridChanged += UpdatePos;
 
             IDDataDict = BdObjectHelper.SetDisplayIDDictionary(info);
-            // IDDataDict = BdObjectHelper.SetDictionary(
-            //     Info,
-            //     bdObject => bdObject,
-            //     bdObject => bdObject.Children ?? Enumerable.Empty<BdObject>()
-            // );
+
+            // WorldTransform 계산
+            foreach (var items in IDDataDict)
+            {
+                worldTransforms.Add(items.Key, AffineTransformation.GetWorldMatrix(items.Value));
+            }
         }
 
         public int SetTick(int newTick)
