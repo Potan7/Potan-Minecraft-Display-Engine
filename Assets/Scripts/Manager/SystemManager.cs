@@ -71,28 +71,28 @@ namespace Manager
         //}
 
         // Update is called once per frame
-        private void Update()
-        {
-            _deltaTime += (Time.unscaledDeltaTime - _deltaTime) * 0.1f;
+//         private void Update()
+//         {
+//             _deltaTime += (Time.unscaledDeltaTime - _deltaTime) * 0.1f;
 
-            // paste from clipboard
-            if (!Input.GetKey(KeyCode.LeftControl) || !Input.GetKeyDown(KeyCode.V)) return;
-            try
-            {
-                var clipboard = GUIUtility.systemCopyBuffer;
+//             // paste from clipboard
+//             if (!Input.GetKey(KeyCode.LeftControl) || !Input.GetKeyDown(KeyCode.V)) return;
+//             try
+//             {
+//                 var clipboard = GUIUtility.systemCopyBuffer;
 
-                CustomLog.Log("Clipboard: " + clipboard);
+//                 CustomLog.Log("Clipboard: " + clipboard);
 
-                _ = GameManager.GetManager<FileManager>().MakeDisplay(clipboard);
-            }
-            catch (Exception e)
-            {
-                CustomLog.Log("Clipboard is not BDEFile");
-#if UNITY_EDITOR
-                Debug.LogError(e);
-#endif
-            }
-        }
+//                 //_ = GameManager.GetManager<FileManager>().MakeDisplay(clipboard);
+//             }
+//             catch (Exception e)
+//             {
+//                 CustomLog.Log("Clipboard is not BDEFile");
+// #if UNITY_EDITOR
+//                 Debug.LogError(e);
+// #endif
+//             }
+//         }
         
         public void ExportPrefab(int idx)
         {

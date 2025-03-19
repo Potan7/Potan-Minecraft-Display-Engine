@@ -12,12 +12,13 @@ namespace Animation
 
         public void Init(float[] transforms, GameObject model, string id)
         {
+            name = id;
             Model = Instantiate(model, transform);
-            SetTransform(transforms);
+            SetTransformation(transforms);
             ID = id;
         }
 
-        public void SetTransform(float[] transforms)
+        public void SetTransformation(float[] transforms)
         {
             Transforms = transforms;
             var matrix = AffineTransformation.GetMatrix(transforms);

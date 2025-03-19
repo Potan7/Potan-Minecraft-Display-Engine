@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 
-namespace Animation
+namespace Animation.UI
 {
     public class DragPanel : MonoBehaviour, 
         IPointerDownHandler//, IPointerMoveHandler//, IPointerUpHandler

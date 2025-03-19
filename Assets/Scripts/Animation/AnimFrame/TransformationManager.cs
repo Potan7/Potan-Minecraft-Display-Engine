@@ -10,9 +10,9 @@ namespace Animation.AnimFrame
         private readonly HashSet<string> _visitedNodes = new HashSet<string>();
         
         private readonly SortedList<int, Frame> _frames;
-        private readonly List<BdObjectContainer> _displayList;
+        private readonly List<AnimModel> _displayList;
 
-        public TransformationManager(SortedList<int, Frame> frames, List<BdObjectContainer> displayList)
+        public TransformationManager(SortedList<int, Frame> frames, List<AnimModel> displayList)
         {
             _frames = frames;
             _displayList = displayList;
@@ -53,15 +53,15 @@ namespace Animation.AnimFrame
             foreach (var display in _displayList)
             {
                 // 1) 현재 display에 해당하는 데이터 찾기
-                if (!frame.worldTransforms.TryGetValue(display.bdObjectID, out var worldTransform))
+                if (!frame.worldTransforms.TryGetValue(display.ID, out var worldTransform))
                 {
                     
                     // 한 번도 없는 bdObjectID라면 로그만 찍고 넘어감
-                    if (_noID.Contains(display.bdObjectID)) 
+                    if (_noID.Contains(display.ID)) 
                         continue;
 
-                    CustomLog.LogError("Target not found, name : " + display.bdObjectID);
-                    _noID.Add(display.bdObjectID);
+                    CustomLog.LogError("Target not found, name : " + display.ID);
+                    _noID.Add(display.ID);
                     continue;
                 }
 
@@ -104,17 +104,17 @@ namespace Animation.AnimFrame
             {
                 // var aContains = a.IDDataDict.TryGetValue(display.bdObjectID, out var aData);
                 // var bContains = b.IDDataDict.TryGetValue(display.bdObjectID, out var bData);
-                var aContains = a.worldTransforms.TryGetValue(display.bdObjectID, out var aData);
-                var bContains = b.worldTransforms.TryGetValue(display.bdObjectID, out var bData);
+                var aContains = a.worldTransforms.TryGetValue(display.ID, out var aData);
+                var bContains = b.worldTransforms.TryGetValue(display.ID, out var bData);
 
                 // a, b 어느 쪽에도 없으면 스킵
                 if (!aContains && !bContains)
                 {
-                    if (_noID.Contains(display.bdObjectID)) 
+                    if (_noID.Contains(display.ID)) 
                         continue;
 
-                    CustomLog.LogError("Target not found, name : " + display.bdObjectID);
-                    _noID.Add(display.bdObjectID);
+                    CustomLog.LogError("Target not found, name : " + display.ID);
+                    _noID.Add(display.ID);
                     continue;
                 }
 

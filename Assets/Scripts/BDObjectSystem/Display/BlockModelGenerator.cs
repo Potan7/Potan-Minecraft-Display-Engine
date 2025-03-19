@@ -3,7 +3,6 @@ using Manager;
 using Minecraft;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
-using BDObjectSystem;
 
 namespace BDObjectSystem.Display
 {
@@ -15,7 +14,7 @@ namespace BDObjectSystem.Display
 
         public void SetModelByBlockState(JToken modelInfo)
         {
-            // ��� ���� ����
+            // Model Setting
             string modelLocation;
             JObject modelObject;
 
@@ -37,7 +36,7 @@ namespace BDObjectSystem.Display
 
             SetModel(modelLocation);
 
-            // X��, Y�� ȸ���� ��Ȯ�� ����
+            // Roate the model
             var modelXRot = Quaternion.Euler(-xRot, 0, 0);
             var modelYRot = Quaternion.Euler(0, -yRot, 0);
 

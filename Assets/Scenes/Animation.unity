@@ -18278,14 +18278,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1481496109}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e1ee4d7a62980ca4d8995532e18a132e, type: 3}
+  m_Script: {fileID: 11500000, guid: 7cb91e55b6f956c48924231df912a862, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _manager: {fileID: 0}
   dragPanel: {fileID: 452743878}
-  animPanel: {fileID: 0}
-  _initPos: {x: 0, y: 0}
-  _isHiding: 0
+  animPanel: {fileID: 2070522682}
   isMouseEnter: 0
   totalTickText: {fileID: 0}
   tickField: {fileID: 583919195}
