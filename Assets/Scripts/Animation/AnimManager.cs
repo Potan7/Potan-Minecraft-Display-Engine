@@ -2,6 +2,7 @@ using System;
 using Manager;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Animation.UI;
 
 namespace Animation
 {

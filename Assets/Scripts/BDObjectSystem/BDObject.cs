@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-// ReSharper disable UnassignedField.Global
+using BDObjectSystem.Utility;
 
 //[System.Serializable]
 namespace BDObjectSystem

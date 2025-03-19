@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using Manager;
 using UnityEngine;
-using UnityEngine.Serialization;
+using Animation.UI;
+using BDObjectSystem;
 
-namespace Animation
+namespace Animation.AnimFrame
 {
     public class AnimObjList : MonoBehaviour
     {

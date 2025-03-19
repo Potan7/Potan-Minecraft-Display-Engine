@@ -6,8 +6,9 @@ using Minecraft;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
+using BDObjectSystem;
 
-namespace BDObjectSystem
+namespace BDObjectSystem.Display
 {
     public class HeadGenerator : BlockModelGenerator
     {

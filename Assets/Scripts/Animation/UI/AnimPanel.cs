@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-namespace Animation
+namespace Animation.UI
 {
     public class AnimPanel : MonoBehaviour
     {

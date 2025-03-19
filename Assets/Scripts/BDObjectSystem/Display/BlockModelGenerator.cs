@@ -3,8 +3,9 @@ using Manager;
 using Minecraft;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using BDObjectSystem;
 
-namespace BDObjectSystem
+namespace BDObjectSystem.Display
 {
     public class BlockModelGenerator : MonoBehaviour
     {

@@ -4,10 +4,11 @@ using BDObjectSystem;
 using Manager;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
+using BDObjectSystem.Utility;
 using UnityEngine.UI;
+using Animation.UI;
 
-namespace Animation
+namespace Animation.AnimFrame
 {
     public class Frame : MonoBehaviour, IPointerDownHandler//, IPointerUpHandler
     {

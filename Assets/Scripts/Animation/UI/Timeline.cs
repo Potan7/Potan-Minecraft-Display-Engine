@@ -6,7 +6,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-namespace Animation
+namespace Animation.UI
 {
     public class Timeline : MonoBehaviour, IPointerDownHandler
     {

@@ -5,7 +5,7 @@ using Minecraft;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-namespace BDObjectSystem
+namespace BDObjectSystem.Display
 {
     public class ItemDisplay : ModelDisPlayObject
     {

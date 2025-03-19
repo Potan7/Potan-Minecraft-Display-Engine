@@ -7,11 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Animation;
 using BDObjectSystem;
 using Newtonsoft.Json;
 using SimpleFileBrowser;
 using UnityEngine;
+using BDObjectSystem.Display;
+using BDObjectSystem.Utility;
+using Animation.AnimFrame;
 
 namespace Manager
 {

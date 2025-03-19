@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using BDObjectSystem;
 
-namespace Animation
+namespace Animation.AnimFrame
 {
     public class TransformationManager
     {

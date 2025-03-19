@@ -2,7 +2,7 @@ using System;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace BDObjectSystem
+namespace BDObjectSystem.Utility
 {
     public static class AffineTransformation
     {

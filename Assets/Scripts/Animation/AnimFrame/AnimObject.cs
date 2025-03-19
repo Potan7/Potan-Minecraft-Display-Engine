@@ -5,8 +5,10 @@ using Manager;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Animation.UI;
+using BDObjectSystem.Utility;
 
-namespace Animation
+namespace Animation.AnimFrame
 {
     public class AnimObject : MonoBehaviour
     {
