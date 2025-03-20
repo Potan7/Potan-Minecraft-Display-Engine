@@ -38,6 +38,7 @@ namespace Animation.UI
 
         }
 
+        // AnimManager의 Tick 값이 변경됨
         private void OnAnimManagerTickChanged(int tick)
         {
             _tick = tick;
@@ -48,38 +49,60 @@ namespace Animation.UI
                 timeBar.anchoredPosition = new Vector2(line.rect.anchoredPosition.x, timeBar.anchoredPosition.y);
             }
         }
-        
+
+        // tick 값에 해당하는 TickLine을 반환
         public TickLine GetTickLine(int tick, bool changeGrid)
         {
             if (tick < 0)
             {
                 return null;
             }
-            // ���� ���̸� �׸��� ����
+
             var line = grid[0];
             if (tick < line.Tick)
             {
                 if (!changeGrid) return null;
-                
+
                 SetTickTexts(tick);
                 return GetTickLine(tick, true);
             }
 
-            line = grid[gridCount-1];
+            line = grid[gridCount - 1];
             if (tick > line.Tick)
             {
                 if (!changeGrid) return null;
-                
+
                 SetTickTexts(line.Tick + 1);
                 return GetTickLine(tick, true);
             }
 
-            // ���� Ž������ ã��
-            var index = grid.BinarySearch(null, Comparer<TickLine>.Create((a, b) => a.Tick.CompareTo(tick)));
+            var index = BinarySearchTick(grid, tick, gridCount);
             return index >= 0 ? grid[index] : null;
         }
 
-        // ���� RectTransform�� ���� ����� TickLine�� ��ȯ�Ѵ�.
+        private int BinarySearchTick(List<TickLine> grid, int tick, int max)
+        {
+            int left = 0, right = gridCount - 1;
+
+            while (left <= right)
+            {
+                int mid = left + (right - left) / 2;
+
+                // Tick 값을 비교
+                if (grid[mid].Tick == tick)
+                    return mid; // 정확한 값 찾음
+
+                if (grid[mid].Tick < tick)
+                    left = mid + 1; // 오른쪽 탐색
+                else
+                    right = mid - 1; // 왼쪽 탐색
+            }
+
+            return ~left; // 찾지 못하면 삽입 위치 반환 (BinarySearch와 동일한 동작)
+        }
+
+
+        // 주어진 pos와 가장 가까운 TickLine을 반환
         public TickLine GetTickLine(Vector2 pos)
         {
             var maxIndex = 0;
@@ -96,6 +119,7 @@ namespace Animation.UI
             return grid[maxIndex];
         }
 
+        // Grid당 개수 변경
         public void ChangeGrid(int move)
         {
             gridCount += move;
@@ -103,8 +127,8 @@ namespace Animation.UI
 
             OnAnimManagerTickChanged(_tick);
         }
-        
-        // TickLine Grid 변경됨 
+
+        // TickLine Grid 변경하기
         public void SetTickTexts(int start)
         {
             for (var i = 0; i < gridCount; i++)
@@ -128,7 +152,7 @@ namespace Animation.UI
                 {
                     grid[i].SetTick(start + i, i == 0);
                 }
-                
+
             }
             for (var i = gridCount; i < grid.Count; i++)
             {
@@ -140,6 +164,7 @@ namespace Animation.UI
             OnGridChanged?.Invoke();
         }
 
+        // 마우스 클릭시
         public void OnPointerDown(PointerEventData eventData)
         {
             if (eventData.button == PointerEventData.InputButton.Left)

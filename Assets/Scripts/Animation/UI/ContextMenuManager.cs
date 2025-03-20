@@ -40,7 +40,7 @@ namespace Animation.UI
 
         }
 
-        // ������ ���� ������ �޴�
+        // Set Context Menu
         public void ShowContextMenu(Frame thisFrame)
         {
             currentType = ContextMenuType.Frame;
@@ -69,6 +69,10 @@ namespace Animation.UI
             Vector2 mousePos = Input.mousePosition;
             contextMenu.SetActive(true);
 
+            if (mousePos.x + contextMenuContent.sizeDelta.x * 2.5f > Screen.width)
+            {
+                mousePos.x -= contextMenuContent.sizeDelta.x * 2.5f;
+            }
             contextMenuContent.anchoredPosition = mousePos;
             contextMenuBtns[(int)currentType].SetActive(true);
         }
