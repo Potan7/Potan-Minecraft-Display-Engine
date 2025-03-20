@@ -26,4 +26,9 @@ public class MenuBarManager : MonoBehaviour
         Application.Quit();
 #endif
     }
+
+    public void OnGitHubButton()
+    {
+        Application.OpenURL("https://github.com/Potan7/Potan-Minecraft-Animation-Viewer");
+    }
 }
