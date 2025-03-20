@@ -6,8 +6,9 @@ using Minecraft;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
+using BDObjectSystem;
 
-namespace BDObjectSystem
+namespace BDObjectSystem.Display
 {
     public class HeadGenerator : BlockModelGenerator
     {
@@ -66,14 +67,32 @@ namespace BDObjectSystem
                 HeadType.Skull => MinecraftFileManager.GetTextureFile(DefaultTexturePath + "skeleton/skeleton.png"),
                 HeadType.Witherskull => MinecraftFileManager.GetTextureFile(DefaultTexturePath + "skeleton/wither_skeleton.png"),
                 HeadType.Creeper => MinecraftFileManager.GetTextureFile(DefaultTexturePath + "creeper/creeper.png"),
-                _ => null,
+                _ => MinecraftFileManager.GetTextureFile(DefaultTexturePath + "player/wide/steve.png")
             };
 
             GameManager.GetManager<FileManager>().WorkingGenerators.Add(this);
 
-            yield return new WaitWhile(() => !headTexture);
+            WaitForSeconds wait = new WaitForSeconds(0.1f);
+            try
+            {
+                int timeout = 0;
+                while (headTexture == null)
+                {
+                    if (timeout > 10000)
+                    {
+                        CustomLog.LogError("Timeout");
+                        break;
+                    }
 
-            GameManager.GetManager<FileManager>().WorkingGenerators.Remove(this);
+                    yield return wait;
+                    timeout++;
+                }
+            }
+            finally
+            {
+                GameManager.GetManager<FileManager>().WorkingGenerators.Remove(this);
+            }
+
 
             switch (headType)
             {
@@ -153,7 +172,7 @@ namespace BDObjectSystem
 
         private Texture2D SetPlayerTexture()
         {
-            // BDObject ��������
+            // Get Playter Texture
             var data = transform.parent.parent.GetComponent<BdObjectContainer>().BdObject;
             
             if (!data.ExtraData.TryGetValue("defaultTextureValue", out var value))
@@ -187,9 +206,9 @@ namespace BDObjectSystem
             if (request.result != UnityWebRequest.Result.Success)
             {
 #if UNITY_EDITOR
-                CustomLog.LogError("�̹��� �ٿ�ε� ����: " + request.error);
+                CustomLog.LogError("Error: " + request.error);
 #else
-            CustomLog.LogError("�̹��� �ٿ�ε� ����! ��õ��մϴ�.");
+            CustomLog.LogError("Download Fail! Try Again");
 #endif
                 StartCoroutine(DownloadTexture(url));
             }

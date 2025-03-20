@@ -2,8 +2,9 @@ using System.Collections.Generic;
 using Manager;
 using TMPro;
 using UnityEngine;
+using Animation.AnimFrame;
 
-namespace Animation
+namespace Animation.UI
 {
     public class ContextMenuManager : BaseManager
     {

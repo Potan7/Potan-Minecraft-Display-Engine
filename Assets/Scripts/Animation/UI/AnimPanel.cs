@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-namespace Animation
+namespace Animation.UI
 {
     public class AnimPanel : MonoBehaviour
     {
@@ -16,8 +16,6 @@ namespace Animation
         private Vector2 _initPos;
         private bool _isHiding;
         public bool isMouseEnter;
-
-        public TextMeshProUGUI totalTickText;
         public TMP_InputField tickField;
         public TMP_InputField tickSpeedField;
 

@@ -7,11 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Animation;
 using BDObjectSystem;
 using Newtonsoft.Json;
 using SimpleFileBrowser;
 using UnityEngine;
+using BDObjectSystem.Display;
+using BDObjectSystem.Utility;
+using Animation.AnimFrame;
 
 namespace Manager
 {
@@ -186,8 +188,9 @@ namespace Manager
                 filePaths = SortFiles(filePaths);
             }
 
+            string fileName = Path.GetFileNameWithoutExtension(filePaths[0]);
             // generate display using first file
-            var animObject = await MakeDisplay(filePaths[0]);
+            var animObject = await MakeDisplay(filePaths[0], fileName);
 
             // reading files and adding frames
             for (var i = 1; i < filePaths.Count; i++)
@@ -199,6 +202,8 @@ namespace Manager
             while (WorkingGenerators.Count > 0) await Task.Delay(500);
 
             GameManager.GetManager<UIManger>().SetLoadingPanel(false);
+            bdObjManager.EndFileImport(fileName);
+            animObject.InitAnimModelData();
 
             CustomLog.Log($"Import is Done! BDObject Count: {GameManager.GetManager<BdObjectManager>().bdObjectCount}");
         }
@@ -242,15 +247,13 @@ namespace Manager
         }
 
         // making display from file
-        // ReSharper disable Unity.PerformanceAnalysis
-        public async Task<AnimObject> MakeDisplay(string filepath)
+
+        public async Task<AnimObject> MakeDisplay(string filepath, string fileName)
         {
             // get file
             var bdObject = await ProcessFileAsync(filepath);
-
-            var fileName = Path.GetFileNameWithoutExtension(filepath);
             // add gameobject
-            await bdObjManager.AddObject(bdObject, fileName);
+            await bdObjManager.AddObject(bdObject);
             // add anim object
             return animObjList.AddAnimObject(fileName);
         }

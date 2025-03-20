@@ -42,10 +42,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 8462625366923813557}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e04c4d304feb6e04f8be1e52931eb35a, type: 3}
+  m_Script: {fileID: 11500000, guid: 2b4c8f2fd8b77e943b8cbe0425f95597, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   modelName: 
+  ModelData:
+    Parent: 
   modelElementParent: {fileID: 3838592623895997604}
 --- !u!1001 &5419129233477597331
 PrefabInstance:

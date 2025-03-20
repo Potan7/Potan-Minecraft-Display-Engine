@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-namespace Animation
+namespace Animation.UI
 {
     public class TickLine : MonoBehaviour
     {

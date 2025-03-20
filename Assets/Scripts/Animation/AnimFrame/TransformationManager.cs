@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using BDObjectSystem;
 
-namespace Animation
+namespace Animation.AnimFrame
 {
     public class TransformationManager
     {
@@ -10,9 +10,9 @@ namespace Animation
         private readonly HashSet<string> _visitedNodes = new HashSet<string>();
         
         private readonly SortedList<int, Frame> _frames;
-        private readonly List<BdObjectContainer> _displayList;
+        private readonly List<AnimModel> _displayList;
 
-        public TransformationManager(SortedList<int, Frame> frames, List<BdObjectContainer> displayList)
+        public TransformationManager(SortedList<int, Frame> frames, List<AnimModel> displayList)
         {
             _frames = frames;
             _displayList = displayList;
@@ -53,23 +53,23 @@ namespace Animation
             foreach (var display in _displayList)
             {
                 // 1) 현재 display에 해당하는 데이터 찾기
-                if (!frame.IDDataDict.TryGetValue(display.bdObjectID, out var idData))
+                if (!frame.worldTransforms.TryGetValue(display.ID, out var worldTransform))
                 {
                     
                     // 한 번도 없는 bdObjectID라면 로그만 찍고 넘어감
-                    if (_noID.Contains(display.bdObjectID)) 
+                    if (_noID.Contains(display.ID)) 
                         continue;
 
-                    CustomLog.LogError("Target not found, name : " + display.bdObjectID);
-                    _noID.Add(display.bdObjectID);
+                    CustomLog.LogError("Target not found, name : " + display.ID);
+                    _noID.Add(display.ID);
                     continue;
                 }
 
                 // 2) 현재 display의 변환 적용
-                display.SetTransformation(idData.Transforms);
+                display.SetTransformation(worldTransform);
 
                 // 3) 부모 노드 변환 순차 적용
-                ApplyChainTransformations(idData.Parent, display.Parent, _visitedNodes);
+                //ApplyChainTransformations(idData.Parent, display.Parent, _visitedNodes);
             }
 
             _visitedNodes.Clear();
@@ -102,17 +102,19 @@ namespace Animation
         {
             foreach (var display in _displayList)
             {
-                var aContains = a.IDDataDict.TryGetValue(display.bdObjectID, out var aData);
-                var bContains = b.IDDataDict.TryGetValue(display.bdObjectID, out var bData);
+                // var aContains = a.IDDataDict.TryGetValue(display.bdObjectID, out var aData);
+                // var bContains = b.IDDataDict.TryGetValue(display.bdObjectID, out var bData);
+                var aContains = a.worldTransforms.TryGetValue(display.ID, out var aData);
+                var bContains = b.worldTransforms.TryGetValue(display.ID, out var bData);
 
                 // a, b 어느 쪽에도 없으면 스킵
                 if (!aContains && !bContains)
                 {
-                    if (_noID.Contains(display.bdObjectID)) 
+                    if (_noID.Contains(display.ID)) 
                         continue;
 
-                    CustomLog.LogError("Target not found, name : " + display.bdObjectID);
-                    _noID.Add(display.bdObjectID);
+                    CustomLog.LogError("Target not found, name : " + display.ID);
+                    _noID.Add(display.ID);
                     continue;
                 }
 
@@ -121,26 +123,26 @@ namespace Animation
                 if (!aContains)
                 {
                     // aFrame에는 없고 bFrame에만 있다면 bTransform 그대로
-                    childTransform = bData.Transforms;
+                    childTransform = bData;
                 }
                 else if (!bContains)
                 {
                     // bFrame에는 없고 aFrame에만 있다면 aTransform 그대로
-                    childTransform = aData.Transforms;
+                    childTransform = aData;
                 }
                 else
                 {
                     // a, b 모두 있으니 보간
-                    childTransform = InterpolateTransforms(aData.Transforms, bData.Transforms, t);
+                    childTransform = InterpolateTransforms(aData, bData, t);
                 }
 
                 // display에 설정
                 display.SetTransformation(childTransform);
 
                 // 2) 부모 노드 보간 적용
-                var aParent = aData?.Parent;
-                var bParent = bData?.Parent;
-                ApplyChainTransformationsInterpolation(t, aParent, bParent, display.Parent, _visitedNodes);
+                // var aParent = aData?.Parent;
+                // var bParent = bData?.Parent;
+                // ApplyChainTransformationsInterpolation(t, aParent, bParent, display.Parent, _visitedNodes);
             }
 
             _visitedNodes.Clear();

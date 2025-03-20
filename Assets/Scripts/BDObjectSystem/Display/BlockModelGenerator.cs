@@ -4,7 +4,7 @@ using Minecraft;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-namespace BDObjectSystem
+namespace BDObjectSystem.Display
 {
     public class BlockModelGenerator : MonoBehaviour
     {
@@ -14,7 +14,7 @@ namespace BDObjectSystem
 
         public void SetModelByBlockState(JToken modelInfo)
         {
-            // ��� ���� ����
+            // Model Setting
             string modelLocation;
             JObject modelObject;
 
@@ -36,7 +36,7 @@ namespace BDObjectSystem
 
             SetModel(modelLocation);
 
-            // X��, Y�� ȸ���� ��Ȯ�� ����
+            // Roate the model
             var modelXRot = Quaternion.Euler(-xRot, 0, 0);
             var modelYRot = Quaternion.Euler(0, -yRot, 0);
 
