@@ -1,146 +1,151 @@
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class BDEngineStyleCameraMovement : MonoBehaviour
+namespace CameraMovement
 {
-    public static bool CanMoveCamera { get; set; } = true;
-
-    [Header("References")]
-    public Transform pivot; // Ä«¸Þ¶ó°¡ ¹Ù¶óº¼ ÇÇ¹þ
-
-    [Header("Camera Movement Settings")]
-    public float rotationSpeed = 90f; // È¸Àü ¼Óµµ (µµ/ÃÊ)
-    public float panSpeed = 5f;       // ÆÒ ¼Óµµ (À¯´Ö/ÃÊ)
-    public float zoomSpeed = 10f;     // ÁÜ ¼Óµµ
-    public float minDistance = 2f;    // Ä«¸Þ¶ó~ÇÇ¹þ ÃÖ¼Ò °Å¸®
-    public float maxDistance = 50f;   // Ä«¸Þ¶ó~ÇÇ¹þ ÃÖ´ë °Å¸®
-
-    private float currentDistance;    // ÇöÀç Ä«¸Þ¶ó~ÇÇ¹þ °Å¸®
-    private Vector3 pivotInitPos;     // ÇÇ¹þ ÃÊ±â À§Ä¡
-    private float initDistance;       // Ä«¸Þ¶ó ÃÊ±â °Å¸®
-
-    [Header("Input Actions")]
-    // MyCameraActions.inputactions (Asset) ÂüÁ¶
-    public InputActionAsset inputActions;
-
-    // ³»ºÎ¿¡¼­ Ã£¾Æ¼­ ¾µ Action Map ¹× Action ÂüÁ¶
-    private InputActionMap cameraMap;
-    private InputAction rotateAction;
-    private InputAction panAction;
-    private InputAction lookDeltaAction;
-    private InputAction zoomAction;
-
-    private void OnEnable()
+    public class BdEngineStyleCameraMovement : MonoBehaviour
     {
-        // ÇÇ¹þÀÌ ¾øÀ¸¸é ½ºÅ©¸³Æ® Áß´Ü
-        if (pivot == null)
+        public static bool CanMoveCamera { get; set; } = true;
+
+        [Header("References")]
+        public Transform pivot; // Ä«ï¿½Þ¶ï¿½ ï¿½Ù¶ï¿½ ï¿½Ç¹ï¿½
+
+        [Header("Camera Movement Settings")]
+        public float rotationSpeed = 90f; // È¸ï¿½ï¿½ ï¿½Óµï¿½ (ï¿½ï¿½/ï¿½ï¿½)
+        public float panSpeed = 5f;       // ï¿½ï¿½ ï¿½Óµï¿½ (ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½)
+        public float zoomSpeed = 10f;     // ï¿½ï¿½ ï¿½Óµï¿½
+        public float minDistance = 2f;    // Ä«ï¿½Þ¶ï¿½~ï¿½Ç¹ï¿½ ï¿½Ö¼ï¿½ ï¿½Å¸ï¿½
+        public float maxDistance = 50f;   // Ä«ï¿½Þ¶ï¿½~ï¿½Ç¹ï¿½ ï¿½Ö´ï¿½ ï¿½Å¸ï¿½
+
+        private float _currentDistance;    // ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½Þ¶ï¿½~ï¿½Ç¹ï¿½ ï¿½Å¸ï¿½
+        private Vector3 _pivotInitPos;     // ï¿½Ç¹ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½Ä¡
+        private float _initDistance;       // Ä«ï¿½Þ¶ï¿½ ï¿½Ê±ï¿½ ï¿½Å¸ï¿½
+
+        [Header("Input Actions")]
+        // MyCameraActions.inputactions (Asset) ï¿½ï¿½ï¿½ï¿½
+        public InputActionAsset inputActions;
+
+        // ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ Ã£ï¿½Æ¼ï¿½ ï¿½ï¿½ Action Map ï¿½ï¿½ Action ï¿½ï¿½ï¿½ï¿½
+        private InputActionMap _cameraMap;
+        private InputAction _rotateAction;
+        private InputAction _panAction;
+        private InputAction _lookDeltaAction;
+        private InputAction _zoomAction;
+
+        private void OnEnable()
         {
-            Debug.LogError("Pivot is not assigned.");
-            enabled = false;
-            return;
+            // ï¿½Ç¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ® ï¿½ß´ï¿½
+            if (pivot == null)
+            {
+                Debug.LogError("Pivot is not assigned.");
+                enabled = false;
+                return;
+            }
+
+            // ï¿½Ê±ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            _currentDistance = Vector3.Distance(transform.position, pivot.position);
+            _initDistance = _currentDistance;
+            _pivotInitPos = pivot.position;
+            transform.LookAt(pivot);
+
+            // --- 1) Action Map ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ---
+            //    (InputActionAsset ï¿½È¿ï¿½ "Camera" ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ø¾ï¿½ ï¿½ï¿½)
+            _cameraMap = inputActions.FindActionMap("Camera", throwIfNotFound: true);
+
+            // --- 2) Action ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ ---
+            _rotateAction = _cameraMap.FindAction("Rotate", throwIfNotFound: true);      // Button
+            _panAction = _cameraMap.FindAction("Pan", throwIfNotFound: true);           // Button
+            _lookDeltaAction = _cameraMap.FindAction("LookDelta", throwIfNotFound: true); // Vector2
+            _zoomAction = _cameraMap.FindAction("Zoom", throwIfNotFound: true);         // float
+
+            // --- 3) Enable ---
+            _cameraMap.Enable(); // or rotateAction.Enable(); panAction.Enable(); ...
+
+            // ï¿½ï¿½ï¿½ï¿½: cameraMap.Enable() ï¿½ï¿½ È£ï¿½ï¿½ï¿½Ï¸ï¿½ 
+            //       cameraMap ï¿½È¿ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ ï¿½×¼ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Enable ï¿½Ë´Ï´ï¿½.
         }
 
-        // ÃÊ±â °ª ¼¼ÆÃ
-        currentDistance = Vector3.Distance(transform.position, pivot.position);
-        initDistance = currentDistance;
-        pivotInitPos = pivot.position;
-        transform.LookAt(pivot);
-
-        // --- 1) Action Map °¡Á®¿À±â ---
-        //    (InputActionAsset ¾È¿¡ "Camera" ¸ÊÀÌ Á¸ÀçÇØ¾ß ÇÔ)
-        cameraMap = inputActions.FindActionMap("Camera", throwIfNotFound: true);
-
-        // --- 2) Action °¢°¢ Ã£±â ---
-        rotateAction = cameraMap.FindAction("Rotate", throwIfNotFound: true);      // Button
-        panAction = cameraMap.FindAction("Pan", throwIfNotFound: true);           // Button
-        lookDeltaAction = cameraMap.FindAction("LookDelta", throwIfNotFound: true); // Vector2
-        zoomAction = cameraMap.FindAction("Zoom", throwIfNotFound: true);         // float
-
-        // --- 3) Enable ---
-        cameraMap.Enable(); // or rotateAction.Enable(); panAction.Enable(); ...
-
-        // Âü°í: cameraMap.Enable() ¸¦ È£ÃâÇÏ¸é 
-        //       cameraMap ¾È¿¡ ÀÖ´Â ¸ðµç ¾×¼ÇÀÌ ÇÑ ¹ø¿¡ Enable µË´Ï´Ù.
-    }
-
-    private void OnDisable()
-    {
-        // Disable
-        cameraMap?.Disable();
-        // ¶Ç´Â °³º° ¾×¼Çµé rotateAction?.Disable(); µî
-    }
-
-    void Update()
-    {
-        if (!CanMoveCamera) return;
-
-        // ActionÀÇ ÇöÀç °ª ÀÐ±â
-        bool rotatePressed = rotateAction.ReadValue<float>() > 0.5f;   // ¸¶¿ì½º ¿ÞÂÊ ¹öÆ°
-        bool panPressed = panAction.ReadValue<float>() > 0.5f;         // ¸¶¿ì½º ¿À¸¥ÂÊ ¹öÆ°
-        Vector2 lookDelta = lookDeltaAction.ReadValue<Vector2>();     // ¸¶¿ì½º ÀÌµ¿
-        float zoomValue = zoomAction.ReadValue<float>();              // ¸¶¿ì½º ÈÙ
-
-        // --- 1) È¸Àü ---
-        if (rotatePressed && lookDelta.sqrMagnitude > 0.0001f)
+        private void OnDisable()
         {
-            RotateAroundPivot(lookDelta, Time.deltaTime);
+            // Disable
+            _cameraMap?.Disable();
+            // ï¿½Ç´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×¼Çµï¿½ rotateAction?.Disable(); ï¿½ï¿½
         }
 
-        // --- 2) ÆÒ ---
-        if (panPressed && lookDelta.sqrMagnitude > 0.0001f)
+        private void Update()
         {
-            PanCamera(lookDelta, Time.deltaTime);
+            if (!CanMoveCamera) return;
+
+            // Actionï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ð±ï¿½
+            var rotatePressed = _rotateAction.ReadValue<float>() > 0.5f;   // ï¿½ï¿½ï¿½ì½º ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ°
+            var panPressed = _panAction.ReadValue<float>() > 0.5f;         // ï¿½ï¿½ï¿½ì½º ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ°
+            var lookDelta = _lookDeltaAction.ReadValue<Vector2>();     // ï¿½ï¿½ï¿½ì½º ï¿½Ìµï¿½
+            var zoomValue = _zoomAction.ReadValue<float>();              // ï¿½ï¿½ï¿½ì½º ï¿½ï¿½
+
+            // --- 1) È¸ï¿½ï¿½ ---
+            if (rotatePressed && lookDelta.sqrMagnitude > 0.0001f)
+            {
+                RotateAroundPivot(lookDelta, Time.deltaTime);
+            }
+
+            // --- 2) ï¿½ï¿½ ---
+            if (panPressed && lookDelta.sqrMagnitude > 0.0001f)
+            {
+                PanCamera(lookDelta, Time.deltaTime);
+            }
+
+            // --- 3) ï¿½ï¿½ ---
+            if (Mathf.Abs(zoomValue) > 0.0001f)
+            {
+                ZoomCamera(zoomValue, Time.deltaTime);
+            }
         }
 
-        // --- 3) ÁÜ ---
-        if (Mathf.Abs(zoomValue) > 0.0001f)
+        private void RotateAroundPivot(Vector2 delta, float dt)
         {
-            ZoomCamera(zoomValue, Time.deltaTime);
+            var yaw = delta.x * rotationSpeed * dt;
+            var pitch = -delta.y * rotationSpeed * dt; // ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ï¿½ï¿½ ï¿½ï¿½(-)
+
+            // 1) yaw : pivot ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Up
+            transform.RotateAround(pivot.position, Vector3.up, yaw);
+
+            // 2) pitch : Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ï¿½ï¿½ Right
+            transform.RotateAround(pivot.position, transform.right, pitch);
+
+            // 3) ï¿½Å¸ï¿½ ï¿½ï¿½ï¿½ï¿½ & pivot ï¿½Ù¶óº¸±ï¿½
+            var direction = (transform.position - pivot.position).normalized;
+            transform.position = pivot.position + direction * _currentDistance;
+            transform.LookAt(pivot);
         }
-    }
 
-    private void RotateAroundPivot(Vector2 delta, float dt)
-    {
-        float yaw = delta.x * rotationSpeed * dt;
-        float pitch = -delta.y * rotationSpeed * dt; // À§·Î ÀÌµ¿½Ã À½(-)
+        private void PanCamera(Vector2 delta, float dt)
+        {
+            var rightMovement = transform.right * (delta.x * panSpeed * dt);
+            var upMovement = transform.up * (delta.y * panSpeed * dt);
+            var panMovement = rightMovement + upMovement;
 
-        // 1) yaw : pivot ±âÁØ Àü¿ª Up
-        transform.RotateAround(pivot.position, Vector3.up, yaw);
+            transform.position += panMovement;
+            pivot.position += panMovement;
+        }
 
-        // 2) pitch : Ä«¸Þ¶ó ±âÁØ Right
-        transform.RotateAround(pivot.position, transform.right, pitch);
+        private void ZoomCamera(float zoomValue, float dt)
+        {
+            _currentDistance -= zoomValue * zoomSpeed * dt;
+            _currentDistance = Mathf.Clamp(_currentDistance, minDistance, maxDistance);
 
-        // 3) °Å¸® À¯Áö & pivot ¹Ù¶óº¸±â
-        Vector3 direction = (transform.position - pivot.position).normalized;
-        transform.position = pivot.position + direction * currentDistance;
-        transform.LookAt(pivot);
-    }
+            var direction = (transform.position - pivot.position).normalized;
+            transform.position = pivot.position + direction * _currentDistance;
+        }
+        
+        [UsedImplicitly]
+        public void ResetCamera()
+        {
+            pivot.position = _pivotInitPos;
+            _currentDistance = _initDistance;
 
-    private void PanCamera(Vector2 delta, float dt)
-    {
-        Vector3 rightMovement = transform.right * (delta.x * panSpeed * dt);
-        Vector3 upMovement = transform.up * (delta.y * panSpeed * dt);
-        Vector3 panMovement = rightMovement + upMovement;
-
-        transform.position += panMovement;
-        pivot.position += panMovement;
-    }
-
-    private void ZoomCamera(float zoomValue, float dt)
-    {
-        currentDistance -= zoomValue * zoomSpeed * dt;
-        currentDistance = Mathf.Clamp(currentDistance, minDistance, maxDistance);
-
-        Vector3 direction = (transform.position - pivot.position).normalized;
-        transform.position = pivot.position + direction * currentDistance;
-    }
-
-    public void ResetCamera()
-    {
-        pivot.position = pivotInitPos;
-        currentDistance = initDistance;
-
-        transform.position = pivotInitPos + new Vector3(0, 0, -currentDistance);
-        transform.LookAt(pivotInitPos);
+            transform.position = _pivotInitPos + new Vector3(0, 0, -_currentDistance);
+            transform.LookAt(_pivotInitPos);
+        }
     }
 }

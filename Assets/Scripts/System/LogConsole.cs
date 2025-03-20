@@ -2,40 +2,43 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 
-public class LogConsole : MonoBehaviour
+namespace System
 {
-    public static LogConsole instance;
-    public TextMeshProUGUI[] text;
-
-    int index = 0;
-
-    WaitForSeconds wait;
-
-    private void Awake()
+    public class LogConsole : MonoBehaviour
     {
-        instance = this;
-        wait = new WaitForSeconds(5f);
-    }
+        public static LogConsole instance;
+        public TextMeshProUGUI[] text;
 
-    public void Log(object message, Color co)
-    {
-        text[index].text = message.ToString();
-        text[index].color = co;
-        StartCoroutine(TextCoroutine(text[index]));
+        private int _index;
 
-        index = (index + 1) % text.Length;
-    }
+        private WaitForSeconds _wait;
 
-    public void Log(object message)
-    {
-        Log(message, Color.white);
-    }
+        private void Awake()
+        {
+            instance = this;
+            _wait = new WaitForSeconds(5f);
+        }
 
-    IEnumerator TextCoroutine(TextMeshProUGUI txt)
-    {
-        txt.gameObject.SetActive(true);
-        yield return wait;
-        txt.color = Color.clear;
-        txt.gameObject.SetActive(false);
+        public void Log(object message, Color co)
+        {
+            text[_index].text = message.ToString();
+            text[_index].color = co;
+            StartCoroutine(TextCoroutine(text[_index]));
+
+            _index = (_index + 1) % text.Length;
+        }
+
+        public void Log(object message)
+        {
+            Log(message, Color.white);
+        }
+
+        private IEnumerator TextCoroutine(TextMeshProUGUI txt)
+        {
+            txt.gameObject.SetActive(true);
+            yield return _wait;
+            txt.color = Color.clear;
+            txt.gameObject.SetActive(false);
+        }
     }
 }

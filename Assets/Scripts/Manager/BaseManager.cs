@@ -1,10 +1,13 @@
 using UnityEngine;
 
-public abstract class BaseManager : MonoBehaviour
+namespace Manager
 {
-    // ¸ðµç °ÔÀÓ ¸Å´ÏÀú¸¦ GameManager¿¡ µî·ÏÇÏ±â
-    protected virtual void Awake()
+    public abstract class BaseManager : MonoBehaviour
     {
-        GameManager.Instance.RegisterManager(this);
+        // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ GameManagerï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+        protected virtual void Awake()
+        {
+            GameManager.Instance.RegisterManager(this);
+        }
     }
 }

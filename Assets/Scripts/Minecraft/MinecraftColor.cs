@@ -1,11 +1,11 @@
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-namespace Minecraft.MColor
+namespace Minecraft
 {
     /// <summary>
-    /// Minecraft »ö»ó Enum
+    /// Minecraft ï¿½ï¿½ï¿½ï¿½ Enum
     /// </summary>
     public enum MinecraftColor
     {
@@ -28,7 +28,7 @@ namespace Minecraft.MColor
     }
 
     /// <summary>
-    /// Static Å¬·¡½º: Áï½Ã Color °ªÀ» °¡Á®¿Ã ¼ö ÀÖµµ·Ï Á¤ÀÇ
+    /// Static Å¬ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ Color ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Öµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     public static class MinecraftColors
     {
@@ -54,11 +54,11 @@ namespace Minecraft.MColor
 
 
     /// <summary>
-    /// EnumÀ» È®ÀåÇÏ¿© Enum¿¡¼­ Color °ªÀ» °¡Á®¿Ã ¼ö ÀÖµµ·Ï ÇÔ
+    /// Enumï¿½ï¿½ È®ï¿½ï¿½ï¿½Ï¿ï¿½ Enumï¿½ï¿½ï¿½ï¿½ Color ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Öµï¿½ï¿½ï¿½ ï¿½ï¿½
     /// </summary>
     public static class MinecraftColorExtensions
     {
-        private static readonly Dictionary<string, MinecraftColor> colorMap = new Dictionary<string, MinecraftColor>(StringComparer.OrdinalIgnoreCase)
+        private static readonly Dictionary<string, MinecraftColor> colorMap = new(StringComparer.OrdinalIgnoreCase)
     {
             { "white", MinecraftColor.White },
             { "orange", MinecraftColor.Orange },
@@ -80,11 +80,7 @@ namespace Minecraft.MColor
 
         public static MinecraftColor ToColorEnum(string mcColor)
         {
-            if (colorMap.TryGetValue(mcColor, out MinecraftColor color))
-            {
-                return color;
-            }
-            return MinecraftColor.Black; // ±âº»°ª (¿¹¿Ü ¹æÁö)
+            return colorMap.GetValueOrDefault(mcColor, MinecraftColor.Black); // ï¿½âº»ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         }
 
         public static Color ToColor(this MinecraftColor mcColor)
@@ -107,7 +103,7 @@ namespace Minecraft.MColor
                 MinecraftColor.Green => MinecraftColors.Green,
                 MinecraftColor.Red => MinecraftColors.Red,
                 MinecraftColor.Black => MinecraftColors.Black,
-                _ => MinecraftColors.Black // ±âº»°ª (¿¹¿Ü ¹æÁö)
+                _ => MinecraftColors.Black // ï¿½âº»ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
             };
         }
     }

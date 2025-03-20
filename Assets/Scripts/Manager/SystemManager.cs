@@ -1,90 +1,123 @@
 //using B83.Win32;
+
 using System;
-using System.Collections.Generic;
+using System.IO;
+using UnityEditor;
 using UnityEngine;
+using BDObjectSystem;
 
-public class SystemManager : BaseManager
+namespace Manager
 {
-    public string[] filesDropped;
-
-
-    private float deltaTime = 0f;
-
-    [SerializeField] private int size = 15;
-    [SerializeField] private Color color = Color.white;
-
-    GUIStyle style;
-
-    protected override void Awake()
+    public class SystemManager : BaseManager
     {
-        base.Awake();
-
-        Application.targetFrameRate = 165;
-
-        //UnityDragAndDropHook.InstallHook();
-        //UnityDragAndDropHook.OnDroppedFiles += OnFiles;
-    }
-
-    private void Start()
-    {
-        style = new GUIStyle();
-
-        style.alignment = TextAnchor.UpperLeft;
-        style.fontSize = size;
-        style.normal.textColor = color;
-    }
-
-    private void OnGUI()
-    {
+        public string[] filesDropped;
 
 
-        Rect rect = new Rect(Screen.width - 200, 30, Screen.width, Screen.height);
+        private float _deltaTime;
 
-        float ms = deltaTime * 1000f;
-        float fps = 1.0f / deltaTime;
-        string text = string.Format("{0:0.} FPS ({1:0.0} ms)", fps, ms);
-        
-        Rect versionRect = new Rect(Screen.width - 200, 10, Screen.width, Screen.height);
-        string version = string.Format("Version: {0}", Application.version);
+        [SerializeField] private int size = 15;
+        [SerializeField] private Color color = Color.white;
 
-        GUI.Label(rect, text, style);
-        GUI.Label(versionRect, version, style);
-    }
+        private GUIStyle _style;
 
-    //private void OnDestroy()
-    //{
-    //    UnityDragAndDropHook.UninstallHook();
-    //}
-
-    //public void OnFiles(List<string> aPathNames, POINT aDropPoint)
-    //{
-    //    GameManager.GetManager<FileManager>().AfterLoadFile(aPathNames.ToArray());
-    //}
-
-    // Update is called once per frame
-    void Update()
-    {
-        deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
-
-        // paste from clipboard
-        if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.V))
+        protected override void Awake()
         {
-            try
-            {
-                string clipboard = GUIUtility.systemCopyBuffer;
+            base.Awake();
 
-                CustomLog.Log("Clipboard: " + clipboard);
+            Application.targetFrameRate = 165;
 
-                _ = GameManager.GetManager<FileManager>().MakeDisplay(clipboard);
-            }
-            catch (System.Exception e)
-            {
-                CustomLog.Log("Clipboard is not BDEFile");
-#if UNITY_EDITOR
-                Debug.LogError(e);
-#endif
-            }
-
+            //UnityDragAndDropHook.InstallHook();
+            //UnityDragAndDropHook.OnDroppedFiles += OnFiles;
         }
+
+        private void Start()
+        {
+            _style = new GUIStyle
+            {
+                alignment = TextAnchor.UpperLeft,
+                fontSize = size,
+                normal =
+                {
+                    textColor = color
+                }
+            };
+        }
+
+        private void OnGUI()
+        {
+
+
+            var rect = new Rect(Screen.width - 200, 70, Screen.width, Screen.height);
+
+            var ms = _deltaTime * 1000f;
+            var fps = 1.0f / _deltaTime;
+            var text = $"{fps:0.} FPS ({ms:0.0} ms)";
+        
+            var versionRect = new Rect(Screen.width - 200, 40, Screen.width, Screen.height);
+            var version = string.Format("Version: {0}", Application.version);
+
+            GUI.Label(rect, text, _style);
+            GUI.Label(versionRect, version, _style);
+        }
+
+        //private void OnDestroy()
+        //{
+        //    UnityDragAndDropHook.UninstallHook();
+        //}
+
+        //public void OnFiles(List<string> aPathNames, POINT aDropPoint)
+        //{
+        //    GameManager.GetManager<FileManager>().AfterLoadFile(aPathNames.ToArray());
+        //}
+
+        // Update is called once per frame
+        private void Update()
+        {
+            _deltaTime += (Time.unscaledDeltaTime - _deltaTime) * 0.1f;
+        }
+
+//             // paste from clipboard
+//             if (!Input.GetKey(KeyCode.LeftControl) || !Input.GetKeyDown(KeyCode.V)) return;
+//             try
+//             {
+//                 var clipboard = GUIUtility.systemCopyBuffer;
+
+//                 CustomLog.Log("Clipboard: " + clipboard);
+
+//                 //_ = GameManager.GetManager<FileManager>().MakeDisplay(clipboard);
+//             }
+//             catch (Exception e)
+//             {
+//                 CustomLog.Log("Clipboard is not BDEFile");
+// #if UNITY_EDITOR
+//                 Debug.LogError(e);
+// #endif
+//             }
+//         }
+        
+        // public void ExportPrefab(int idx)
+        // {
+        //     var bdObjParent = GameManager.GetManager<BdObjectManager>().bdObjectParent;
+        //     if (idx >= bdObjParent.childCount) return;
+            
+        //     var prefab = bdObjParent.GetChild(idx).gameObject;
+            
+        //     if (!prefab)
+        //     {
+        //         Debug.LogError("Target object is null. Assign a GameObject.");
+        //         return;
+        //     }
+
+        //     const string directory = "Assets/RuntimePrefabs";
+        //     if (!Directory.Exists(directory))
+        //     {
+        //         Directory.CreateDirectory(directory);
+        //     }
+
+        //     var prefabPath = $"{directory}/{prefab.name}.prefab";
+
+        //     // 프리팹 저장
+        //     PrefabUtility.SaveAsPrefabAsset(prefab, prefabPath);
+        // }
     }
 }
