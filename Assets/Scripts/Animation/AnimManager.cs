@@ -33,9 +33,11 @@ namespace Animation
             set
             {
                 tickSpeed = value;
-                _tickInterval = 1.0f / tickSpeed; // ��Ȯ�� �ð� ���� ������Ʈ
+                _tickInterval = 1.0f / tickSpeed;
             }
         }
+        
+        private float _tickTimer = 0f;
 
         public static event Action<int> TickChanged;
 
@@ -43,26 +45,26 @@ namespace Animation
 
         [FormerlySerializedAs("Timeline")] public Timeline timeline;
 
-        private float _lastTickTime;  // ������ Tick ������Ʈ �ð�
-        private float _tickInterval = 1.0f / 20.0f; // �ʱ� Tick ����
+        private float _tickInterval = 1.0f / 20.0f;
 
         private void Start()
         {
-            _tickInterval = 1.0f / tickSpeed; // �ʱ� TickSpeed �ݿ�
-            _lastTickTime = Time.time; // ���� �ð� ���
+            _tickInterval = 1.0f / tickSpeed; // Tick Speed
         }
 
-        private void Update()
+        private void FixedUpdate()
         {
             if (IsPlaying)
             {
-                if (Time.time - _lastTickTime >= _tickInterval)
+                _tickTimer += Time.fixedDeltaTime;
+                if (_tickTimer >= _tickInterval)
                 {
-                    _lastTickTime = Time.time; // ���� �ð� ������Ʈ
-                    Tick++; // Tick ����
+                    _tickTimer -= _tickInterval; // 남은 시간을 보존
+                    Tick++;
                 }
             }
         }
+
 
         public void TickAdd(int value)
         {
@@ -74,6 +76,6 @@ namespace Animation
             TickChanged = null;
         }
 
-        
+
     }
 }

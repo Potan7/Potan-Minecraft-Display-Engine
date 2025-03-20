@@ -47,13 +47,13 @@ namespace Manager
         {
 
 
-            var rect = new Rect(Screen.width - 200, 30, Screen.width, Screen.height);
+            var rect = new Rect(Screen.width - 200, 70, Screen.width, Screen.height);
 
             var ms = _deltaTime * 1000f;
             var fps = 1.0f / _deltaTime;
             var text = $"{fps:0.} FPS ({ms:0.0} ms)";
         
-            var versionRect = new Rect(Screen.width - 200, 10, Screen.width, Screen.height);
+            var versionRect = new Rect(Screen.width - 200, 40, Screen.width, Screen.height);
             var version = string.Format("Version: {0}", Application.version);
 
             GUI.Label(rect, text, _style);
@@ -71,9 +71,10 @@ namespace Manager
         //}
 
         // Update is called once per frame
-//         private void Update()
-//         {
-//             _deltaTime += (Time.unscaledDeltaTime - _deltaTime) * 0.1f;
+        private void Update()
+        {
+            _deltaTime += (Time.unscaledDeltaTime - _deltaTime) * 0.1f;
+        }
 
 //             // paste from clipboard
 //             if (!Input.GetKey(KeyCode.LeftControl) || !Input.GetKeyDown(KeyCode.V)) return;
@@ -94,29 +95,29 @@ namespace Manager
 //             }
 //         }
         
-        public void ExportPrefab(int idx)
-        {
-            var bdObjParent = GameManager.GetManager<BdObjectManager>().bdObjectParent;
-            if (idx >= bdObjParent.childCount) return;
+        // public void ExportPrefab(int idx)
+        // {
+        //     var bdObjParent = GameManager.GetManager<BdObjectManager>().bdObjectParent;
+        //     if (idx >= bdObjParent.childCount) return;
             
-            var prefab = bdObjParent.GetChild(idx).gameObject;
+        //     var prefab = bdObjParent.GetChild(idx).gameObject;
             
-            if (!prefab)
-            {
-                Debug.LogError("Target object is null. Assign a GameObject.");
-                return;
-            }
+        //     if (!prefab)
+        //     {
+        //         Debug.LogError("Target object is null. Assign a GameObject.");
+        //         return;
+        //     }
 
-            const string directory = "Assets/RuntimePrefabs";
-            if (!Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
+        //     const string directory = "Assets/RuntimePrefabs";
+        //     if (!Directory.Exists(directory))
+        //     {
+        //         Directory.CreateDirectory(directory);
+        //     }
 
-            var prefabPath = $"{directory}/{prefab.name}.prefab";
+        //     var prefabPath = $"{directory}/{prefab.name}.prefab";
 
-            // 프리팹 저장
-            PrefabUtility.SaveAsPrefabAsset(prefab, prefabPath);
-        }
+        //     // 프리팹 저장
+        //     PrefabUtility.SaveAsPrefabAsset(prefab, prefabPath);
+        // }
     }
 }

@@ -38,12 +38,5 @@ namespace Manager
         {
             _fileManager.ImportFile();
         }
-
-        [UsedImplicitly]
-        public void OnRealodButton()
-        {
-            DestroyImmediate(GameManager.Instance.gameObject);
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        }
     }
 }
