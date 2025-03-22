@@ -70,7 +70,7 @@ namespace BDObjectSystem.Display
                 _ => MinecraftFileManager.GetTextureFile(DefaultTexturePath + "player/wide/steve.png")
             };
 
-            GameManager.GetManager<FileManager>().WorkingGenerators.Add(this);
+            GameManager.GetManager<FileLoadManager>().WorkingGenerators.Add(this);
 
             WaitForSeconds wait = new WaitForSeconds(0.1f);
             try
@@ -90,7 +90,7 @@ namespace BDObjectSystem.Display
             }
             finally
             {
-                GameManager.GetManager<FileManager>().WorkingGenerators.Remove(this);
+                GameManager.GetManager<FileLoadManager>().WorkingGenerators.Remove(this);
             }
 
 

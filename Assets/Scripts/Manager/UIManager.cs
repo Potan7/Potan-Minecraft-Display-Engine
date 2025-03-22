@@ -9,14 +9,14 @@ namespace Manager
 {
     public class UIManger : BaseManager
     {
-        private FileManager _fileManager;
+        private FileLoadManager _fileManager;
 
         [FormerlySerializedAs("LoadingPanel")] public GameObject loadingPanel;
         private int _cursorID;
 
         private void Start()
         {
-            _fileManager = GameManager.GetManager<FileManager>();
+            _fileManager = GameManager.GetManager<FileLoadManager>();
             GameManager.GetManager<BdObjectManager>();
         }
 

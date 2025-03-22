@@ -22,7 +22,7 @@ namespace Animation.AnimFrame
 
         private void Start()
         {
-            GameManager.GetManager<FileManager>().animObjList = this;
+            GameManager.GetManager<FileLoadManager>().animObjList = this;
             timeline = GameManager.GetManager<AnimManager>().timeline;
             jump = importButton.sizeDelta.y * 1.5f;
         }

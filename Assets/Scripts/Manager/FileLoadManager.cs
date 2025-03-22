@@ -17,8 +17,10 @@ using Animation.AnimFrame;
 
 namespace Manager
 {
-    public class FileManager : BaseManager
+    public class FileLoadManager : BaseManager
     {
+        public static readonly string DefaultPath = Application.dataPath + "/../";
+
         public BdObjectManager bdObjManager;
         public AnimObjList animObjList;
         public readonly HashSet<HeadGenerator> WorkingGenerators = new HashSet<HeadGenerator>();
@@ -34,11 +36,7 @@ namespace Manager
                 new FileBrowser.Filter("Files", ".bdengine", ".bdstudio"));
 
             // add launcher folder to shortcut
-#if UNITY_EDITOR
-            FileBrowser.AddQuickLink("Launcher Folder", Application.dataPath);
-#else
-        FileBrowser.AddQuickLink("Launcher Folder", Application.dataPath + "/../");
-#endif 
+            FileBrowser.AddQuickLink("Launcher Folder", DefaultPath);
             
             // add download folder to shortcut
             var download = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal));
@@ -52,7 +50,7 @@ namespace Manager
         private IEnumerator ShowLoadDialogCoroutine(Action<List<string>> callback)
         {
             // Get file path
-            yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.FilesAndFolders, true, null, null, "Select Files", "Load");
+            yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.FilesAndFolders, true, DefaultPath, null, "Select Files", "Load");
 
             // if not success, result is null
             if (FileBrowser.Success)

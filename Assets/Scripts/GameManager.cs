@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Manager;
+using ToolSystem;
 
 public class GameManager : MonoBehaviour
 {
-    // �̱��� Static ����
+    // Singleton
     private static GameManager _instance;
     public static GameManager Instance
     {
@@ -17,15 +18,15 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ��� �Ŵ����� ����Ǵ� ��ųʸ�
+    // Managers
     private readonly Dictionary<Type, BaseManager> _managers = new Dictionary<Type, BaseManager>();
 
     public static SettingManager Setting => GetManager<SettingManager>();
 
-    // �Ŵ����� �������� �Լ�
+    // Get Manager
     public static T GetManager<T>() where T : BaseManager
     {
-        // ��ųʸ����� �ش� Ÿ���� �Ŵ����� ã�� ��ȯ
+        // return manager by Type
         if (_instance._managers.TryGetValue(typeof(T), out var manager))
         {
             if (manager is T value)
@@ -36,7 +37,7 @@ public class GameManager : MonoBehaviour
         return null;
     }
 
-    // �Ŵ����� ����ϴ� �Լ�
+    // Set Manager in GameManager
     public void RegisterManager(BaseManager manager)
     {
         var type = manager.GetType();
