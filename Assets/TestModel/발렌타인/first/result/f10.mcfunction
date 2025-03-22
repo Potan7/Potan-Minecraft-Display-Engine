@@ -1,4 +1,0 @@
-data merge entity @e[limit=1,tag=pt_potan8,type=item_display] {start_interpolation: 0, interpolation_duration: 4, transformation:[1.3435f,-0.0f,-0.0f,1.3754f,-0.0f,-0.4639f,0.4639f,0.829f,-0.0f,-0.9721f,-0.9721f,2.6587f,0.0f,0.0f,0.0f,1.0f]}
-data merge entity @e[limit=1,tag=pt_potan9,type=item_display] {start_interpolation: 0, interpolation_duration: 4, transformation:[1.3435f,-0.0f,-0.0f,1.3754f,-0.0f,-0.9277f,0.4639f,1.0609f,-0.0f,-1.9442f,-0.9721f,3.1447f,0.0f,0.0f,0.0f,1.0f]}
-data merge entity @e[limit=1,tag=pt_potan10,type=item_display] {start_interpolation: 0, interpolation_duration: 4, transformation:[1.3435f,-0.0f,0.0f,-0.6398f,0.0f,0.4639f,0.4639f,1.0609f,-0.0f,-0.9721f,0.9721f,2.6599f,0.0f,0.0f,0.0f,1.0f]}
-data merge entity @e[limit=1,tag=pt_potan11,type=item_display] {start_interpolation: 0, interpolation_duration: 4, transformation:[1.3435f,-0.0f,0.0f,-0.6398f,0.0f,0.9277f,0.4639f,0.829f,-0.0f,-1.9442f,0.9721f,3.1459f,0.0f,0.0f,0.0f,1.0f]}

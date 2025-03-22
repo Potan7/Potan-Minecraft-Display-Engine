@@ -1,4 +1,0 @@
-data merge entity @e[limit=1,tag=pt_appie1,type=block_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[-1.0f,0.0f,0.0f,0.625f,0.0f,0.866f,0.5f,1.375f,-0.0f,0.5f,-0.866f,2.25f,0.0f,0.0f,0.0f,1.0f]}
-data merge entity @e[limit=1,tag=pt_appie2,type=block_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[-1.0f,0.0f,0.0f,0.625f,0.0f,0.866f,0.5f,2.241f,-0.0f,0.5f,-0.866f,2.75f,0.0f,0.0f,0.0f,1.0f]}
-data merge entity @e[limit=1,tag=pt_appie32,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[-0.4685f,0.0f,0.0f,0.4228f,-0.0f,0.1213f,-0.4525f,1.3174f,-0.0f,-0.4525f,-0.1213f,-0.2371f,0.0f,0.0f,0.0f,1.0f]}
-data merge entity @e[limit=1,tag=pt_appie33,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[-0.4685f,0.0f,0.0f,0.4228f,-0.0f,0.2425f,-0.4525f,1.2568f,-0.0f,-0.9051f,-0.1213f,-0.0108f,0.0f,0.0f,0.0f,1.0f]}
