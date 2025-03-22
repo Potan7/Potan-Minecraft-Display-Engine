@@ -19,9 +19,9 @@ namespace Animation.AnimFrame
             
         }
         
-        public void OnTickChanged(int tick)
+        public void OnTickChanged(float tick)
         {
-            if (tick == 0)
+            if (tick <= 0.01f)
                 _noID.Clear();
 
             // get left frame
@@ -38,7 +38,7 @@ namespace Animation.AnimFrame
             else
             {
                 // interpolation ratio
-                var t = (float)(tick - leftFrame.tick) / leftFrame.interpolation;
+                var t = (tick - leftFrame.tick) / leftFrame.interpolation;
 
                 // get before frame
                 var before = _frames.Values[left - 1];
@@ -202,9 +202,9 @@ namespace Animation.AnimFrame
         }
 
         // find left frame by tick
-        private int GetLeftFrame(int tick)
+        private int GetLeftFrame(float tick)
         {
-
+            tick = (int)tick;
             // 1. if tick is smaller than first frame (<0)
             if (_frames.Values[0].tick > tick)
                 return -1;

@@ -69,9 +69,9 @@ namespace Animation.UI
                 tickSpeedField.text = _manager.TickSpeed.ToString();
         }
 
-        private void AnimManager_TickChanged(int obj)
+        private void AnimManager_TickChanged(float obj)
         {
-            tickField.text = obj.ToString();
+            tickField.text = ((int)obj).ToString();
         }
 
         public void Stop()

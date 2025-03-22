@@ -13,7 +13,7 @@ namespace Animation.UI
         public TickLine gridPrefab;
         public List<TickLine> grid;
         [FormerlySerializedAs("TimeBar")] public RectTransform timeBar;
-        private int _tick;
+        private float _tick;
 
         public int gridCount = 100;
         public event Action OnGridChanged;
@@ -39,7 +39,7 @@ namespace Animation.UI
         }
 
         // AnimManager의 Tick 값이 변경됨
-        private void OnAnimManagerTickChanged(int tick)
+        private void OnAnimManagerTickChanged(float tick)
         {
             _tick = tick;
             var line = GetTickLine(_tick, true);
@@ -51,19 +51,21 @@ namespace Animation.UI
         }
 
         // tick 값에 해당하는 TickLine을 반환
-        public TickLine GetTickLine(int tick, bool changeGrid)
+        public TickLine GetTickLine(float tick, bool changeGrid)
         {
             if (tick < 0)
             {
                 return null;
             }
 
+            int tickInt = (int)tick;
+
             var line = grid[0];
             if (tick < line.Tick)
             {
                 if (!changeGrid) return null;
 
-                SetTickTexts(tick);
+                SetTickTexts(tickInt);
                 return GetTickLine(tick, true);
             }
 
@@ -76,7 +78,7 @@ namespace Animation.UI
                 return GetTickLine(tick, true);
             }
 
-            var index = BinarySearchTick(grid, tick, gridCount);
+            var index = BinarySearchTick(grid, tickInt, gridCount);
             return index >= 0 ? grid[index] : null;
         }
 

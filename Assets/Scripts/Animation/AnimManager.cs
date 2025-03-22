@@ -8,24 +8,24 @@ namespace Animation
 {
     public class AnimManager : BaseManager
     {
-        // 현재 애니메이션 틱 
+        // 현재 애니메이션 틱 (0.5 단위 사용)
         [SerializeField]
-        private int tick;
-        public int Tick
+        private float _tick;
+        public float Tick
         {
-            get => tick;
+            get => _tick;
             set
             {
-                if (value < 0)
+                if (value < 0f)
                 {
-                    value = 0;
+                    value = 0f;
                 }
-                tick = value;
-                TickChanged?.Invoke(tick);
+                _tick = value;
+                TickChanged?.Invoke(_tick);
             }
         }
 
-        // 애니메이션 틱 속도
+        // 애니메이션 틱 속도 (1초당 몇 틱, 그대로 유지)
         private float tickSpeed = 20.0f;
         public float TickSpeed
         {
@@ -33,23 +33,23 @@ namespace Animation
             set
             {
                 tickSpeed = value;
-                _tickInterval = 1.0f / tickSpeed;
+                _tickInterval = 1.0f / (tickSpeed * 2.0f); // 0.5틱 단위
             }
         }
-        
-        private float _tickTimer = 0f;
 
-        public static event Action<int> TickChanged;
+        private float _tickTimer = 0f;
+        private float _tickInterval = 1.0f / (20.0f * 2.0f); // 기본값
+
+        public static event Action<float> TickChanged;
 
         public bool IsPlaying { get; set; }
 
-        [FormerlySerializedAs("Timeline")] public Timeline timeline;
-
-        private float _tickInterval = 1.0f / 20.0f;
+        [FormerlySerializedAs("Timeline")] 
+        public Timeline timeline;
 
         private void Start()
         {
-            _tickInterval = 1.0f / tickSpeed; // Tick Speed
+            _tickInterval = 1.0f / (tickSpeed * 2.0f);
         }
 
         private void FixedUpdate()
@@ -57,16 +57,16 @@ namespace Animation
             if (IsPlaying)
             {
                 _tickTimer += Time.fixedDeltaTime;
-                if (_tickTimer >= _tickInterval)
+
+                while (_tickTimer >= _tickInterval)
                 {
-                    _tickTimer -= _tickInterval; // 남은 시간을 보존
-                    Tick++;
+                    _tickTimer -= _tickInterval;
+                    Tick += 0.5f;
                 }
             }
         }
 
-
-        public void TickAdd(int value)
+        public void TickAdd(float value)
         {
             Tick += value;
         }
@@ -75,7 +75,5 @@ namespace Animation
         {
             TickChanged = null;
         }
-
-
     }
 }
