@@ -1,3 +1,4 @@
+using Animation;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -21,6 +22,7 @@ namespace Manager
         public string frameFileName = "frame";
         public string frameFilePath = "result";
         public string resultPath = "result";
+        public int tickUnit = 2;
 
         [FormerlySerializedAs("FindModeToggle")] public Toggle findModeToggle;
         public TMP_InputField[] inputFields;
@@ -99,6 +101,15 @@ namespace Manager
                     break;
                 case 8:
                     resultPath = value;
+                    break;
+                case 9:
+                    if (int.TryParse(value, out var unit) && unit >= 1)
+                    {
+                        tickUnit = unit;
+                        GameManager.GetManager<AnimManager>().TickUnit = 1.0f / tickUnit;
+                    }
+                    else
+                        value = tickUnit.ToString();
                     break;
             }
             inputFields[idx].text = value;

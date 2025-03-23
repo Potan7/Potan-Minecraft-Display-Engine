@@ -71,7 +71,7 @@ namespace Animation.UI
 
         private void AnimManager_TickChanged(float obj)
         {
-            tickField.text = ((int)obj).ToString();
+            tickField.text = obj.ToString("F2");
         }
 
         public void Stop()

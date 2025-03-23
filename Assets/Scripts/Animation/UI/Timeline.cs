@@ -42,16 +42,30 @@ namespace Animation.UI
         private void OnAnimManagerTickChanged(float tick)
         {
             _tick = tick;
-            var line = GetTickLine(_tick, true);
 
-            if (line)
+            int baseTick = Mathf.FloorToInt(tick);
+            float ratio = tick - baseTick;
+
+            TickLine lineA = GetTickLine(baseTick, true);
+            TickLine lineB = GetTickLine(baseTick + 1, true);
+
+            if (lineA && lineB)
             {
-                timeBar.anchoredPosition = new Vector2(line.rect.anchoredPosition.x, timeBar.anchoredPosition.y);
+                float xA = lineA.rect.anchoredPosition.x;
+                float xB = lineB.rect.anchoredPosition.x;
+                float x = Mathf.Lerp(xA, xB, ratio);
+
+                timeBar.anchoredPosition = new Vector2(x, timeBar.anchoredPosition.y);
+            }
+            else if (lineA) // fallback: 마지막 틱에 도달했을 때
+            {
+                timeBar.anchoredPosition = new Vector2(lineA.rect.anchoredPosition.x, timeBar.anchoredPosition.y);
             }
         }
 
+
         // tick 값에 해당하는 TickLine을 반환
-        public TickLine GetTickLine(float tick, bool changeGrid)
+        public TickLine GetTickLine(float tick, bool changeGrid = false)
         {
             if (tick < 0)
             {
@@ -177,20 +191,50 @@ namespace Animation.UI
 
         private void Update()
         {
-            if (isClicking)
+            if (!isClicking)
             {
-                Vector2 pos = Input.mousePosition;
-                var line = GetTickLine(pos);
-                if (line && line.Tick != _animManager.Tick)
-                {
-                    _animManager.Tick = line.Tick;
-                }
-
-                if (Input.GetMouseButtonUp(0))
-                {
-                    isClicking = false;
-                }
+                return;
             }
+
+            // 마우스 클릭 해제
+            if (Input.GetMouseButtonUp(0))
+            {
+                isClicking = false;
+                return;
+            }
+
+
+            Vector2 mousePos = Input.mousePosition;
+            TickLine line = GetTickLine(mousePos);
+            RectTransform rectTransform = line.rect;
+
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                rectTransform,
+                mousePos,
+                null,
+                out var localPoint
+            );
+
+            if (Mathf.Approximately(line.Tick, _animManager.Tick))
+                return;
+
+            int otherTick = localPoint.x > 0 ? line.Tick + 1 : line.Tick - 1;
+            TickLine otherTickLine = GetTickLine(otherTick);
+            if (otherTickLine is null) return;
+
+            // 두 라인의 스크린 좌표 계산
+            float x1 = RectTransformUtility.WorldToScreenPoint(null, line.rect.position).x;
+            float x2 = RectTransformUtility.WorldToScreenPoint(null, otherTickLine.rect.position).x;
+            float mouseX = mousePos.x;
+
+            // 마우스 위치 비율 계산
+            float ratio = Mathf.InverseLerp(x1, x2, mouseX);
+
+            // Tick 보간
+            float newTick = Mathf.Lerp(line.Tick, otherTick, ratio);
+
+            // 적용
+            _animManager.Tick = newTick;
         }
     }
 }

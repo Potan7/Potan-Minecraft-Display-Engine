@@ -8,4 +8,5 @@ BDEngine의 파일들을 불러와 애니메이션을 재생시킬 수 있습니
 - Panch : 팽치류 알고리즘, 테스트 모델 제공
 - Appie : 테스트 모델 제공
 - Kite : 테스트 모델 제공
-- Seo Yipo : 아이콘 지원
+- Zoropic : 테스트 모델 제공
+- Seo Yipo : 아이콘, 로고 제작
