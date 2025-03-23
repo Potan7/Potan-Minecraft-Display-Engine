@@ -25,7 +25,7 @@ namespace ToolSystem
 
         public void OnExportButton()
         {
-            StartCoroutine(_exportManager.ExportCoroutine());
+            _exportManager.SetExportPanel(true);
         }
 
         public void OnExitButton()

@@ -30,7 +30,7 @@ namespace Animation.AnimFrame
         [Header("BDObject Info")]
         public BdObject Info;
         public Dictionary<string, BdObject> IDDataDict;
-        public Dictionary<string, float[]> worldTransforms = new Dictionary<string, float[]>();
+        public Dictionary<string, Matrix4x4> worldTransforms = new();
         private Timeline _timeline;
         
 

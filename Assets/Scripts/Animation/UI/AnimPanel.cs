@@ -30,9 +30,9 @@ namespace Animation.UI
             _initPos = new Vector2(0, 225);
             AnimManager.TickChanged += AnimManager_TickChanged;
 
-            _isHiding = true;
+            _isHiding = false;
             dragPanel.SetDragPanel(!_isHiding);
-            dragPanel.SetPanelSize(0);
+            dragPanel.SetPanelSize(_initPos.y);
         }
 
         private void Update()

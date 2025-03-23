@@ -22,7 +22,7 @@ namespace BDObjectSystem.Utility
             //  Row-Major
         }
 
-        public static void ApplyMatrixToTransform(Transform target, Matrix4x4 matrix)
+        public static void ApplyMatrixToTransform(Transform target, in Matrix4x4 matrix)
         {
             // 1. Translation (localPosition)
             Vector3 translation = matrix.GetColumn(3);
@@ -56,46 +56,22 @@ namespace BDObjectSystem.Utility
         }
 
         // 해당 BDObject의 모든 Parent Transform을 적용한 WorldMatrix 반환
-        public static float[] GetWorldMatrix(BdObject bdObject)
-{
-    BdObject obj = bdObject;
-    var transforms = new float[16];
-    
-    // 초기 transforms를 bdObject의 로컬 Transform으로 설정
-    for (int i = 0; i < 16; i++)
-    {
-        transforms[i] = bdObject.Transforms[i];
-    }
-
-    float[] temp = new float[16];
-
-    while (obj.Parent != null)  // 부모가 존재하는 동안 반복
-    {
-        BdObject parent = obj.Parent;
-
-        // 부모 * 현재 행렬을 곱함 (부모를 먼저 적용)
-        for (int i = 0; i < 4; i++)
+        public static Matrix4x4 GetWorldMatrix(BdObject bdObject)
         {
-            for (int j = 0; j < 4; j++)
+            BdObject obj = bdObject;
+            Matrix4x4 transforms = GetMatrix(bdObject.Transforms);
+
+            while (obj.Parent != null)
             {
-                temp[i * 4 + j] =
-                    parent.Transforms[i * 4 + 0] * transforms[0 + j] +
-                    parent.Transforms[i * 4 + 1] * transforms[4 + j] +
-                    parent.Transforms[i * 4 + 2] * transforms[8 + j] +
-                    parent.Transforms[i * 4 + 3] * transforms[12 + j];
+                BdObject parent = obj.Parent;
+                Matrix4x4 parentMatrix = GetMatrix(parent.Transforms);
+
+                transforms = parentMatrix * transforms;
+                obj = parent;
             }
-        }
 
-        // temp 값을 transforms에 복사하여 기존 배열을 덮어씀
-        for (int i = 0; i < 16; i++)
-        {
-            transforms[i] = temp[i];
+            return transforms;
         }
-
-        obj = parent;  // 부모로 이동
-    }
-    return transforms;
-}
 
     }
 }

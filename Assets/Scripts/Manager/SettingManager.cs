@@ -1,5 +1,6 @@
 using Animation;
 using TMPro;
+using ToolSystem;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -21,12 +22,13 @@ namespace Manager
         public string @namespace = "PotanAnim";
         public string frameFileName = "frame";
         public string frameFilePath = "result";
-        public string resultPath = "result";
         public int tickUnit = 2;
 
         [FormerlySerializedAs("FindModeToggle")] public Toggle findModeToggle;
         public TMP_InputField[] inputFields;
         [FormerlySerializedAs("SettingPanel")] public GameObject settingPanel;
+
+        public ExportManager exportManager;
 
         private void Start()
         {
@@ -100,7 +102,7 @@ namespace Manager
                     frameFilePath = value;
                     break;
                 case 8:
-                    resultPath = value;
+                    exportManager.ExportPath = value;
                     break;
                 case 9:
                     if (int.TryParse(value, out var unit) && unit >= 1)

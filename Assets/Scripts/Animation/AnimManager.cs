@@ -68,7 +68,7 @@ namespace Animation
 
         private void Start()
         {
-            _tickInterval = 1.0f / (tickSpeed * 2.0f);
+            RecalculateTickInterval();
         }
 
         private void FixedUpdate()

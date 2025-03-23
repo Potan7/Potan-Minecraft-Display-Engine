@@ -79,7 +79,7 @@ namespace BDObjectSystem
 
         public void SetTransformation(float[] mat)
         {
-            transformation = AffineTransformation.GetMatrix(mat);
+            transformation = AffineTransformation.FloatArrayToMatrix(mat);
             AffineTransformation.ApplyMatrixToTransform(transform, transformation);
         }
     }

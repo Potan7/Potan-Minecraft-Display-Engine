@@ -37,6 +37,11 @@ namespace Animation.AnimFrame
             animObjects.Add(animObject);
 
             importButton.anchoredPosition = new Vector2(importButton.anchoredPosition.x, importButton.anchoredPosition.y - jump);
+
+            var animMan = GameManager.GetManager<AnimManager>();
+            animMan.Tick = 0;
+            animMan.timeline.SetTickTexts(0);
+            
             return animObject;
         }
 

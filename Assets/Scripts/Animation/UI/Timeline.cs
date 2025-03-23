@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Manager;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
@@ -21,7 +20,7 @@ namespace Animation.UI
         public bool isClicking;
 
         private AnimManager _animManager;
-        RectTransform _rectTransform;
+        private RectTransform _rectTransform;
 
         private void Start()
         {

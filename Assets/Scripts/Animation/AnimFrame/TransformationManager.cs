@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using BDObjectSystem;
+using Unity.Mathematics;
+using UnityEngine;
 
 namespace Animation.AnimFrame
 {
@@ -8,7 +10,7 @@ namespace Animation.AnimFrame
     {
         private readonly HashSet<string> _noID = new HashSet<string>();
         private readonly HashSet<string> _visitedNodes = new HashSet<string>();
-        
+
         private readonly SortedList<int, Frame> _frames;
         private readonly List<AnimModel> _displayList;
 
@@ -16,9 +18,9 @@ namespace Animation.AnimFrame
         {
             _frames = frames;
             _displayList = displayList;
-            
+
         }
-        
+
         public void OnTickChanged(float tick)
         {
             if (tick <= 0.01f)
@@ -30,7 +32,7 @@ namespace Animation.AnimFrame
             var leftFrame = _frames.Values[left];
 
             // no interpolation
-            if (leftFrame.interpolation == 0 || leftFrame.tick + leftFrame.interpolation <= tick || left == 0) 
+            if (leftFrame.interpolation == 0 || leftFrame.tick + leftFrame.interpolation <= tick || left == 0)
             {
                 // SetObjectTransformation(_root.BdObject.ID, leftFrame.Info);
                 SetObjectTransformation(leftFrame);
@@ -40,14 +42,12 @@ namespace Animation.AnimFrame
                 // interpolation ratio
                 var t = (tick - leftFrame.tick) / leftFrame.interpolation;
 
-                // get before frame
-                var before = _frames.Values[left - 1];
-                SetObjectTransformationInterpolation(t, before, leftFrame);
+                SetObjectTransformationInterpolation(t, left);
             }
         }
-        
-        
-         // 보간 없이, 단일 Frame에서 변환 적용
+
+
+        // 보간 없이, 단일 Frame에서 변환 적용
         private void SetObjectTransformation(Frame frame)
         {
             foreach (var display in _displayList)
@@ -55,9 +55,9 @@ namespace Animation.AnimFrame
                 // 1) 현재 display에 해당하는 데이터 찾기
                 if (!frame.worldTransforms.TryGetValue(display.ID, out var worldTransform))
                 {
-                    
+
                     // 한 번도 없는 bdObjectID라면 로그만 찍고 넘어감
-                    if (_noID.Contains(display.ID)) 
+                    if (_noID.Contains(display.ID))
                         continue;
 
                     CustomLog.LogError("Target not found, name : " + display.ID);
@@ -75,31 +75,13 @@ namespace Animation.AnimFrame
             _visitedNodes.Clear();
         }
 
-        // 부모 체인을 따라가며 변환을 적용하는 유틸 메서드
-        private static void ApplyChainTransformations(BdObject parentData, BdObjectContainer parentDisplay, HashSet<string> visited)
-        {
-            while (parentData != null && parentDisplay is not null)
-            {
-                // 이미 방문한 부모 노드면 중단 (중복 처리 방지)
-                if (visited.Contains(parentData.ID))
-                    break;
-
-                // 부모 변환 적용
-                parentDisplay.SetTransformation(parentData.Transforms);
-
-                // 방문 표시
-                visited.Add(parentData.ID);
-
-                // 한 칸 더 위로
-                parentData = parentData.Parent;
-                parentDisplay = parentDisplay.Parent;
-            }
-        }
-
         // -----------------------------------------------------------
         // 두 Frame(a, b) 사이에서 t만큼 보간하여 변환 적용
-        private void SetObjectTransformationInterpolation(float t, Frame a, Frame b)
+        private void SetObjectTransformationInterpolation(float t, int IndexOf)
         {
+            Frame a = _frames.Values[IndexOf - 1];
+            Frame b = _frames.Values[IndexOf];
+
             foreach (var display in _displayList)
             {
                 // var aContains = a.IDDataDict.TryGetValue(display.bdObjectID, out var aData);
@@ -110,7 +92,7 @@ namespace Animation.AnimFrame
                 // a, b 어느 쪽에도 없으면 스킵
                 if (!aContains && !bContains)
                 {
-                    if (_noID.Contains(display.ID)) 
+                    if (_noID.Contains(display.ID))
                         continue;
 
                     CustomLog.LogError("Target not found, name : " + display.ID);
@@ -119,7 +101,7 @@ namespace Animation.AnimFrame
                 }
 
                 // 1) 자식(현재 display) 자체 변환 계산
-                float[] childTransform;
+                Matrix4x4 childTransform;
                 if (!aContains)
                 {
                     // aFrame에는 없고 bFrame에만 있다면 bTransform 그대로
@@ -132,74 +114,60 @@ namespace Animation.AnimFrame
                 }
                 else
                 {
+                    var newAData = aData;
+
                     // a, b 모두 있으니 보간
-                    childTransform = InterpolateTransforms(aData, bData, t);
+                    childTransform = InterpolateMatrixTRS(newAData, bData, t);
                 }
 
                 // display에 설정
                 display.SetTransformation(childTransform);
-
-                // 2) 부모 노드 보간 적용
-                // var aParent = aData?.Parent;
-                // var bParent = bData?.Parent;
-                // ApplyChainTransformationsInterpolation(t, aParent, bParent, display.Parent, _visitedNodes);
             }
 
             _visitedNodes.Clear();
         }
 
-        // 부모 체인을 따라가며 보간 변환을 적용하는 유틸 메서드
-        private static void ApplyChainTransformationsInterpolation(float t, BdObject aParent, BdObject bParent, BdObjectContainer parentDisplay, HashSet<string> visited)
-        {
-            while ((aParent != null || bParent != null) && parentDisplay is not null)
-            {
-                // 부모 노드 ID를 구한다. (하나라도 있으면 그걸로)
-                // - 보통 aParent.ID == bParent.ID라 가정
-                var parentId = aParent?.ID ?? bParent?.ID;
-                if (parentId != null && visited.Contains(parentId))
-                    break;
-
-                float[] finalTransform;
-                if (aParent != null && bParent != null)
-                {
-                    finalTransform = InterpolateTransforms(aParent.Transforms, bParent.Transforms, t);
-                }
-                else if (aParent != null)
-                {
-                    finalTransform = aParent.Transforms;
-                }
-                else
-                {
-                    // bParent != null 인 경우
-                    finalTransform = bParent.Transforms;
-                }
-
-                // 부모 Display에 설정
-                parentDisplay.SetTransformation(finalTransform);
-
-                if (parentId != null)
-                    visited.Add(parentId);
-
-                // 체인 업
-                aParent = aParent?.Parent;
-                bParent = bParent?.Parent;
-                parentDisplay = parentDisplay.Parent;
-            }
-        }
-
         // -----------------------------------------------------------
         // 행렬(혹은 float[16]) 보간 메서드
-        private static float[] InterpolateTransforms(float[] aMatrix, float[] bMatrix, float t)
+        // private static float[] InterpolateTransforms(float[] aMatrix, float[] bMatrix, float t)
+        // {
+        //     // 길이 16의 두 행렬 a, b를 원소별 선형 보간
+        //     var result = new float[16];
+        //     var invT = 1f - t;
+        //     for (var i = 0; i < 16; i++)
+        //     {
+        //         result[i] = aMatrix[i] * invT + bMatrix[i] * t;
+        //     }
+        //     return result;
+        // }
+
+        private static Matrix4x4 InterpolateMatrixTRS(in Matrix4x4 a, in Matrix4x4 b, float t)
         {
-            // 길이 16의 두 행렬 a, b를 원소별 선형 보간
-            var result = new float[16];
-            var invT = 1f - t;
-            for (var i = 0; i < 16; i++)
-            {
-                result[i] = aMatrix[i] * invT + bMatrix[i] * t;
-            }
-            return result;
+            // 1) 위치(Translation) 보간
+            Vector3 posA = a.GetColumn(3);
+            Vector3 posB = b.GetColumn(3);
+            Vector3 pos = Vector3.Lerp(posA, posB, t);
+
+            // 2) 회전(Rotation) 보간 - Unity 제공 프로퍼티 사용
+            Quaternion rotA = a.rotation;
+            Quaternion rotB = b.rotation;
+            Quaternion rot = Quaternion.Slerp(rotA, rotB, t);
+
+            // 3) 스케일(Scale) 보간
+            Vector3 scaleA = new Vector3(a.GetColumn(0).magnitude,
+                                         a.GetColumn(1).magnitude,
+                                         a.GetColumn(2).magnitude);
+
+            Vector3 scaleB = new Vector3(b.GetColumn(0).magnitude,
+                                         b.GetColumn(1).magnitude,
+                                         b.GetColumn(2).magnitude);
+
+            Vector3 scale = Vector3.Lerp(scaleA, scaleB, t);
+
+            // 4) 최종 TRS 행렬로 재구성
+            return Matrix4x4.TRS(pos, rot, scale);
         }
+
 
         // find left frame by tick
         private int GetLeftFrame(float tick)
@@ -214,13 +182,13 @@ namespace Animation.AnimFrame
             var right = _frames.Count - 1;
             var keys = _frames.Keys;
             var idx = -1;
-            
+
             while (left <= right)
             {
                 var mid = (left + right) / 2;
                 if (keys[mid] <= tick)
                 {
-                    idx = mid; 
+                    idx = mid;
                     left = mid + 1;
                 }
                 else
