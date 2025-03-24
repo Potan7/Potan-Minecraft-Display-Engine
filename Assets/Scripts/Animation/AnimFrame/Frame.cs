@@ -30,7 +30,7 @@ namespace Animation.AnimFrame
         [Header("BDObject Info")]
         public BdObject Info;
         public Dictionary<string, BdObject> IDDataDict;
-        public Dictionary<string, Matrix4x4> worldTransforms = new();
+        public Dictionary<string, Matrix4x4> worldTransforms;
         private Timeline _timeline;
         
 
@@ -49,12 +49,7 @@ namespace Animation.AnimFrame
             _timeline.OnGridChanged += UpdatePos;
 
             IDDataDict = BdObjectHelper.SetDisplayIDDictionary(info);
-
-            // WorldTransform 계산
-            foreach (var items in IDDataDict)
-            {
-                worldTransforms.Add(items.Key, AffineTransformation.GetWorldMatrix(items.Value));
-            }
+            worldTransforms = AffineTransformation.GetAllLeafWorldMatrices(info);
         }
 
         public int SetTick(int newTick)
@@ -124,7 +119,6 @@ namespace Animation.AnimFrame
         }
         
 
-        // ������ ����
         public void RemoveFrame()
         {
             _timeline.OnGridChanged -= UpdatePos;

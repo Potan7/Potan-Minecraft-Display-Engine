@@ -10,7 +10,6 @@ using Manager;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Minecraft
 {
@@ -297,14 +296,11 @@ namespace Minecraft
             //}
         }
 
-        public List<string> fileNames = new List<string>();
         // �ؽ������� ����Ʈ �ڵ�� �����ϱ�
         private void SavePNGData(string path, byte[] fileData)
         {
             path = path.Replace("assets/minecraft/textures/", "");
             _textureFiles[path] = fileData;
-            
-            fileNames.Add(path);
 
             //lock (textureFiles) // Lock because textureFiles is a shared resource
             //{

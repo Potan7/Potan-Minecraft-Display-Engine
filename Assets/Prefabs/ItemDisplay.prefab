@@ -45,4 +45,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   modelName: 
+  ModelData:
+    Parent: 
   itemModel: {fileID: 0}
