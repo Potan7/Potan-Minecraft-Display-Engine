@@ -69,6 +69,11 @@ namespace BDObjectSystem.Utility
                 
                 if (obj.IsDisplay)
                 {
+                    if (idDataDict.ContainsKey(obj.ID))
+                    {
+                        CustomLog.Log($"Duplicate ID: {obj.ID}");
+                        continue;
+                    }
                     idDataDict[obj.ID] = obj;
                 }
                 

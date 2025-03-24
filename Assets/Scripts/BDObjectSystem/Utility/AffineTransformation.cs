@@ -1,5 +1,3 @@
-using System;
-using Unity.Mathematics;
 using UnityEngine;
 
 namespace BDObjectSystem.Utility
@@ -24,32 +22,20 @@ namespace BDObjectSystem.Utility
 
         public static void ApplyMatrixToTransform(Transform target, in Matrix4x4 matrix)
         {
-            // 1. Translation (localPosition)
+            // 1) 위치
             Vector3 translation = matrix.GetColumn(3);
 
-            // 2. Scale (localScale)
-            var scale = new Vector3(
-                matrix.GetColumn(0).magnitude, // X �� ������
-                matrix.GetColumn(1).magnitude, // Y �� ������
-                matrix.GetColumn(2).magnitude  // Z �� ������
+            // 2) 스케일
+            Vector3 scale = new Vector3(
+                matrix.GetColumn(0).magnitude,
+                matrix.GetColumn(1).magnitude,
+                matrix.GetColumn(2).magnitude
             );
 
-            // 3. Rotation (localRotation)
-            //Vector3 normalizedX = matrix.GetColumn(0).normalized;
-            Vector3 normalizedY = matrix.GetColumn(1).normalized;
-            Vector3 normalizedZ = matrix.GetColumn(2).normalized;
+            // 3) 회전 - LookRotation 대신에 matrix.rotation 사용
+            Quaternion rotation = matrix.rotation;
 
-            var forward = normalizedZ.magnitude > 0 ? normalizedZ : Vector3.forward;
-            var up = normalizedY.magnitude > 0 ? normalizedY : Vector3.up;
-
-            var rotation = Quaternion.LookRotation(forward, up);
-            //Quaternion rotation = Quaternion.FromToRotation(Vector3.right, normalizedX) *
-            //              Quaternion.FromToRotation(Vector3.up, normalizedY);
-
-            //Quaternion rotation = matrix.rotation;
-
-
-            // 4. Transform�� ����
+            // 4) 실제 Transform에 적용
             target.localPosition = translation;
             target.localScale = scale;
             target.localRotation = rotation;

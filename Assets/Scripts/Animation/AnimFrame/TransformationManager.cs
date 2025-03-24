@@ -115,6 +115,14 @@ namespace Animation.AnimFrame
                 else
                 {
                     var newAData = aData;
+                    // aFrame의 보간이 끝나지 않았는데 다음 프레임 도달 시 그때의 aFrame의 위치를 보간
+                    if (IndexOf > 1 && a.tick + a.interpolation > b.tick)
+                    {
+                        var beforeA = _frames.Values[IndexOf - 2];
+                        float ratio = (b.tick - a.tick) / (float) (a.tick + a.interpolation - a.tick);
+                        newAData = InterpolateMatrixTRS(beforeA.worldTransforms[display.ID], aData, ratio);
+                    }
+                    
 
                     // a, b 모두 있으니 보간
                     childTransform = InterpolateMatrixTRS(newAData, bData, t);
