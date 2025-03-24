@@ -1,1 +1,0 @@
-data merge entity @e[limit=1,tag=pt_potan1,type=item_display] {start_interpolation: 0, interpolation_duration: 20, transformation:[-2.687f,0.0f,0.0f,0.3686f,-0.0f,1.312f,0.0f,1.558f,-0.0f,0.0f,-2.7495f,3.234f,0.0f,0.0f,0.0f,1.0f]}

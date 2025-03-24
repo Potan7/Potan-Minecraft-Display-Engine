@@ -1,9 +1,0 @@
-data merge entity @e[limit=1,tag=pt_potan8,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[0.5f,-0f,-0f,0.7866f,0f,0.5f,0f,1.5f,0f,-0f,0.5f,3.4378f,0f,0f,0f,1f]}
-data merge entity @e[limit=1,tag=pt_potan9,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[0.5f,-0f,-0f,0.7866f,0f,1f,0f,1.25f,0f,-0f,0.5f,3.4378f,0f,0f,0f,1f]}
-data merge entity @e[limit=1,tag=pt_thing1,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[0.3f,0f,0f,0.775f,0f,0.3f,0f,-0.4125f,0f,0f,0.3f,4.15f,0f,0f,0f,1f]}
-data merge entity @e[limit=1,tag=pt_thing2,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[0.0375f,0f,0f,0.9062f,0f,0.3f,0f,-0.3563f,0f,0f,0.3f,4.15f,0f,0f,0f,1f]}
-data merge entity @e[limit=1,tag=pt_thing3,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[0.0375f,0f,0f,0.6438f,0f,0.3f,0f,-0.3563f,0f,0f,0.3f,4.15f,0f,0f,0f,1f]}
-data merge entity @e[limit=1,tag=pt_thing4,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[0.0375f,0f,0f,0.775f,0f,0.3f,0f,-0.3563f,0f,0f,0.3f,4.15f,0f,0f,0f,1f]}
-data merge entity @e[limit=1,tag=pt_thing5,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[0.3f,0f,0f,0.775f,0f,0.3f,0f,-0.3563f,0f,0f,0.0375f,4.2812f,0f,0f,0f,1f]}
-data merge entity @e[limit=1,tag=pt_thing6,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[0.3f,0f,0f,0.775f,0f,0.3f,0f,-0.3563f,0f,0f,0.0375f,4.0187f,0f,0f,0f,1f]}
-data merge entity @e[limit=1,tag=pt_thing7,type=item_display] {start_interpolation: 0, interpolation_duration: 0, transformation:[0.3f,0f,0f,0.775f,0f,0.3f,0f,-0.3563f,0f,0f,0.0375f,4.15f,0f,0f,0f,1f]}
