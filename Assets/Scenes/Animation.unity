@@ -2946,7 +2946,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   filePath: 
-  fileNames: []
 --- !u!114 &257885229
 MonoBehaviour:
   m_ObjectHideFlags: 0
