@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -12,9 +11,12 @@ namespace CameraMovement
         public Transform pivot; // ī�޶� �ٶ� �ǹ�
 
         [Header("Camera Movement Settings")]
-        public float rotationSpeed = 90f; // ȸ�� �ӵ� (��/��)
-        public float panSpeed = 5f;       // �� �ӵ� (����/��)
-        public float zoomSpeed = 10f;     // �� �ӵ�
+        public float cameraSpeed;
+        public float rotationSpeedRange = 12f;
+        public float panSpeedRange = -10f;
+
+        public float zoomSpeed;
+        public float zoomSpeedRange = 50f;
         public float minDistance = 2f;    // ī�޶�~�ǹ� �ּ� �Ÿ�
         public float maxDistance = 50f;   // ī�޶�~�ǹ� �ִ� �Ÿ�
 
@@ -104,8 +106,8 @@ namespace CameraMovement
 
         private void RotateAroundPivot(Vector2 delta, float dt)
         {
-            var yaw = delta.x * rotationSpeed * dt;
-            var pitch = -delta.y * rotationSpeed * dt; // ���� �̵��� ��(-)
+            var yaw = delta.x * cameraSpeed * rotationSpeedRange * dt;
+            var pitch = -delta.y * cameraSpeed * rotationSpeedRange * dt; // ���� �̵��� ��(-)
 
             // 1) yaw : pivot ���� ���� Up
             transform.RotateAround(pivot.position, Vector3.up, yaw);
@@ -121,8 +123,8 @@ namespace CameraMovement
 
         private void PanCamera(Vector2 delta, float dt)
         {
-            var rightMovement = transform.right * (delta.x * panSpeed * dt);
-            var upMovement = transform.up * (delta.y * panSpeed * dt);
+            var rightMovement = transform.right * (delta.x * cameraSpeed * panSpeedRange * dt);
+            var upMovement = transform.up * (delta.y * cameraSpeed * panSpeedRange * dt);
             var panMovement = rightMovement + upMovement;
 
             transform.position += panMovement;
@@ -131,14 +133,13 @@ namespace CameraMovement
 
         private void ZoomCamera(float zoomValue, float dt)
         {
-            _currentDistance -= zoomValue * zoomSpeed * dt;
+            _currentDistance -= zoomValue * zoomSpeed * zoomSpeedRange * dt;
             _currentDistance = Mathf.Clamp(_currentDistance, minDistance, maxDistance);
 
             var direction = (transform.position - pivot.position).normalized;
             transform.position = pivot.position + direction * _currentDistance;
         }
         
-        [UsedImplicitly]
         public void ResetCamera()
         {
             pivot.position = _pivotInitPos;

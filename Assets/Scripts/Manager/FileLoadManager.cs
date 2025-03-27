@@ -175,29 +175,34 @@ namespace Manager
         // ReSharper disable once AsyncVoidMethod
         private async void AfterLoadFile(List<string> filePaths)
         {
-            GameManager.GetManager<UIManger>().SetLoadingPanel(true);
+            UIManger ui = GameManager.GetManager<UIManger>();
+            ui.SetLoadingPanel(true);
 
             var settingManager = GameManager.Setting;
             if (settingManager.UseFrameTxtFile || settingManager.UseNameInfoExtract)
             {
+                ui.SetLoadingText("Reading Frame.txt");
                 // sort files by f<number>
                 filePaths = SortFiles(filePaths);
             }
 
             string fileName = Path.GetFileNameWithoutExtension(filePaths[0]);
             // generate display using first file
+            ui.SetLoadingText("Making Display");
             var animObject = await MakeDisplay(filePaths[0], fileName);
 
             // reading files and adding frames
+            ui.SetLoadingText("Making Frames");
             for (var i = 1; i < filePaths.Count; i++)
             {
                 var bdObject = await ProcessFileAsync(filePaths[i]);
                 animObject.AddFrame(bdObject, Path.GetFileNameWithoutExtension(filePaths[i]));
             }
+            ui.SetLoadingText("Waiting Head Textures");
             // wait until all generators are done
             while (WorkingGenerators.Count > 0) await Task.Delay(500);
 
-            GameManager.GetManager<UIManger>().SetLoadingPanel(false);
+            ui.SetLoadingPanel(false);
             bdObjManager.EndFileImport(fileName);
             animObject.InitAnimModelData();
 

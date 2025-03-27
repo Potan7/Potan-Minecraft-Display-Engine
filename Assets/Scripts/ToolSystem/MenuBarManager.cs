@@ -6,6 +6,7 @@ namespace ToolSystem
 
     public class MenuBarManager : MonoBehaviour
     {
+        private const string githubURL = "https://github.com/Potan7/Potan-Minecraft-Display-Engine";
         ExportManager _exportManager;
 
         void Start()
@@ -39,7 +40,7 @@ namespace ToolSystem
 
         public void OnGitHubButton()
         {
-            Application.OpenURL("https://github.com/Potan7/Potan-Minecraft-Animation-Viewer");
+            Application.OpenURL(githubURL);
         }
     }
 }
