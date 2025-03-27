@@ -14,6 +14,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 113006
   packageName: Runtime File Browser
-  packageVersion: 1.6.4
+  packageVersion: 1.7.0
   assetPath: Assets/Plugins/SimpleFileBrowser/Scripts/FileBrowserMovement.cs
-  uploadId: 649298
+  uploadId: 743587
