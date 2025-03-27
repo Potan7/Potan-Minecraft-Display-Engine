@@ -11,8 +11,10 @@ namespace CameraMovement
         public Transform pivot; // ī�޶� �ٶ� �ǹ�
 
         [Header("Camera Movement Settings")]
-        public float cameraSpeed;
+        public float cameraRotateSpeed;
         public float rotationSpeedRange = 12f;
+
+        public float panSpeed;
         public float panSpeedRange = -10f;
 
         public float zoomSpeed;
@@ -106,8 +108,8 @@ namespace CameraMovement
 
         private void RotateAroundPivot(Vector2 delta, float dt)
         {
-            var yaw = delta.x * cameraSpeed * rotationSpeedRange * dt;
-            var pitch = -delta.y * cameraSpeed * rotationSpeedRange * dt; // ���� �̵��� ��(-)
+            var yaw = delta.x * cameraRotateSpeed * rotationSpeedRange * dt;
+            var pitch = -delta.y * cameraRotateSpeed * rotationSpeedRange * dt; // ���� �̵��� ��(-)
 
             // 1) yaw : pivot ���� ���� Up
             transform.RotateAround(pivot.position, Vector3.up, yaw);
@@ -123,8 +125,8 @@ namespace CameraMovement
 
         private void PanCamera(Vector2 delta, float dt)
         {
-            var rightMovement = transform.right * (delta.x * cameraSpeed * panSpeedRange * dt);
-            var upMovement = transform.up * (delta.y * cameraSpeed * panSpeedRange * dt);
+            var rightMovement = transform.right * (delta.x * panSpeed * panSpeedRange * dt);
+            var upMovement = transform.up * (delta.y * panSpeed * panSpeedRange * dt);
             var panMovement = rightMovement + upMovement;
 
             transform.position += panMovement;
