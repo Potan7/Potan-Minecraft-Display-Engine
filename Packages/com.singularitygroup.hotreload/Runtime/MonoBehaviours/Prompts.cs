@@ -4,6 +4,9 @@ using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.EventSystems;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace SingularityGroup.HotReload {
     internal class Prompts : MonoBehaviour {
@@ -105,10 +108,18 @@ namespace SingularityGroup.HotReload {
         private void Update() {
             if (!userTriedToInteract) {
                 // when user interacts with the screen, make sure overlay can handle taps
+#if ENABLE_INPUT_SYSTEM
+                if ((Touchscreen.current != null && Touchscreen.current.touches.Count > 0) || 
+                    (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)) {
+                    userTriedToInteract = true;
+                    DoEnsureEventSystem();
+                }
+#else
                 if (Input.touchCount > 0 || Input.GetMouseButtonDown(0)) {
                     userTriedToInteract = true;
                     DoEnsureEventSystem();
                 }
+#endif
             }
         }
 

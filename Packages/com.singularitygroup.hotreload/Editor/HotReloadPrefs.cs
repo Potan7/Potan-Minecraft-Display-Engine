@@ -62,6 +62,8 @@ namespace SingularityGroup.HotReload.Editor {
         private const string RunTabUndetectedPatchesFilterKey = "HotReloadWindow.RunTabUndetectedPatchesFilter";
         private const string RunTabAppliedPatchesFilterKey = "HotReloadWindow.RunTabAppliedPatchesFilter";
         private const string RecompileDialogueShownKey = "HotReloadWindow.RecompileDialogueShown";
+        private const string ApplyFieldInitiailzerEditsToExistingClassInstancesKey = "HotReloadWindow.ApplyFieldInitiailzerEditsToExistingClassInstances";
+        private const string LoggedInlinedMethodsDialogueKey = "HotReloadWindow.LoggedInlinedMethodsDialogue";
         private const string OpenedWindowAtLeastOnceKey = "HotReloadWindow.OpenedWindowAtLeastOnce";
 
         public const string DontShowPromptForDownloadKey = "ServerDownloader.DontShowPromptForDownload";
@@ -430,6 +432,17 @@ namespace SingularityGroup.HotReload.Editor {
             }
             string[] rgbaParts = ser.Split(rgbaDelimiter.ToCharArray());
             return new Color(float.Parse(rgbaParts[0]), float.Parse(rgbaParts[1]),float.Parse(rgbaParts[2]),float.Parse(rgbaParts[3]));
+        }
+        
+        [Obsolete("was not implemented")]
+        public static bool ApplyFieldInitiailzerEditsToExistingClassInstances {
+            get { return EditorPrefs.GetBool(ApplyFieldInitiailzerEditsToExistingClassInstancesKey); }
+            set { EditorPrefs.SetBool(ApplyFieldInitiailzerEditsToExistingClassInstancesKey, value); }
+        }
+        
+        public static bool LoggedInlinedMethodsDialogue {
+            get { return EditorPrefs.GetBool(LoggedInlinedMethodsDialogueKey); }
+            set { EditorPrefs.SetBool(LoggedInlinedMethodsDialogueKey, value); }
         }
     }
 }

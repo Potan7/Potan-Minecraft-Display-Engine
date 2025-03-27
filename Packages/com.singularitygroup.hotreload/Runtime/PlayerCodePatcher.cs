@@ -100,7 +100,6 @@ namespace SingularityGroup.HotReload {
         static void HandleResponseReceived(MethodPatchResponse response) {
             Log.Debug("PollMethodPatches handling MethodPatchResponse id:{0} response.patches.Length:{1} response.failures.Length:{2}",
                 response.id, response.patches.Length, response.failures.Length);
-            // TODO handle new response data (removed methods etc.)
             if(response.patches.Length > 0) {
                 CodePatcher.I.RegisterPatches(response, persist: true);
             }

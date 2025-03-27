@@ -98,18 +98,12 @@ namespace SingularityGroup.HotReload.Editor {
                     using (new EditorGUILayout.HorizontalScope(HotReloadWindowStyles.SectionOuterBoxCompact)) {
                         using (new EditorGUILayout.HorizontalScope(HotReloadWindowStyles.SectionInnerBoxWide)) {
                             using (new EditorGUILayout.VerticalScope()) {
-                                HotReloadPrefs.ShowConfiguration = EditorGUILayout.Foldout(HotReloadPrefs.ShowConfiguration, "Configuration", true, HotReloadWindowStyles.FoldoutStyle);
+                                HotReloadPrefs.ShowConfiguration = EditorGUILayout.Foldout(HotReloadPrefs.ShowConfiguration, "Settings", true, HotReloadWindowStyles.FoldoutStyle);
                                 if (HotReloadPrefs.ShowConfiguration) {
                                     EditorGUILayout.Space();
-                                    RenderUnityAutoRefresh();
-                                    RenderAssetRefresh();
-                                    if (HotReloadPrefs.AllAssetChanges) {
-                                        using (new EditorGUILayout.VerticalScope(paddedStyle ?? (paddedStyle = new GUIStyle { padding = new RectOffset(20, 0, 0, 0) }))) {
-                                            RenderIncludeShaderChanges();
-                                        }
 
-                                        EditorGUILayout.Space();
-                                    }
+                                    // main section
+                                    RenderUnityAutoRefresh();
                                     using (new EditorGUI.DisabledScope(!EditorCodePatcher.autoRecompileUnsupportedChangesSupported)) {
                                         RenderAutoRecompileUnsupportedChanges();
                                         if (HotReloadPrefs.AutoRecompileUnsupportedChanges && EditorCodePatcher.autoRecompileUnsupportedChangesSupported) {
@@ -122,18 +116,43 @@ namespace SingularityGroup.HotReload.Editor {
                                         }
                                         EditorGUILayout.Space();
                                     }
-                                    RenderConsoleWindow();
-                                    RenderAutostart();
+                                    RenderAssetRefresh();
+                                    if (HotReloadPrefs.AllAssetChanges) {
+                                        using (new EditorGUILayout.VerticalScope(paddedStyle ?? (paddedStyle = new GUIStyle { padding = new RectOffset(20, 0, 0, 0) }))) {
+                                            RenderIncludeShaderChanges();
+                                        }
 
+                                        EditorGUILayout.Space();
+                                    }
+
+                                    // // fields
+                                    // RenderShowFeatures();
+                                    // using (new EditorGUILayout.VerticalScope(paddedStyle ?? (paddedStyle = new GUIStyle { padding = new RectOffset(20, 0, 0, 0) }))) {
+                                    //     RenderShowApplyfieldInitializerEditsToExistingClassInstances();
+                                    //
+                                    //     EditorGUILayout.Space();
+                                    // }
+
+                                    // visual feedback
                                     if (EditorWindowHelper.supportsNotifications) {
                                         RenderShowNotifications();
-                                            using (new EditorGUILayout.VerticalScope(paddedStyle ?? (paddedStyle = new GUIStyle { padding = new RectOffset(20, 0, 0, 0) }))) {
-                                                    RenderShowPatchingNotifications();
-                                                    RenderShowCompilingUnsupportedNotifications();
-                                                }
-
-                                            EditorGUILayout.Space();
+                                        using (new EditorGUILayout.VerticalScope(paddedStyle ?? (paddedStyle = new GUIStyle { padding = new RectOffset(20, 0, 0, 0) }))) {
+                                            RenderShowPatchingNotifications();
+                                            RenderShowCompilingUnsupportedNotifications();
                                         }
+
+                                        EditorGUILayout.Space();
+                                    }
+
+                                    // misc
+                                    RenderMiscHeader();
+                                    using (new EditorGUILayout.VerticalScope(paddedStyle ?? (paddedStyle = new GUIStyle { padding = new RectOffset(20, 0, 0, 0) }))) {
+                                        RenderAutostart();
+                                        RenderConsoleWindow();
+
+                                        EditorGUILayout.Space();
+                                    }
+
                                     EditorGUILayout.Space();
                                     using (new EditorGUILayout.HorizontalScope()) {
                                         GUILayout.FlexibleSpace();
@@ -166,19 +185,19 @@ namespace SingularityGroup.HotReload.Editor {
         }
 
         void RenderUnityAutoRefresh() {
-            var newSettings = EditorGUILayout.BeginToggleGroup(new GUIContent("Allow to manage Unity's Auto Compile settings (recommended)"), HotReloadPrefs.AllowDisableUnityAutoRefresh);
+            var newSettings = EditorGUILayout.BeginToggleGroup(new GUIContent("Manage Unity auto-refresh (recommended)"), HotReloadPrefs.AllowDisableUnityAutoRefresh);
             if (newSettings != HotReloadPrefs.AllowDisableUnityAutoRefresh) {
                 HotReloadPrefs.AllowDisableUnityAutoRefresh = newSettings;
             }
             string toggleDescription;
             if (HotReloadPrefs.AllowDisableUnityAutoRefresh) {
-                toggleDescription = "Hot Reload will manage Unity's Auto Refresh and Script Compilation settings when it's running. Previous settings will be restored when Hot Reload is stopped.";
+                toggleDescription = "To avoid unnecessary recompiling, Hot Reload will automatically change Unity's Auto Refresh and Script Compilation settings. Previous settings will be restored when Hot Reload is stopped";
             } else {
-                toggleDescription = "Enable to allow Hot Reload to manage Unity's Auto Refresh and Script Compilation settings when it's running. If enabled, previous settings will be restored when Hot Reload is stopped.";
+                toggleDescription = "Enabled this setting to auto-manage Unity's Auto Refresh and Script Compilation settings. This reduces unncessary recompiling";
             }
             EditorGUILayout.LabelField(toggleDescription, HotReloadWindowStyles.WrapStyle);
             EditorGUILayout.EndToggleGroup();
-            EditorGUILayout.Space(3f);
+            EditorGUILayout.Space(6f);
         }
         
         void RenderAssetRefresh() {
@@ -190,7 +209,7 @@ namespace SingularityGroup.HotReload.Editor {
                     var restartServer = EditorUtility.DisplayDialog("Hot Reload",
                         $"When changing 'Asset refresh', the Hot Reload server must be restarted for this to take effect." +
                         "\nDo you want to restart it now?",
-                        "Restart server", "Don't restart");
+                        "Restart Hot Reload", "Don't restart");
                     if (restartServer) {
                         EditorCodePatcher.RestartCodePatcher().Forget();
                     }
@@ -198,13 +217,13 @@ namespace SingularityGroup.HotReload.Editor {
             }
             string toggleDescription;
             if (HotReloadPrefs.AllAssetChanges) {
-                toggleDescription = "Hot Reload will refresh changed assets in the project.";
+                toggleDescription = "Hot Reload will refresh changed assets such as sprites, prefabs, etc";
             } else {
-                toggleDescription = "Enable to allow Hot Reload to refresh changed assets in the project. All asset types are supported including sprites, prefabs, shaders etc.";
+                toggleDescription = "Enable to allow Hot Reload to refresh changed assets in the project. All asset types are supported including sprites, prefabs, shaders etc";
             }
             EditorGUILayout.LabelField(toggleDescription, HotReloadWindowStyles.WrapStyle);
             EditorGUILayout.EndToggleGroup();
-            EditorGUILayout.Space(3f);
+            EditorGUILayout.Space(6f);
         }
         
         void RenderIncludeShaderChanges() {
@@ -245,7 +264,7 @@ namespace SingularityGroup.HotReload.Editor {
             }
             EditorGUILayout.LabelField(toggleDescription, HotReloadWindowStyles.WrapStyle);
             EditorGUILayout.EndToggleGroup();
-            EditorGUILayout.Space(3f);
+            EditorGUILayout.Space(6f);
         }
         
         void RenderAutostart() {
@@ -265,15 +284,23 @@ namespace SingularityGroup.HotReload.Editor {
         }
 
         void RenderShowNotifications() {
-            GUILayout.Label("Indications", HotReloadWindowStyles.NotificationsTitleStyle);
+            EditorGUILayout.Space(14f);
+            GUILayout.Label("Visual Feedback", HotReloadWindowStyles.NotificationsTitleStyle);
             
-            string toggleDescription;
             if (!EditorWindowHelper.supportsNotifications && !UnitySettingsHelper.I.playmodeTintSupported) {
-                toggleDescription = "Indications are not supported in the Unity version you use.";
-            } else {
-                toggleDescription = "Chosen indications are enabled:";
+                var toggleDescription = "Indications are not supported in the Unity version you use.";
+                EditorGUILayout.LabelField(toggleDescription, HotReloadWindowStyles.WrapStyle);
             }
-            EditorGUILayout.LabelField(toggleDescription, HotReloadWindowStyles.WrapStyle);
+        }
+
+        // void RenderShowFields() {
+        //     EditorGUILayout.Space(14f);
+        //     GUILayout.Label("Fields", HotReloadWindowStyles.NotificationsTitleStyle);
+        // }
+
+        void RenderMiscHeader() {
+            EditorGUILayout.Space(14f);
+            GUILayout.Label("Misc", HotReloadWindowStyles.NotificationsTitleStyle);
         }
 
         void RenderShowPatchingNotifications() {
@@ -288,6 +315,36 @@ namespace SingularityGroup.HotReload.Editor {
             }
             EditorGUILayout.LabelField(toggleDescription, HotReloadWindowStyles.WrapStyle);
             EditorGUILayout.EndToggleGroup();
+        }
+        
+        // void RenderShowApplyfieldInitializerEditsToExistingClassInstances() {
+        //     var newSetting = EditorGUILayout.BeginToggleGroup(new GUIContent("Apply field initializer edits to existing class instances"), HotReloadPrefs.ApplyFieldInitiailzerEditsToExistingClassInstances);
+        //     ApplyApplyFieldInitializerEditsToExistingClassInstances(newSetting);
+        //     string toggleDescription;
+        //     if (HotReloadPrefs.ApplyFieldInitiailzerEditsToExistingClassInstances) {
+        //         toggleDescription = "New field initializers with constant value will update field value of existing objects.";
+        //     } else {
+        //         toggleDescription = "New field initializers will not modify existing objects.";
+        //     }
+        //     EditorGUILayout.LabelField(toggleDescription, HotReloadWindowStyles.WrapStyle);
+        //     EditorGUILayout.EndToggleGroup();
+        // }
+
+        [Obsolete("Not implemented")]
+        public static void ApplyApplyFieldInitializerEditsToExistingClassInstances(bool newSetting) {
+            if (newSetting != HotReloadPrefs.ApplyFieldInitiailzerEditsToExistingClassInstances) {
+                HotReloadPrefs.ApplyFieldInitiailzerEditsToExistingClassInstances = newSetting;
+                // restart when setting changes
+                if (ServerHealthCheck.I.IsServerHealthy) {
+                    var restartServer = EditorUtility.DisplayDialog("Hot Reload",
+                        $"When changing 'Apply field initializer edits to existing class instances' setting, the Hot Reload server must restart for it to take effect." +
+                        "\nDo you want to restart it now?",
+                        "Restart server", "Don't restart");
+                    if (restartServer) {
+                        EditorCodePatcher.RestartCodePatcher().Forget();
+                    }
+                }
+            }
         }
 
         void RenderShowCompilingUnsupportedNotifications() {
@@ -310,9 +367,9 @@ namespace SingularityGroup.HotReload.Editor {
             if (!EditorCodePatcher.autoRecompileUnsupportedChangesSupported) {
                 toggleDescription = "Auto recompiling unsupported changes is not supported in the Unity version you use.";
             } else if (HotReloadPrefs.AutoRecompileUnsupportedChanges) {
-                toggleDescription = "Hot Reload will recompile when unsupported changes are detected.";
+                toggleDescription = "Hot Reload will recompile automatically after code changes that Hot Reload doesn't support.";
             } else {
-                toggleDescription = "Enable to recompile when unsupported changes are detected.";
+                toggleDescription = "When enabled, recompile happens automatically after code changes that Hot Reload doesn't support.";
             }
             EditorGUILayout.LabelField(toggleDescription, HotReloadWindowStyles.WrapStyle);
             EditorGUILayout.EndToggleGroup();

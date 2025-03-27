@@ -438,7 +438,7 @@ namespace SingularityGroup.HotReload.Editor.ProjectGeneration {
         // #if !ROSLYN_ANALYZER_FIX
         //         .Concat(GetRoslynAnalyzerPaths())
         // #else
-                .Concat(assembly.CompilerOptions.RoslynAnalyzerDllPaths)
+                .Concat(assembly.CompilerOptions.RoslynAnalyzerDllPaths ?? Array.Empty<string>())
         // #endif
                 .Select(MakeAbsolutePath)
                 .Distinct()
@@ -655,7 +655,7 @@ namespace SingularityGroup.HotReload.Editor.ProjectGeneration {
                             var index = b.IndexOf(":", StringComparison.Ordinal);
                             if (index > 0 && b.Length > index) {
                                 var key = b.Substring(1, index - 1);
-                                return new KeyValuePair<string, string>(key, b.Substring(index + 1));
+                                return new KeyValuePair<string, string>(key.ToLowerInvariant(), b.Substring(index + 1));
                             }
 
                             const string warnaserror = "warnaserror";

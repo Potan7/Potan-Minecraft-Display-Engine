@@ -2,8 +2,11 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+#if UNITY_EDITOR_WIN
 using System.Net.NetworkInformation;
+#else
 using System.Net.Sockets;
+#endif
 using System.Threading.Tasks;
 using SingularityGroup.HotReload.Newtonsoft.Json;
 using UnityEditor;
@@ -34,17 +37,18 @@ namespace SingularityGroup.HotReload.Editor.Cli {
         /// </summary>
         public static Task StartAsync() {
             return StartAsync(
+                isReleaseMode: RequestHelper.IsReleaseMode(),
                 exposeServerToNetwork: HotReloadPrefs.ExposeServerToLocalNetwork, 
                 allAssetChanges: HotReloadPrefs.AllAssetChanges, 
                 createNoWindow: HotReloadPrefs.DisableConsoleWindow
             );
         }
         
-        internal static async Task StartAsync(bool exposeServerToNetwork, bool allAssetChanges, bool createNoWindow, LoginData loginData = null) {
+        internal static async Task StartAsync(bool exposeServerToNetwork, bool allAssetChanges, bool createNoWindow, bool isReleaseMode, LoginData loginData = null) {
             var port = await Prepare().ConfigureAwait(false);
             await ThreadUtility.SwitchToThreadPool();
             StartArgs args;
-            if (TryGetStartArgs(UnityHelper.DataPath, exposeServerToNetwork, allAssetChanges, createNoWindow, loginData, port, out args)) {
+            if (TryGetStartArgs(UnityHelper.DataPath, exposeServerToNetwork, allAssetChanges, createNoWindow, isReleaseMode, loginData, port, out args)) {
                 await controller.Start(args);
             }
         }
@@ -65,7 +69,7 @@ namespace SingularityGroup.HotReload.Editor.Cli {
 #pragma warning restore CS0649
         }
         
-        static bool TryGetStartArgs(string dataPath, bool exposeServerToNetwork, bool allAssetChanges, bool createNoWindow, LoginData loginData, int port, out StartArgs args) {
+        static bool TryGetStartArgs(string dataPath, bool exposeServerToNetwork, bool allAssetChanges, bool createNoWindow, bool isReleaseMode, LoginData loginData, int port, out StartArgs args) {
             string serverDir;
             if(!CliUtils.TryFindServerDir(out serverDir)) {
                 Log.Warning($"Failed to start the Hot Reload Server. " +
@@ -114,7 +118,7 @@ namespace SingularityGroup.HotReload.Editor.Cli {
             }
             
             var searchAssemblies = string.Join(";", CodePatcher.I.GetAssemblySearchPaths());
-            var cliArguments = $@"-u ""{unityProjDir}"" -s ""{slnPath}"" -t ""{cliTempDir}"" -a ""{searchAssemblies}"" -ver ""{PackageConst.Version}"" -proc ""{Process.GetCurrentProcess().Id}"" -assets ""{allAssetChanges}"" -p ""{port}""";
+            var cliArguments = $@"-u ""{unityProjDir}"" -s ""{slnPath}"" -t ""{cliTempDir}"" -a ""{searchAssemblies}"" -ver ""{PackageConst.Version}"" -proc ""{Process.GetCurrentProcess().Id}"" -assets ""{allAssetChanges}"" -p ""{port}"" -r {isReleaseMode}";
             if (loginData != null) {
                 cliArguments += $@" -email ""{loginData.email}"" -pass ""{loginData.password}""";
             }
