@@ -1,101 +1,128 @@
 using System;
-using Unity.Mathematics;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BDObjectSystem.Utility
 {
     public static class AffineTransformation
     {
-        //  float�迭�� ��ȯ�Ͽ� Matrix4x4 ����
-        public static Matrix4x4 GetMatrix(float[] transforms)
-        {
-            if (transforms.Length == 16)
-                return new Matrix4x4(
-                    new Vector4(transforms[0], transforms[4], transforms[8], transforms[12]), // X ��
-                    new Vector4(transforms[1], transforms[5], transforms[9], transforms[13]), // Y ��
-                    new Vector4(transforms[2], transforms[6], transforms[10], transforms[14]), // Z ��
-                    new Vector4(transforms[3], transforms[7], transforms[11], transforms[15]) // Translation
-                );
-            CustomLog.LogError("Invalid transform data");
-            return Matrix4x4.identity;
 
-            //  Row-Major
+        public static Matrix4x4 GetMatrix(float[] t)
+        {
+            if (t.Length == 16)
+            {
+                // Row-Major 16개짜리를 Column-Major로 바꿔서 넣기
+                return new Matrix4x4(
+                    // column0
+                    new Vector4(t[0], t[4], t[8], t[12]),
+                    // column1
+                    new Vector4(t[1], t[5], t[9], t[13]),
+                    // column2
+                    new Vector4(t[2], t[6], t[10], t[14]),
+                    // column3
+                    new Vector4(t[3], t[7], t[11], t[15])
+                );
+            }
+
+            // 예외 처리
+            Debug.LogError("Invalid transform data");
+            return Matrix4x4.identity;
         }
 
-        public static void ApplyMatrixToTransform(Transform target, Matrix4x4 matrix)
+
+
+        public static void ApplyMatrixToTransform(Transform target, in Matrix4x4 matrix)
         {
-            // 1. Translation (localPosition)
+            // 1) 위치 ( Translation )
             Vector3 translation = matrix.GetColumn(3);
 
-            // 2. Scale (localScale)
-            var scale = new Vector3(
-                matrix.GetColumn(0).magnitude, // X �� ������
-                matrix.GetColumn(1).magnitude, // Y �� ������
-                matrix.GetColumn(2).magnitude  // Z �� ������
+            // 2) 스케일 (단순 컬럼의 크기)
+            Vector3 scale = new Vector3(
+                matrix.GetColumn(0).magnitude,
+                matrix.GetColumn(1).magnitude,
+                matrix.GetColumn(2).magnitude
             );
 
-            // 3. Rotation (localRotation)
-            //Vector3 normalizedX = matrix.GetColumn(0).normalized;
-            Vector3 normalizedY = matrix.GetColumn(1).normalized;
-            Vector3 normalizedZ = matrix.GetColumn(2).normalized;
+            // 3) 회전
+            //  - 음수 스케일이 섞여 있으면 Unity 내부적으로 "뒤집힌 축"을 양수로 만들어 놓고 rotation을 추출함.
+            //  - 그래도 LookRotation(...)으로 직접 구하는 것보다 안전함
+            Quaternion rotation = matrix.rotation;
+            // Vector3 euler = rotation.eulerAngles;
+            // euler.z *= -1;
+            // rotation = Quaternion.Euler(euler);
 
-            var forward = normalizedZ.magnitude > 0 ? normalizedZ : Vector3.forward;
-            var up = normalizedY.magnitude > 0 ? normalizedY : Vector3.up;
-
-            var rotation = Quaternion.LookRotation(forward, up);
-            //Quaternion rotation = Quaternion.FromToRotation(Vector3.right, normalizedX) *
-            //              Quaternion.FromToRotation(Vector3.up, normalizedY);
-
-            //Quaternion rotation = matrix.rotation;
-
-
-            // 4. Transform�� ����
+            // 4) 실제 Transform에 적용
             target.localPosition = translation;
             target.localScale = scale;
             target.localRotation = rotation;
         }
 
+
+
         // 해당 BDObject의 모든 Parent Transform을 적용한 WorldMatrix 반환
-        public static float[] GetWorldMatrix(BdObject bdObject)
-{
-    BdObject obj = bdObject;
-    var transforms = new float[16];
-    
-    // 초기 transforms를 bdObject의 로컬 Transform으로 설정
-    for (int i = 0; i < 16; i++)
-    {
-        transforms[i] = bdObject.Transforms[i];
-    }
+        // public static Matrix4x4 GetWorldMatrix(BdObject bdObject)
+        // {
+        //     BdObject obj = bdObject;
+        //     Matrix4x4 transforms = GetMatrix(bdObject.Transforms);
 
-    float[] temp = new float[16];
+        //     while (obj.Parent != null)
+        //     {
+        //         BdObject parent = obj.Parent;
+        //         Matrix4x4 parentMatrix = GetMatrix(parent.Transforms);
 
-    while (obj.Parent != null)  // 부모가 존재하는 동안 반복
-    {
-        BdObject parent = obj.Parent;
+        //         transforms = parentMatrix * transforms;
+        //         obj = parent;
+        //     }
 
-        // 부모 * 현재 행렬을 곱함 (부모를 먼저 적용)
-        for (int i = 0; i < 4; i++)
+        //     return transforms;
+        // }
+
+        /// <summary>
+        /// 최상위 부모 오브젝트(root)로부터 시작하여,
+        /// 트리 구조 내의 모든 '잎(leaf) 노드'들의 월드 행렬을 구해 반환한다.
+        /// </summary>
+        /// <param name="root">최상위 부모 BdObject</param>
+        /// <returns>잎 노드 -> 해당 월드행렬 딕셔너리</returns>
+        public static Dictionary<string, Matrix4x4> GetAllLeafWorldMatrices(BdObject root)
         {
-            for (int j = 0; j < 4; j++)
+            var result = new Dictionary<string, Matrix4x4>();
+
+            // 재귀 호출 시작: 처음 parentWorld는 단위행렬(Identity)로 시작
+            TraverseAndCollectLeaf(root, Matrix4x4.identity, result);
+
+            return result;
+        }
+
+        /// <summary>
+        /// 현재 노드(node)와 누적 월드행렬(parentWorld)을 받아,
+        /// 자식들이 있으면 순회하고, 없으면 잎이므로 result에 저장
+        /// </summary>
+        private static void TraverseAndCollectLeaf(
+            BdObject node,
+            Matrix4x4 parentWorld,
+            Dictionary<string, Matrix4x4> result)
+        {
+            // 1) 현재 노드의 로컬 행렬
+            Matrix4x4 localMatrix = GetMatrix(node.Transforms);
+
+            // 2) 부모 월드행렬 x 로컬행렬 => 현재 노드의 월드행렬
+            Matrix4x4 worldMatrix = parentWorld * localMatrix;
+
+            // 3) 자식이 없으면 => 잎(leaf) 노드
+            if (node.Children == null || node.Children.Length == 0)
             {
-                temp[i * 4 + j] =
-                    parent.Transforms[i * 4 + 0] * transforms[0 + j] +
-                    parent.Transforms[i * 4 + 1] * transforms[4 + j] +
-                    parent.Transforms[i * 4 + 2] * transforms[8 + j] +
-                    parent.Transforms[i * 4 + 3] * transforms[12 + j];
+                // result에 기록
+                result[node.ID] = worldMatrix;
+            }
+            else
+            {
+                // 자식이 있으면 모든 자식에 대해 재귀
+                foreach (var child in node.Children)
+                {
+                    TraverseAndCollectLeaf(child, worldMatrix, result);
+                }
             }
         }
-
-        // temp 값을 transforms에 복사하여 기존 배열을 덮어씀
-        for (int i = 0; i < 16; i++)
-        {
-            transforms[i] = temp[i];
-        }
-
-        obj = parent;  // 부모로 이동
-    }
-    return transforms;
-}
 
     }
 }

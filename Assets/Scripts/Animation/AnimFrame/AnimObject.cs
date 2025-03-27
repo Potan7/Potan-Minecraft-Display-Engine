@@ -102,7 +102,7 @@ namespace Animation.AnimFrame
             tick = MaxTick;
             inter = setting.defaultInterpolation;
 
-            var fileManager = GameManager.GetManager<FileManager>();
+            var fileManager = GameManager.GetManager<FileLoadManager>();
 
             // frame.txt 쓴다면
             if (setting.UseFrameTxtFile)

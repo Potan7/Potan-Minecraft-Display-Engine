@@ -7,10 +7,10 @@ namespace Animation
     public class AnimModel : MonoBehaviour
     {
         public string ID;
-        public float[] Transforms;
+        public Matrix4x4 Transforms;
         public GameObject Model;
 
-        public void Init(float[] transforms, GameObject model, string id)
+        public void Init(in Matrix4x4 transforms, GameObject model, string id)
         {
             name = id;
             Model = Instantiate(model, transform);
@@ -18,11 +18,10 @@ namespace Animation
             ID = id;
         }
 
-        public void SetTransformation(float[] transforms)
+        public void SetTransformation(in Matrix4x4 transforms)
         {
             Transforms = transforms;
-            var matrix = AffineTransformation.GetMatrix(transforms);
-            AffineTransformation.ApplyMatrixToTransform(transform, matrix);
+            AffineTransformation.ApplyMatrixToTransform(transform, transforms);
         }
     }
 }

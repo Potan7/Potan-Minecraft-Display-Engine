@@ -61,6 +61,8 @@ namespace BDObjectSystem
             // 디스플레이만 모아놓은 리스트 생성 
             var displayList = BdObjectHelper.SetDisplayList(currentBdObject);
 
+            var IDWorldDict = AffineTransformation.GetAllLeafWorldMatrices(currentBdObject.BdObject);
+
             // 애니메이션용 오브젝트 생성 
             var animList = new List<AnimModel>();
             var animParent = new GameObject("AnimObjectParent").transform;
@@ -70,7 +72,7 @@ namespace BDObjectSystem
             for (int i = 0; i < displayList.Count; i++)
             {
                 var animModel = Instantiate(animModelPrefab, animParent);
-                animModel.Init(AffineTransformation.GetWorldMatrix(displayList[i].BdObject), displayList[i].displayObj.gameObject, displayList[i].BdObject.ID);
+                animModel.Init(IDWorldDict[displayList[i].BdObject.ID], displayList[i].displayObj.gameObject, displayList[i].BdObject.ID);
                 animList.Add(animModel);
             }
 

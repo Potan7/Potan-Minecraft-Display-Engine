@@ -2,7 +2,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 
-namespace System
+namespace ToolSystem
 {
     public class LogConsole : MonoBehaviour
     {

@@ -4,19 +4,24 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using BDObjectSystem;
+using TMPro;
 
 namespace Manager
 {
     public class UIManger : BaseManager
     {
-        private FileManager _fileManager;
+        const string DefaultLoadingText = "Loading...";
+
+        private FileLoadManager _fileManager;
 
         [FormerlySerializedAs("LoadingPanel")] public GameObject loadingPanel;
+        public TextMeshProUGUI loadingText;
+
         private int _cursorID;
 
         private void Start()
         {
-            _fileManager = GameManager.GetManager<FileManager>();
+            _fileManager = GameManager.GetManager<FileLoadManager>();
             GameManager.GetManager<BdObjectManager>();
         }
 
@@ -30,7 +35,13 @@ namespace Manager
             else
             {
                 CursorStack.Pop(_cursorID);
+                loadingText.text = DefaultLoadingText;
             }
+        }
+
+        public void SetLoadingText(string text)
+        {
+            loadingText.text = text;
         }
 
         [UsedImplicitly]

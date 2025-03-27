@@ -69,6 +69,12 @@ namespace BDObjectSystem.Utility
                 
                 if (obj.IsDisplay)
                 {
+                    if (idDataDict.ContainsKey(obj.ID))
+                    {
+                        CustomLog.LogError($"{obj.ID}가 중복됨: 애니메이션 불가능!");
+                        idDataDict.Clear();
+                        return idDataDict;
+                    }
                     idDataDict[obj.ID] = obj;
                 }
                 

@@ -86,7 +86,7 @@ namespace Animation.UI
 
         public void OnAddFrameButtonClicked()
         {
-            GameManager.GetManager<FileManager>().ImportFrame(currentObj, animObjectsTick);
+            GameManager.GetManager<FileLoadManager>().ImportFrame(currentObj, animObjectsTick);
             CloseContectMenu();
         }
 

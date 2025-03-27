@@ -22,7 +22,7 @@ namespace Animation.AnimFrame
 
         private void Start()
         {
-            GameManager.GetManager<FileManager>().animObjList = this;
+            GameManager.GetManager<FileLoadManager>().animObjList = this;
             timeline = GameManager.GetManager<AnimManager>().timeline;
             jump = importButton.sizeDelta.y * 1.5f;
         }
@@ -37,6 +37,11 @@ namespace Animation.AnimFrame
             animObjects.Add(animObject);
 
             importButton.anchoredPosition = new Vector2(importButton.anchoredPosition.x, importButton.anchoredPosition.y - jump);
+
+            var animMan = GameManager.GetManager<AnimManager>();
+            animMan.Tick = 0;
+            animMan.timeline.SetTickTexts(0);
+            
             return animObject;
         }
 
