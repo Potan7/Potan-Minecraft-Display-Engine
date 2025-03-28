@@ -1,5 +1,7 @@
 using System;
 using UnityEngine;
+using SaveLoadSystem;
+using TMPro;
 
 namespace ToolSystem
 {
@@ -9,9 +11,18 @@ namespace ToolSystem
         private const string githubURL = "https://github.com/Potan7/Potan-Minecraft-Display-Engine";
         ExportManager _exportManager;
 
+        public TextMeshProUGUI currentFileText;
+
         void Start()
         {
             _exportManager = GetComponent<ExportManager>();
+
+            GameManager.Setting.exportManager = _exportManager;
+        }
+
+        public void SetCurrentFileText(string fileName)
+        {
+            currentFileText.text = fileName;
         }
 
         public void OnSaveButton()
