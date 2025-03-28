@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -5,7 +6,16 @@ namespace CameraMovement
 {
     public class BdEngineStyleCameraMovement : MonoBehaviour
     {
-        public static bool CanMoveCamera { get; set; } = true;
+        //public static bool CanMoveCamera { get; set; } = true;
+        [Flags]
+        public enum CameraStatus {
+            None = 0,
+            OnAnimPanel = 1 << 0,
+            OnSettingPanel = 1 << 1,
+            OnExportPanel = 1 << 2,
+            OnDraggingPanel = 1 << 3,
+        }
+        public static CameraStatus CurrentCameraStatus { get; set; } = CameraStatus.None;
 
         [Header("References")]
         public Transform pivot; // ī�޶� �ٶ� �ǹ�
@@ -79,7 +89,8 @@ namespace CameraMovement
 
         private void Update()
         {
-            if (!CanMoveCamera) return;
+            //if (!CanMoveCamera) return;
+            if (CurrentCameraStatus != CameraStatus.None) return; // Only when no panel is open
 
             // Action�� ���� �� �б�
             var rotatePressed = _rotateAction.ReadValue<float>() > 0.5f;   // ���콺 ���� ��ư

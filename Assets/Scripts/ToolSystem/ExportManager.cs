@@ -1,4 +1,5 @@
 using System.Collections;
+using CameraMovement;
 using Manager;
 using SimpleFileBrowser;
 using TMPro;
@@ -12,31 +13,43 @@ namespace ToolSystem
 
         public TextMeshProUGUI exportPathText;
         private string exportPath = "result";
-        public string ExportPath {
+        public string ExportPath
+        {
             get => exportPath;
-            set {
+            set
+            {
                 exportPath = value;
                 SetPathText(currentPath);
             }
         }
         private string currentPath;
 
+        private AnimExporter exporter;
+
         private void Start()
         {
             SetPathText(Application.dataPath);
+            exporter = new AnimExporter();
         }
 
         private void SetPathText(string path)
         {
-            currentPath = path;
-            exportPathText.text = (path + '/' + exportPath).Replace('\\', '/');
+            currentPath = string.Concat(path, '/', exportPath);
+            exportPathText.text = currentPath;
         }
 
         public void SetExportPanel(bool isShow)
         {
             exportPanel.SetActive(isShow);
             if (isShow)
+            {
                 SetPathText(currentPath);
+                BdEngineStyleCameraMovement.CurrentCameraStatus |= BdEngineStyleCameraMovement.CameraStatus.OnExportPanel;
+            }
+            else
+            {
+                BdEngineStyleCameraMovement.CurrentCameraStatus &= ~BdEngineStyleCameraMovement.CameraStatus.OnExportPanel;
+            }
         }
 
         public void ChangePath() => StartCoroutine(GetNewPathCoroutine());
@@ -47,14 +60,15 @@ namespace ToolSystem
 
             if (FileBrowser.Success)
             {
-                Debug.Log("Selected Folder: " + FileBrowser.Result[0]);
+                //Debug.Log("Selected Folder: " + FileBrowser.Result[0]);
                 SetPathText(FileBrowser.Result[0]);
             }
         }
 
         public void OnExportButton()
         {
-            
+            //Debug.Log("Exporting to: " + currentPath);
+            exporter.ExportAnimation(currentPath);
         }
     }
 }

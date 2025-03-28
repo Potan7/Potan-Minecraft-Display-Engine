@@ -172,7 +172,6 @@ namespace Manager
         }
 
         // make display and frames from files
-        // ReSharper disable once AsyncVoidMethod
         private async void AfterLoadFile(List<string> filePaths)
         {
             UIManger ui = GameManager.GetManager<UIManger>();
@@ -206,12 +205,12 @@ namespace Manager
             bdObjManager.EndFileImport(fileName);
             animObject.InitAnimModelData();
 
+            FrameInfo.Clear();
+
             CustomLog.Log($"Import is Done! BDObject Count: {GameManager.GetManager<BdObjectManager>().bdObjectCount}");
         }
 
         // make frame from file
-        // ReSharper disable Unity.PerformanceAnalysis
-        // ReSharper disable once AsyncVoidMethod
         private async void AfterLoadFrame(string filepath, AnimObject target, int tick)
         {
             GameManager.GetManager<UIManger>().SetLoadingPanel(true);
@@ -248,7 +247,6 @@ namespace Manager
         }
 
         // making display from file
-
         public async Task<AnimObject> MakeDisplay(string filepath, string fileName)
         {
             // get file

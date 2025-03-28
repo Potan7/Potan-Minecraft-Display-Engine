@@ -43,12 +43,12 @@ namespace Animation.UI
                 ))
             {
                 isMouseEnter = true;
-                BdEngineStyleCameraMovement.CanMoveCamera = false;
+                BdEngineStyleCameraMovement.CurrentCameraStatus |= BdEngineStyleCameraMovement.CameraStatus.OnAnimPanel;
             }
             else
             {
                 isMouseEnter = false;
-                BdEngineStyleCameraMovement.CanMoveCamera = true;
+                BdEngineStyleCameraMovement.CurrentCameraStatus &= ~BdEngineStyleCameraMovement.CameraStatus.OnAnimPanel;
 
             }
         }

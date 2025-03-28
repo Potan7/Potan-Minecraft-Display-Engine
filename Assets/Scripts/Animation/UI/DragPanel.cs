@@ -58,7 +58,7 @@ namespace Animation.UI
                 if (Input.GetMouseButtonUp(0))
                 {
                     _isDragging = false;
-                    BdEngineStyleCameraMovement.CanMoveCamera = true;
+                    BdEngineStyleCameraMovement.CurrentCameraStatus &= ~BdEngineStyleCameraMovement.CameraStatus.OnDraggingPanel;
                 }
             }
         }
@@ -68,7 +68,7 @@ namespace Animation.UI
             if (!isOnOff) return;
 
             _isDragging = true;
-            BdEngineStyleCameraMovement.CanMoveCamera = false;
+            BdEngineStyleCameraMovement.CurrentCameraStatus |= BdEngineStyleCameraMovement.CameraStatus.OnDraggingPanel;
         }
 
         public void SetPanelSize(float y)

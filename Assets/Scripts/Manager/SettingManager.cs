@@ -158,6 +158,14 @@ namespace Manager
         public void SetSettingPanel(bool isOn)
         {
             settingPanel.SetActive(isOn);
+            if (isOn)
+            {
+                BdEngineStyleCameraMovement.CurrentCameraStatus |= BdEngineStyleCameraMovement.CameraStatus.OnSettingPanel;
+            }
+            else
+            {
+                BdEngineStyleCameraMovement.CurrentCameraStatus &= ~BdEngineStyleCameraMovement.CameraStatus.OnSettingPanel;
+            }
         }
 
         private void OnEndEditValue(string value, int idx)
