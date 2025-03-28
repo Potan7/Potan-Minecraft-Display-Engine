@@ -3,7 +3,7 @@ using UnityEngine;
 using SaveLoadSystem;
 using TMPro;
 
-namespace ToolSystem
+namespace GameSystem
 {
 
     public class MenuBarManager : MonoBehaviour

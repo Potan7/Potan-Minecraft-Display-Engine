@@ -14,8 +14,9 @@ using UnityEngine;
 using BDObjectSystem.Display;
 using BDObjectSystem.Utility;
 using Animation.AnimFrame;
+using GameSystem;
 
-namespace Manager
+namespace FileSystem
 {
     public class FileLoadManager : BaseManager
     {

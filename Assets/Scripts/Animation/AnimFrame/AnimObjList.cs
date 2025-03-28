@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Manager;
+using GameSystem;
 using UnityEngine;
 using Animation.UI;
 using BDObjectSystem;
+using FileSystem;
 
 namespace Animation.AnimFrame
 {

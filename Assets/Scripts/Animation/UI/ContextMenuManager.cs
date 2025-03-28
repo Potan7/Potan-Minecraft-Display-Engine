@@ -1,8 +1,9 @@
 using System.Collections.Generic;
-using Manager;
+using GameSystem;
 using TMPro;
 using UnityEngine;
 using Animation.AnimFrame;
+using FileSystem;
 
 namespace Animation.UI
 {

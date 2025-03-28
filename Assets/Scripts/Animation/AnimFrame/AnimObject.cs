@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using BDObjectSystem;
-using Manager;
+using GameSystem;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Animation.UI;
 using BDObjectSystem.Utility;
+using FileSystem;
 
 namespace Animation.AnimFrame
 {

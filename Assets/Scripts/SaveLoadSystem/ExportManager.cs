@@ -1,6 +1,5 @@
 using System.Collections;
-using CameraMovement;
-using Manager;
+using GameSystem;
 using SimpleFileBrowser;
 using TMPro;
 using UnityEngine;
