@@ -21,7 +21,8 @@
         "SingularityGroup.HotReload.RuntimeDependencies2019.dll",
         "SingularityGroup.HotReload.RuntimeDependencies2020.dll",
         "SingularityGroup.HotReload.RuntimeDependencies2022.dll",
-        "SingularityGroup.HotReload.EditorDependencies.dll"
+        "SingularityGroup.HotReload.EditorDependencies.dll",
+        "Sirenix.OdinInspector.Editor.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": []

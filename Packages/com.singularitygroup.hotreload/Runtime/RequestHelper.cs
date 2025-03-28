@@ -345,13 +345,25 @@ namespace SingularityGroup.HotReload {
             }
         }
         
+        public static bool IsReleaseMode() {
+#           if (UNITY_EDITOR && UNITY_2022_1_OR_NEWER)
+                return UnityEditor.Compilation.CompilationPipeline.codeOptimization == UnityEditor.Compilation.CodeOptimization.Release;
+#           elif (UNITY_EDITOR)
+                return false;
+#           elif (DEBUG)
+                return false;
+#           else
+                return true;
+#endif
+        }
+        
         public static Task RequestClearPatches() {
-            var body = SerializeRequestBody(new CompileRequest(serverInfo.rootPath));
+            var body = SerializeRequestBody(new CompileRequest(serverInfo.rootPath, IsReleaseMode()));
             return PostJson(url + "/clearpatches", body, 10);
         }
         
         public static Task RequestCompile() {
-            var body = SerializeRequestBody(new CompileRequest(serverInfo.rootPath));
+            var body = SerializeRequestBody(new CompileRequest(serverInfo.rootPath, IsReleaseMode()));
             return PostJson(url + "/compile", body, 10);
         }
         

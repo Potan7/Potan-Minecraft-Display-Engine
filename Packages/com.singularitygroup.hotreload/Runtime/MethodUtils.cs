@@ -14,8 +14,21 @@ namespace SingularityGroup.HotReload {
                 ptr->monoMethodFlags |= Interop.MonoMethodFlags.skip_visibility;
             }
         }
+
+        public static unsafe bool IsMethodInlined(MethodBase method) {
+            if(IntPtr.Size == sizeof(long)) {
+                var ptr = (Interop.MonoMethod64*)method.MethodHandle.Value.ToPointer();
+                return (ptr -> monoMethodFlags & Interop.MonoMethodFlags.inline_info) == Interop.MonoMethodFlags.inline_info;
+            } else {
+                var ptr = (Interop.MonoMethod32*)method.MethodHandle.Value.ToPointer();
+                return (ptr -> monoMethodFlags & Interop.MonoMethodFlags.inline_info) == Interop.MonoMethodFlags.inline_info;
+            }
+        }
 #else
         public static void DisableVisibilityChecks(MethodBase method) { }
+        public static bool IsMethodInlined(MethodBase method) {
+             return false; 
+        }
 #endif
     }
 }

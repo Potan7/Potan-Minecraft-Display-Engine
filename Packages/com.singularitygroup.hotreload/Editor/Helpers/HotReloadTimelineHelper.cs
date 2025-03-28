@@ -28,6 +28,7 @@ namespace SingularityGroup.HotReload.Editor {
     internal enum AlertEntryType {
         Error,
         Failure,
+        InlinedMethod,
         PatchApplied,
         PartiallySupportedChange,
         UndetectedChange,
@@ -57,9 +58,9 @@ namespace SingularityGroup.HotReload.Editor {
         public readonly EntryType entryType;
         public readonly bool detiled;
         public readonly DateTime createdAt;
-        public readonly string[] patchedMethodsDisplayNames;
+        public readonly string[] patchedMembersDisplayNames;
 
-        public AlertData(AlertEntryType alertEntryType, DateTime createdAt, bool detiled = false, EntryType entryType = EntryType.Standalone, string errorString = null, string methodName = null, string methodSimpleName = null, PartiallySupportedChange partiallySupportedChange = default(PartiallySupportedChange), string[] patchedMethodsDisplayNames = null) {
+        public AlertData(AlertEntryType alertEntryType, DateTime createdAt, bool detiled = false, EntryType entryType = EntryType.Standalone, string errorString = null, string methodName = null, string methodSimpleName = null, PartiallySupportedChange partiallySupportedChange = default(PartiallySupportedChange), string[] patchedMembersDisplayNames = null) {
             this.alertEntryType = alertEntryType;
             this.createdAt = createdAt;
             this.detiled = detiled;
@@ -68,7 +69,7 @@ namespace SingularityGroup.HotReload.Editor {
             this.methodName = methodName;
             this.methodSimpleName = methodSimpleName;
             this.partiallySupportedChange = partiallySupportedChange;
-            this.patchedMethodsDisplayNames = patchedMethodsDisplayNames;
+            this.patchedMembersDisplayNames = patchedMembersDisplayNames;
         }
     }
     
@@ -120,9 +121,14 @@ namespace SingularityGroup.HotReload.Editor {
                         case AlertEntryType.Error:
                             CreateErrorEventEntry(errorString: alertData.errorString, entryType: alertData.entryType, createdAt: alertData.createdAt);
                             break;
+#if UNITY_2020_1_OR_NEWER
+                        case AlertEntryType.InlinedMethod:
+                            CreateInlinedMethodsEntry(alertData.patchedMembersDisplayNames, alertData.entryType, alertData.createdAt);
+                            break;
+#endif
                         case AlertEntryType.Failure:
                             if (alertData.entryType == EntryType.Parent) {
-                                CreateReloadFinishedWithWarningsEventEntry(createdAt: alertData.createdAt, patchedMethodsDisplayNames: alertData.patchedMethodsDisplayNames);
+                                CreateReloadFinishedWithWarningsEventEntry(createdAt: alertData.createdAt, patchedMembersDisplayNames: alertData.patchedMembersDisplayNames);
                             } else {
                                 CreatePatchFailureEventEntry(errorString: alertData.errorString, methodName: alertData.methodName, methodSimpleName: alertData.methodSimpleName, entryType: alertData.entryType, createdAt: alertData.createdAt);
                             }
@@ -130,12 +136,12 @@ namespace SingularityGroup.HotReload.Editor {
                         case AlertEntryType.PatchApplied:
                             CreateReloadFinishedEventEntry(
                                 createdAt: alertData.createdAt,
-                                patchedMethodsDisplayNames: alertData.patchedMethodsDisplayNames
+                                patchedMethodsDisplayNames: alertData.patchedMembersDisplayNames
                             );
                             break;
                         case AlertEntryType.PartiallySupportedChange:
                             if (alertData.entryType == EntryType.Parent) {
-                                CreateReloadPartiallyAppliedEventEntry(createdAt: alertData.createdAt, patchedMethodsDisplayNames: alertData.patchedMethodsDisplayNames);
+                                CreateReloadPartiallyAppliedEventEntry(createdAt: alertData.createdAt, patchedMethodsDisplayNames: alertData.patchedMembersDisplayNames);
                             } else {
                                 CreatePartiallyAppliedEventEntry(alertData.partiallySupportedChange, entryType: alertData.entryType, detailed: alertData.detiled, createdAt: alertData.createdAt);
                             }
@@ -184,17 +190,23 @@ namespace SingularityGroup.HotReload.Editor {
             { AlertType.UndetectedChange, "undetected" },
         };
         
+#pragma warning disable CS0612 // obsolete
         public static Dictionary<PartiallySupportedChange, string> partiallySupportedChangeDescriptions = new Dictionary<PartiallySupportedChange, string> {
             {PartiallySupportedChange.LambdaClosure, "A lambda closure was edited (captured variable was added or removed). Changes to it will only be visible to the next created lambda(s)."},
             {PartiallySupportedChange.EditAsyncMethod, "An async method was edited. Changes to it will only be visible the next time this method is called."},
             {PartiallySupportedChange.AddMonobehaviourMethod, "A new method was added. It will not show up in the Inspector until the next full recompilation."},
             {PartiallySupportedChange.EditMonobehaviourField, "A field in a MonoBehaviour was removed or reordered. The inspector will not notice this change until the next full recompilation."},
             {PartiallySupportedChange.EditCoroutine, "An IEnumerator/IEnumerable was edited. When used as a coroutine, changes to it will only be visible the next time the coroutine is created."},
+            {PartiallySupportedChange.EditGenericFieldInitializer, "A field initializer inside generic class was edited. Field initializer will not have any effect until the next full recompilation."},
             {PartiallySupportedChange.AddEnumMember, "An enum member was added. ToString and other reflection methods work only after the next full recompilation. Additionally, changes to the enum order may not apply until you patch usages in other places of the code."},
             {PartiallySupportedChange.EditFieldInitializer, "A field initializer was edited. Changes will only apply to new instances of that type, since the initializer for an object only runs when it is created."},
             {PartiallySupportedChange.AddMethodWithAttributes, "A method with attributes was added. Method attributes will not have any effect until the next full recompilation."},
+            {PartiallySupportedChange.AddFieldWithAttributes, "A field with attributes was added. Field attributes will not have any effect until the next full recompilation."},
             {PartiallySupportedChange.GenericMethodInGenericClass, "A generic method was edited. Usages in non-generic classes applied, but usages in the generic classes are not supported."},
+            {PartiallySupportedChange.NewCustomSerializableField, "A new custom serializable field was added. The inspector will not notice this change until the next full recompilation."},
+            {PartiallySupportedChange.MultipleFieldsEditedInTheSameType, "Multiple fields modified in the same type during a single patch. Their values have been reset."},
         };
+#pragma warning restore CS0612
         
         internal static List<AlertEntry> Suggestions = new List<AlertEntry>();
         internal static int UnsupportedChangesCount => EventsTimeline.Count(alert => alert.alertType == AlertType.UnsupportedChange && alert.entryType != EntryType.Child);
@@ -339,6 +351,40 @@ namespace SingularityGroup.HotReload.Editor {
             ));
         }
         
+#if UNITY_2020_1_OR_NEWER
+        internal static void CreateInlinedMethodsEntry(string[] patchedMethodsDisplayNames, EntryType entryType = EntryType.Standalone, DateTime? createdAt = null) {
+            var truncated = false;
+            if (patchedMethodsDisplayNames?.Length > 25) {
+                patchedMethodsDisplayNames = TruncateList(patchedMethodsDisplayNames, 25);
+                truncated = true;
+            }
+            var patchesList = patchedMethodsDisplayNames?.Length > 0 ? string.Join("\n• ", patchedMethodsDisplayNames) : "";
+            var timestamp = createdAt ?? DateTime.Now;
+            var entry = new AlertEntry(
+                timestamp: timestamp,
+                alertType : AlertType.UnsupportedChange, 
+                title: "Failed applying patch to method", 
+                description: $"Some methods got inlined by the Unity compiler and cannot be patched by Hot Reload. Switch to Debug mode to avoid this problem.\n\n• {(truncated ? patchesList + "\n..." : patchesList)}",
+                entryType: EntryType.Parent,
+                actionData: () => {
+                    GUILayout.Space(10f);
+                    using (new EditorGUILayout.HorizontalScope()) {
+                        RenderCompileButton();
+                        var suggestion = HotReloadSuggestionsHelper.suggestionMap[HotReloadSuggestionKind.SwitchToDebugModeForInlinedMethods];
+                        if (suggestion?.actionData != null) {
+                            suggestion.actionData();
+                        }
+                    }
+                },
+                alertData: new AlertData(AlertEntryType.InlinedMethod, createdAt: timestamp, patchedMembersDisplayNames: patchedMethodsDisplayNames, entryType: EntryType.Parent)
+            );
+            InsertEntry(entry);
+            if (patchedMethodsDisplayNames?.Length > 0) {
+                expandedEntries.Add(entry);
+            }
+        }
+#endif
+        
         internal static void CreatePatchFailureEventEntry(string errorString, string methodName, string methodSimpleName = null, EntryType entryType = EntryType.Standalone, DateTime? createdAt = null) {
             var timestamp = createdAt ?? DateTime.Now;
             ErrorData errorData = ErrorData.GetErrorData(errorString);
@@ -390,7 +436,7 @@ namespace SingularityGroup.HotReload.Editor {
                     AlertEntryType.PatchApplied, 
                     createdAt: timestamp, 
                     entryType: EntryType.Standalone,
-                    patchedMethodsDisplayNames: patchedMethodsDisplayNames)
+                    patchedMembersDisplayNames: patchedMethodsDisplayNames)
             );
             
             InsertEntry(entry);
@@ -399,24 +445,24 @@ namespace SingularityGroup.HotReload.Editor {
             }
         }
         
-        internal static void CreateReloadFinishedWithWarningsEventEntry(DateTime? createdAt = null, string[] patchedMethodsDisplayNames = null) {
+        internal static void CreateReloadFinishedWithWarningsEventEntry(DateTime? createdAt = null, string[] patchedMembersDisplayNames = null) {
             var truncated = false;
-            if (patchedMethodsDisplayNames?.Length > 25) {
-                patchedMethodsDisplayNames = TruncateList(patchedMethodsDisplayNames, 25);
+            if (patchedMembersDisplayNames?.Length > 25) {
+                patchedMembersDisplayNames = TruncateList(patchedMembersDisplayNames, 25);
                 truncated = true;
             }
-            var patchesList = patchedMethodsDisplayNames?.Length > 0 ? string.Join("\n• ", patchedMethodsDisplayNames) : "";
+            var patchesList = patchedMembersDisplayNames?.Length > 0 ? string.Join("\n• ", patchedMembersDisplayNames) : "";
             var timestamp = createdAt ?? DateTime.Now;
             var entry = new AlertEntry(
                 timestamp: timestamp,
                 alertType: AlertType.UnsupportedChange,
                 title: EditorIndicationState.IndicationText[EditorIndicationState.IndicationStatus.Unsupported],
-                description: patchedMethodsDisplayNames?.Length > 0 ? $"• {(truncated ? patchesList + "\n...\n\nSee unsupported changes below" : patchesList + "\n\nSee unsupported changes below")}" : "See detailed entries below",
+                description: patchedMembersDisplayNames?.Length > 0 ? $"• {(truncated ? patchesList + "\n...\n\nSee unsupported changes below" : patchesList + "\n\nSee unsupported changes below")}" : "See detailed entries below",
                 entryType: EntryType.Parent,
-                alertData: new AlertData(AlertEntryType.Failure, createdAt: timestamp, entryType: EntryType.Parent, patchedMethodsDisplayNames: patchedMethodsDisplayNames)
+                alertData: new AlertData(AlertEntryType.Failure, createdAt: timestamp, entryType: EntryType.Parent, patchedMembersDisplayNames: patchedMembersDisplayNames)
             );
             InsertEntry(entry);
-            if (patchedMethodsDisplayNames?.Length > 0) {
+            if (patchedMembersDisplayNames?.Length > 0) {
                 expandedEntries.Add(entry);
             }
         }
@@ -435,7 +481,7 @@ namespace SingularityGroup.HotReload.Editor {
                 title: EditorIndicationState.IndicationText[EditorIndicationState.IndicationStatus.PartiallySupported],
                 description: patchedMethodsDisplayNames?.Length > 0 ? $"• {(truncated ? patchesList + "\n...\n\nSee partially applied changes below" : patchesList + "\n\nSee partially applied changes below")}"  : "See detailed entries below",
                 entryType: EntryType.Parent,
-                alertData: new AlertData(AlertEntryType.PartiallySupportedChange, createdAt: timestamp, entryType: EntryType.Parent, patchedMethodsDisplayNames: patchedMethodsDisplayNames)
+                alertData: new AlertData(AlertEntryType.PartiallySupportedChange, createdAt: timestamp, entryType: EntryType.Parent, patchedMembersDisplayNames: patchedMethodsDisplayNames)
             );
             InsertEntry(entry);
             if (patchedMethodsDisplayNames?.Length > 0) {
@@ -523,6 +569,7 @@ namespace SingularityGroup.HotReload.Editor {
 
         // performance optimization (Enum.ToString uses reflection)
         internal static string ToString(this PartiallySupportedChange change) {
+#pragma warning disable CS0612 // obsolete
             switch (change) {
                 case PartiallySupportedChange.LambdaClosure:
                     return nameof(PartiallySupportedChange.LambdaClosure);
@@ -531,9 +578,11 @@ namespace SingularityGroup.HotReload.Editor {
                 case PartiallySupportedChange.AddMonobehaviourMethod:
                    return nameof(PartiallySupportedChange.AddMonobehaviourMethod);
                 case PartiallySupportedChange.EditMonobehaviourField:
-                   return nameof(PartiallySupportedChange.EditMonobehaviourField);
+                    return nameof(PartiallySupportedChange.EditMonobehaviourField);
                 case PartiallySupportedChange.EditCoroutine:
                    return nameof(PartiallySupportedChange.EditCoroutine);
+                case PartiallySupportedChange.EditGenericFieldInitializer:
+                   return nameof(PartiallySupportedChange.EditGenericFieldInitializer);
                 case PartiallySupportedChange.AddEnumMember:
                    return nameof(PartiallySupportedChange.AddEnumMember);
                 case PartiallySupportedChange.EditFieldInitializer:
@@ -542,6 +591,13 @@ namespace SingularityGroup.HotReload.Editor {
                    return nameof(PartiallySupportedChange.AddMethodWithAttributes);
                 case PartiallySupportedChange.GenericMethodInGenericClass:
                    return nameof(PartiallySupportedChange.GenericMethodInGenericClass);
+                case PartiallySupportedChange.AddFieldWithAttributes:
+                   return nameof(PartiallySupportedChange.AddFieldWithAttributes);
+                case PartiallySupportedChange.NewCustomSerializableField:
+                   return nameof(PartiallySupportedChange.NewCustomSerializableField);
+                case PartiallySupportedChange.MultipleFieldsEditedInTheSameType:
+                   return nameof(PartiallySupportedChange.MultipleFieldsEditedInTheSameType);
+#pragma warning restore CS0612
                 default:
                     throw new ArgumentOutOfRangeException(nameof(change), change, null);
             }

@@ -90,6 +90,7 @@ namespace Manager
         enum SliderType
         {
             CameraSpeed,
+            CameraMoveSpeed,
             CameraZoomSpeed,
         }
         #endregion
@@ -133,8 +134,13 @@ namespace Manager
             }
             if (PlayerPrefs.HasKey("cameraSpeed"))
             {
-                cameraMovement.cameraSpeed = PlayerPrefs.GetFloat("cameraSpeed");
-                sliders[(int)SliderType.CameraSpeed].value = cameraMovement.cameraSpeed;
+                cameraMovement.cameraRotateSpeed = PlayerPrefs.GetFloat("cameraSpeed");
+                sliders[(int)SliderType.CameraSpeed].value = cameraMovement.cameraRotateSpeed;
+            }
+            if (PlayerPrefs.HasKey("cameraMoveSpeed"))
+            {
+                cameraMovement.panSpeed = PlayerPrefs.GetFloat("cameraMoveSpeed");
+                sliders[(int)SliderType.CameraMoveSpeed].value = cameraMovement.panSpeed;
             }
             if (PlayerPrefs.HasKey("cameraZoomSpeed"))
             {
@@ -152,6 +158,14 @@ namespace Manager
         public void SetSettingPanel(bool isOn)
         {
             settingPanel.SetActive(isOn);
+            if (isOn)
+            {
+                BdEngineStyleCameraMovement.CurrentCameraStatus |= BdEngineStyleCameraMovement.CameraStatus.OnSettingPanel;
+            }
+            else
+            {
+                BdEngineStyleCameraMovement.CurrentCameraStatus &= ~BdEngineStyleCameraMovement.CameraStatus.OnSettingPanel;
+            }
         }
 
         private void OnEndEditValue(string value, int idx)
@@ -224,8 +238,12 @@ namespace Manager
             switch (type)
             {
                 case SliderType.CameraSpeed:
-                    cameraMovement.cameraSpeed = value;
+                    cameraMovement.cameraRotateSpeed = value;
                     PlayerPrefs.SetFloat("cameraSpeed", value);
+                    break;
+                case SliderType.CameraMoveSpeed:
+                    cameraMovement.panSpeed = value;
+                    PlayerPrefs.SetFloat("cameraMoveSpeed", value);
                     break;
                 case SliderType.CameraZoomSpeed:
                     cameraMovement.zoomSpeed = value;
