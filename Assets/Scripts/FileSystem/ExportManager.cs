@@ -4,7 +4,7 @@ using SimpleFileBrowser;
 using TMPro;
 using UnityEngine;
 
-namespace SaveLoadSystem
+namespace FileSystem
 {
     public class ExportManager : MonoBehaviour
     {
@@ -23,12 +23,9 @@ namespace SaveLoadSystem
         }
         private string currentPath;
 
-        private AnimExporter exporter;
-
         private void Start()
         {
             SetPathText(Application.dataPath);
-            exporter = new AnimExporter();
         }
 
         private void SetPathText(string path)
@@ -67,7 +64,11 @@ namespace SaveLoadSystem
         public void OnExportButton()
         {
             //Debug.Log("Exporting to: " + currentPath);
-            exporter.ExportAnimation(currentPath);
+        }
+
+        public void ExportAnimation()
+        {
+            
         }
     }
 }
