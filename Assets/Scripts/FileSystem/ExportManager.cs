@@ -40,11 +40,11 @@ namespace FileSystem
             if (isShow)
             {
                 SetPathText(currentPath);
-                BdEngineStyleCameraMovement.CurrentCameraStatus |= BdEngineStyleCameraMovement.CameraStatus.OnExportPanel;
+                UIManager.CurrentUIStatus |= UIManager.UIStatus.OnPopupPanel;
             }
             else
             {
-                BdEngineStyleCameraMovement.CurrentCameraStatus &= ~BdEngineStyleCameraMovement.CameraStatus.OnExportPanel;
+                UIManager.CurrentUIStatus &= ~UIManager.UIStatus.OnPopupPanel;
             }
         }
 

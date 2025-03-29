@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Numerics;
 using BDObjectSystem;
 
-namespace SaveLoadSystem
+namespace FileSystem
 {
     [Serializable]
     public class MDEFile
     {
-        public string name;
+        public string name = string.Empty;
         public string version;
         public List<AnimObjectFile> animObjects;
     }

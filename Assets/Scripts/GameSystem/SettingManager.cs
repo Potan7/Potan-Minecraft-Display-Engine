@@ -160,11 +160,11 @@ namespace GameSystem
             settingPanel.SetActive(isOn);
             if (isOn)
             {
-                BdEngineStyleCameraMovement.CurrentCameraStatus |= BdEngineStyleCameraMovement.CameraStatus.OnSettingPanel;
+                UIManager.CurrentUIStatus |= UIManager.UIStatus.OnSettingPanel;
             }
             else
             {
-                BdEngineStyleCameraMovement.CurrentCameraStatus &= ~BdEngineStyleCameraMovement.CameraStatus.OnSettingPanel;
+                UIManager.CurrentUIStatus &= ~UIManager.UIStatus.OnSettingPanel;
             }
         }
 

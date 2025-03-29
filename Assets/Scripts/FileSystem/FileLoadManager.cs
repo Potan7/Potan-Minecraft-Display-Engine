@@ -101,7 +101,7 @@ namespace FileSystem
         /// </summary>
         private async Task OnFilesSelectedForMainImportAsync(List<string> filePaths)
         {
-            var ui = GameManager.GetManager<UIManger>();
+            var ui = GameManager.GetManager<UIManager>();
             ui.SetLoadingPanel(true);
             ui.SetLoadingText("Reading and Sorting Files...");
 
@@ -129,7 +129,7 @@ namespace FileSystem
 
         private async Task ImportFilesAsync(List<string> filePaths)
         {
-            var ui = GameManager.GetManager<UIManger>();
+            var ui = GameManager.GetManager<UIManager>();
             var settingManager = GameManager.Setting;
 
             // 1) frame.txt 파싱
@@ -228,7 +228,7 @@ namespace FileSystem
 
         private async Task OnFrameFileSelectedAsync(string filePath, AnimObject target, int tick)
         {
-            var ui = GameManager.GetManager<UIManger>();
+            var ui = GameManager.GetManager<UIManager>();
             ui.SetLoadingPanel(true);
 
             try

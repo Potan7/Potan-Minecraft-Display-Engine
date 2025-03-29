@@ -3,12 +3,12 @@ using GameSystem;
 using Newtonsoft.Json;
 using UnityEngine;
 
-namespace SaveLoadSystem
+namespace FileSystem
 {
     public class SaveManager : BaseManager
     {
-        [SerializeField]
-        private MDEFile currentMDEFile;
+        public MDEFile currentMDEFile;
+        public bool IsNoneSaved => string.IsNullOrEmpty(currentMDEFile.name);
 
         public void MakeNewMDEFile(string name)
         {
@@ -20,17 +20,11 @@ namespace SaveLoadSystem
             };
         }
 
-        public void SaveMDEFile(string path, string fileName)
+        public void SaveMDEFile(string path)
         {
-            if (currentMDEFile == null)
-            {
-                Debug.LogError("No MDE file to save.");
-                return;
-            }
-
             // Serialize currentMDEFile to JSON and save to the specified path
             string json = JsonConvert.SerializeObject(currentMDEFile, Formatting.Indented);
-            string fullPath = System.IO.Path.Combine(path, fileName + ".mde");
+            string fullPath = System.IO.Path.Combine(path, currentMDEFile.name + ".mde");
             System.IO.File.WriteAllText(fullPath, json);
         }
     }
