@@ -1,4 +1,4 @@
-using CameraMovement;
+using GameSystem;
 using Riten.Native.Cursors.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;

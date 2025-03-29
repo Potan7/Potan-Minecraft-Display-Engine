@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using BDObjectSystem;
 
-namespace Manager
+namespace GameSystem
 {
     public class SystemManager : BaseManager
     {

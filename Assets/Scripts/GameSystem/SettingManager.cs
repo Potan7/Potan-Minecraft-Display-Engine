@@ -1,13 +1,13 @@
 using System;
 using Animation;
-using CameraMovement;
+using GameSystem;
 using TMPro;
-using SaveLoadSystem;
+using FileSystem;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-namespace Manager
+namespace GameSystem
 {
     public class SettingManager : BaseManager
     {

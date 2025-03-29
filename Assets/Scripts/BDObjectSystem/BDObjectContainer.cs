@@ -1,4 +1,4 @@
-using Manager;
+using GameSystem;
 using UnityEngine;
 using BDObjectSystem.Display;
 using BDObjectSystem.Utility;

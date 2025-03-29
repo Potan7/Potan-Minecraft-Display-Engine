@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Serialization;
-using Manager;
+using GameSystem;
 using BDObjectSystem.Display;
 using BDObjectSystem.Utility;
 using Animation;

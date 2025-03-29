@@ -5,8 +5,9 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using BDObjectSystem;
 using TMPro;
+using FileSystem;
 
-namespace Manager
+namespace GameSystem
 {
     public class UIManger : BaseManager
     {
