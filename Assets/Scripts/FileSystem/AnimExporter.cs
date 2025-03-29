@@ -1,11 +1,11 @@
 using GameSystem;
 using UnityEngine;
 
-namespace SaveLoadSystem
+namespace FileSystem
 {
     public class AnimExporter
     {
-        SettingManager settingManager = GameManager.GetManager<SettingManager>();
+        SettingManager settingManager = GameManager.Setting;
 
         public void ExportAnimation(string path)
         {
