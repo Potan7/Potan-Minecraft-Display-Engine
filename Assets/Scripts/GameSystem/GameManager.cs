@@ -19,7 +19,7 @@ public class GameManager : MonoBehaviour
     }
 
     // Managers
-    private readonly Dictionary<Type, BaseManager> _managers = new Dictionary<Type, BaseManager>();
+    private static readonly Dictionary<Type, BaseManager> _managers = new Dictionary<Type, BaseManager>();
 
     public static SettingManager Setting => GetManager<SettingManager>();
 
@@ -29,10 +29,9 @@ public class GameManager : MonoBehaviour
     public static T GetManager<T>() where T : BaseManager
     {
         // return manager by Type
-        if (_instance._managers.TryGetValue(typeof(T), out var manager))
+        if (_managers.TryGetValue(typeof(T), out var manager))
         {
-            if (manager is T value)
-                return value;
+            return manager as T;
         }
 
         CustomLog.LogError($"Manager of type {typeof(T)} not found!");
@@ -75,6 +74,11 @@ public class GameManager : MonoBehaviour
         }
 
         playerInput = GetComponent<PlayerInput>();
+    }
+
+    private void OnDestroy()
+    {
+        _managers.Clear();
     }
 }
 

@@ -20,6 +20,7 @@ namespace BDObjectSystem
 
         public JObject Options;
         public BdObject[] Children;
+        
         [JsonExtensionData]
         public Dictionary<string, object> ExtraData;
 

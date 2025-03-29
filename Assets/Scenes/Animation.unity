@@ -11809,7 +11809,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentFileText: {fileID: 1581310613}
   FilePanelButtons: {fileID: 2027496731}
-  SavePanel: {fileID: 28402151}
+  saveButtons: []
 --- !u!114 &810254531
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14995,6 +14995,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10a4c0a302efc2749bcffb59639ea8e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  MDEFilePath: 
   currentMDEFile:
     name: 
     version: 
@@ -17799,7 +17800,7 @@ MonoBehaviour:
   m_fontSizeMax: 72
   m_fontStyle: 2
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -18509,7 +18510,7 @@ MonoBehaviour:
   m_fontSizeMax: 72
   m_fontStyle: 0
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0

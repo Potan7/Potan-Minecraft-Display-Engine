@@ -30,6 +30,8 @@ namespace FileSystem
         /// </summary>
         public readonly Dictionary<string, (int, int)> FrameInfo = new Dictionary<string, (int, int)>();
 
+        private FileBrowser.Filter loadFilter = new FileBrowser.Filter("Files", ".bdengine", ".bdstudio");
+
         #endregion
 
         #region Unity 라이프사이클
@@ -46,9 +48,6 @@ namespace FileSystem
 
         private void SetupFileBrowser()
         {
-            FileBrowser.SetFilters(false,
-                new FileBrowser.Filter("Files", ".bdengine", ".bdstudio"));
-
             FileBrowser.AddQuickLink("Launcher Folder", Application.dataPath + "/../");
 
             // OS 별로 “Downloads” 폴더 찾기
@@ -77,6 +76,8 @@ namespace FileSystem
         /// </summary>
         private IEnumerator ShowLoadDialogCoroutine(Func<List<string>, Task> callback)
         {
+            FileBrowser.SetFilters(false, loadFilter);
+
             yield return FileBrowser.WaitForLoadDialog(
                 pickMode: FileBrowser.PickMode.FilesAndFolders,
                 allowMultiSelection: true,

@@ -2,11 +2,14 @@ using System;
 using UnityEngine;
 using FileSystem;
 using TMPro;
+using System.Collections;
+using SimpleFileBrowser;
+using UnityEngine.UI;
 
 namespace GameSystem
 {
 
-    public class MenuBarManager : MonoBehaviour
+    public class MenuBarManager : BaseManager
     {
         private const string githubURL = "https://github.com/Potan7/Potan-Minecraft-Display-Engine";
         private ExportManager _exportManager;
@@ -15,7 +18,8 @@ namespace GameSystem
         public TextMeshProUGUI currentFileText;
 
         public GameObject FilePanelButtons;
-        public GameObject SavePanel;
+
+        public Button[] saveButtons;
 
         void Start()
         {
@@ -29,32 +33,33 @@ namespace GameSystem
         {
             currentFileText.text = fileName;
         }
+
+        private void UpdateSaveButtonInteraction()
+        {
+            foreach (var button in saveButtons)
+            {
+                button.interactable = _saveManager.IsNoneSaved;
+            }
+        }
         
         #region  Button Events
 
         public void OnSaveButton()
         {
-            if (_saveManager.IsNoneSaved)
+            if (string.IsNullOrEmpty(_saveManager.MDEFilePath))
             {
                 // Save As 실행하기
                 OnSaveAsButton();
             }
             else
             {
-                // Save 하기
+                _saveManager.SaveMDEFile();
             }
         }
 
         public void OnSaveAsButton()
         {
-            SavePanel.SetActive(true);
-            UIManager.CurrentUIStatus |= UIManager.UIStatus.OnPopupPanel;
-        }
-
-        public void OnSavePanelCloseButton()
-        {
-            SavePanel.SetActive(false);
-            UIManager.CurrentUIStatus &= ~UIManager.UIStatus.OnPopupPanel;
+            _saveManager.SaveAsNewFile();
         }
 
         public void OnLoadButton()
@@ -77,6 +82,7 @@ namespace GameSystem
 
         public void OnMenuBarMouseEnter()
         {
+            UpdateSaveButtonInteraction();
             UIManager.CurrentUIStatus |= UIManager.UIStatus.OnMenuBarPanel;
         }
 

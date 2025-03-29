@@ -1,7 +1,7 @@
 using GameSystem;
 using UnityEngine;
 
-namespace SaveLoadSystem
+namespace FileSystem
 {
     public class LoadManager : BaseManager
     {
