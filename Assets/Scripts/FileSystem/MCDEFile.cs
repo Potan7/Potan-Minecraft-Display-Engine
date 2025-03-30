@@ -8,7 +8,7 @@ using BDObjectSystem.Utility;
 namespace FileSystem
 {
     [Serializable]
-    public class MDEFile
+    public class MCDEFile
     {
         public string name = string.Empty;
         public string version;
@@ -27,18 +27,28 @@ namespace FileSystem
             SetInformation(animObject);
         }
 
-        private void SetInformation(AnimObject animObject)
+        public void SetInformation(AnimObject animObject)
         {
             name = animObject.bdFileName;
             model = animObject.rootBDObj.BdObject;
-            frameFiles = new FrameFile[animObject.frames.Count];
+
+            int frameCount = animObject.frames.Count;
+            if (frameFiles == null || frameFiles.Length != frameCount)
+                frameFiles = new FrameFile[frameCount];
 
             var frameValues = animObject.frames.Values;
-            for (int i = 0; i < animObject.frames.Count; i++)
+            int i = 0;
+            foreach (var frame in frameValues)
             {
-                frameFiles[i] = new FrameFile(frameValues[i]);
+                if (frameFiles[i] == null)
+                    frameFiles[i] = new FrameFile(frame);
+                else
+                    frameFiles[i].SetInformation(frame);
+
+                i++;
             }
         }
+
     }
 
     [Serializable]
@@ -61,12 +71,24 @@ namespace FileSystem
             tick = frame.tick;
             interpolation = frame.interpolation;
 
-            worldTransforms = new Dictionary<string, float[]>();
+            if (worldTransforms == null)
+                worldTransforms = new Dictionary<string, float[]>();
+            else
+                worldTransforms.Clear();
+
             foreach (var display in frame.worldTransforms)
             {
-                worldTransforms[display.Key] = AffineTransformation.MatrixToArray(display.Value);
+                if (!worldTransforms.TryGetValue(display.Key, out var array) || array == null || array.Length != 16)
+                {
+                    array = new float[16];
+                    worldTransforms[display.Key] = array;
+                }
+
+                AffineTransformation.MatrixToArray(display.Value, array);
+
             }
         }
+
 
     }
 }

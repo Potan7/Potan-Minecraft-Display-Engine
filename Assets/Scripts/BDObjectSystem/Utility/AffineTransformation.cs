@@ -29,15 +29,23 @@ namespace BDObjectSystem.Utility
             return Matrix4x4.identity;
         }
 
+        public static void MatrixToArray(Matrix4x4 m, float[] array)
+        {
+            if (array == null || array.Length != 16)
+                throw new ArgumentException("array must be a float[16]");
+
+            array[0] = m[0, 0]; array[1] = m[0, 1]; array[2] = m[0, 2]; array[3] = m[0, 3];
+            array[4] = m[1, 0]; array[5] = m[1, 1]; array[6] = m[1, 2]; array[7] = m[1, 3];
+            array[8] = m[2, 0]; array[9] = m[2, 1]; array[10] = m[2, 2]; array[11] = m[2, 3];
+            array[12] = m[3, 0]; array[13] = m[3, 1]; array[14] = m[3, 2]; array[15] = m[3, 3];
+        }
+
+        // 여전히 한 번성용으로 쓰고 싶을 때를 위해 기존 함수도 유지할 수 있음
         public static float[] MatrixToArray(Matrix4x4 m)
         {
-            return new float[]
-            {
-        m[0,0], m[0,1], m[0,2], m[0,3], // row 0
-        m[1,0], m[1,1], m[1,2], m[1,3], // row 1
-        m[2,0], m[2,1], m[2,2], m[2,3], // row 2
-        m[3,0], m[3,1], m[3,2], m[3,3]  // row 3
-            };
+            var array = new float[16];
+            MatrixToArray(m, array);
+            return array;
         }
 
 

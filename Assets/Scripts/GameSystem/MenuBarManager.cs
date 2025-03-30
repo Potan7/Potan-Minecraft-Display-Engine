@@ -53,7 +53,7 @@ namespace GameSystem
             }
             else
             {
-                _saveManager.SaveMDEFile();
+                _saveManager.SaveMCDEFile();
             }
         }
 
@@ -64,7 +64,7 @@ namespace GameSystem
 
         public void OnLoadButton()
         {
-            CustomLog.Log("Load 기능 구현 안되었음");
+            _saveManager.LoadMCDEFile();
         }
 
         public void OnExportButton()

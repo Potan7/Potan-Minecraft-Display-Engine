@@ -71,5 +71,10 @@ namespace Animation.AnimFrame
 
             CustomLog.Log("Line Removed: " + obj.bdFileName);
         }
+
+        public void SetByMCDEFile()
+        {
+            
+        }
     }
 }

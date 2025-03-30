@@ -134,8 +134,8 @@ namespace GameSystem
             }
             if (PlayerPrefs.HasKey("cameraSpeed"))
             {
-                cameraMovement.cameraRotateSpeed = PlayerPrefs.GetFloat("cameraSpeed");
-                sliders[(int)SliderType.CameraSpeed].value = cameraMovement.cameraRotateSpeed;
+                cameraMovement.rotateSpeed = PlayerPrefs.GetFloat("cameraSpeed");
+                sliders[(int)SliderType.CameraSpeed].value = cameraMovement.rotateSpeed;
             }
             if (PlayerPrefs.HasKey("cameraMoveSpeed"))
             {
@@ -238,7 +238,7 @@ namespace GameSystem
             switch (type)
             {
                 case SliderType.CameraSpeed:
-                    cameraMovement.cameraRotateSpeed = value;
+                    cameraMovement.rotateSpeed = value;
                     PlayerPrefs.SetFloat("cameraSpeed", value);
                     break;
                 case SliderType.CameraMoveSpeed:

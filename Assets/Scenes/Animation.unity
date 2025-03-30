@@ -4063,11 +4063,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pivot: {fileID: 280487879}
   cameraRotateSpeed: 0
-  rotationSpeedRange: 15
+  rotationSpeedRange: 17
+  minRotationSpeed: 2
   panSpeed: 0
   panSpeedRange: -10
+  minPanSpeed: -1
   zoomSpeed: 15
   zoomSpeedRange: 100
+  minZoomSpeed: 2
   minDistance: 0.1
   maxDistance: 100
   inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

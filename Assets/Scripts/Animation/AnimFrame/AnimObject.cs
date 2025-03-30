@@ -89,7 +89,7 @@ namespace Animation.AnimFrame
         // add frame with fileName
         public void AddFrame(BdObject frameInfo, string fileName)
         {
-            CustomLog.Log("AddFrame : " + fileName);    
+            //CustomLog.Log("AddFrame : " + fileName);    
             GetTickAndInterByFileName(fileName, out var tick, out var inter);
             AddFrame(fileName, frameInfo, tick, inter);
         }
