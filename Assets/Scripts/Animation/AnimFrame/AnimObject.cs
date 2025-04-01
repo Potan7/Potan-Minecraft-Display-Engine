@@ -27,7 +27,7 @@ namespace Animation.AnimFrame
 
         public BdObjectContainer rootBDObj;
         // private Dictionary<string, BdObjectContainer> _idDict;
-        private List<AnimModel> _displayList;
+        private List<BdObjectContainer> _displayList;
 
         // Set initial values and initialize first frame
         public void Init(string fileName, AnimObjList list)
@@ -43,7 +43,7 @@ namespace Animation.AnimFrame
             var bdObject = GameManager.GetManager<BdObjectManager>().BdObjects[bdFileName];
             rootBDObj = bdObject.RootObject;
             // _idDict = bdObject.Item2;
-            _displayList = bdObject.AnimObjects;
+            _displayList = bdObject.DisplayList;
 
             GetTickAndInterByFileName(bdFileName, out _, out var inter);
             firstFrame.Init(bdFileName, 0, inter, rootBDObj.BdObject, this, _manager.timeline);
