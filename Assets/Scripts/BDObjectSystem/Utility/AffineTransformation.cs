@@ -39,37 +39,35 @@ namespace BDObjectSystem.Utility
             array[8] = m[2, 0]; array[9] = m[2, 1]; array[10] = m[2, 2]; array[11] = m[2, 3];
             array[12] = m[3, 0]; array[13] = m[3, 1]; array[14] = m[3, 2]; array[15] = m[3, 3];
         }
-
-        // 여전히 한 번성용으로 쓰고 싶을 때를 위해 기존 함수도 유지할 수 있음
-        public static float[] MatrixToArray(Matrix4x4 m)
-        {
-            var array = new float[16];
-            MatrixToArray(m, array);
-            return array;
-        }
-
-
-
-
         public static void ApplyMatrixToTransform(Transform target, in Matrix4x4 matrix)
         {
-            // 1) 위치 ( Translation )
+            // 1) 위치 (Translation)
             Vector3 translation = matrix.GetColumn(3);
 
-            // 2) 스케일 (단순 컬럼의 크기)
-            Vector3 scale = new Vector3(
-                matrix.GetColumn(0).magnitude,
-                matrix.GetColumn(1).magnitude,
-                matrix.GetColumn(2).magnitude
-            );
+            // 2) 스케일 및 회전용 3x3 부분 추출
+            Vector3 col0 = matrix.GetColumn(0);
+            Vector3 col1 = matrix.GetColumn(1);
+            Vector3 col2 = matrix.GetColumn(2);
 
-            // 3) 회전
-            //  - 음수 스케일이 섞여 있으면 Unity 내부적으로 "뒤집힌 축"을 양수로 만들어 놓고 rotation을 추출함.
-            //  - 그래도 LookRotation(...)으로 직접 구하는 것보다 안전함
-            Quaternion rotation = matrix.rotation;
-            // Vector3 euler = rotation.eulerAngles;
-            // euler.z *= -1;
-            // rotation = Quaternion.Euler(euler);
+            // 스케일은 각 컬럼 벡터의 크기
+            float scaleX = col0.magnitude;
+            float scaleY = col1.magnitude;
+            float scaleZ = col2.magnitude;
+            Vector3 scale = new Vector3(scaleX, scaleY, scaleZ);
+
+            // 컬럼 벡터를 정규화하여 순수 회전 행렬을 만듦
+            if (scaleX != 0) col0 /= scaleX;
+            if (scaleY != 0) col1 /= scaleY;
+            if (scaleZ != 0) col2 /= scaleZ;
+
+            // 3) 회전: 정규화된 컬럼으로 회전 행렬 생성 후 Quaternion 변환
+            Matrix4x4 rotationMatrix = new Matrix4x4();
+            rotationMatrix.SetColumn(0, new Vector4(col0.x, col0.y, col0.z, 0));
+            rotationMatrix.SetColumn(1, new Vector4(col1.x, col1.y, col1.z, 0));
+            rotationMatrix.SetColumn(2, new Vector4(col2.x, col2.y, col2.z, 0));
+            rotationMatrix.SetColumn(3, new Vector4(0, 0, 0, 1));
+
+            Quaternion rotation = QuaternionFromMatrix(rotationMatrix);
 
             // 4) 실제 Transform에 적용
             target.localPosition = translation;
@@ -77,25 +75,50 @@ namespace BDObjectSystem.Utility
             target.localRotation = rotation;
         }
 
+        /// <summary>
+        /// 주어진 회전 행렬(Matrix4x4)을 Quaternion으로 변환하는 사용자 정의 함수.
+        /// 참고: 행렬의 3x3 부분이 순수 회전을 나타낸다고 가정.
+        /// </summary>
+        private static Quaternion QuaternionFromMatrix(in Matrix4x4 m)
+        {
+            Quaternion q = new Quaternion();
+            float trace = m.m00 + m.m11 + m.m22;
+            if (trace > 0)
+            {
+                float s = Mathf.Sqrt(trace + 1.0f) * 2; // s = 4 * qw
+                q.w = 0.25f * s;
+                q.x = (m.m21 - m.m12) / s;
+                q.y = (m.m02 - m.m20) / s;
+                q.z = (m.m10 - m.m01) / s;
+            }
+            else if ((m.m00 > m.m11) && (m.m00 > m.m22))
+            {
+                float s = Mathf.Sqrt(1.0f + m.m00 - m.m11 - m.m22) * 2; // s = 4 * qx
+                q.w = (m.m21 - m.m12) / s;
+                q.x = 0.25f * s;
+                q.y = (m.m01 + m.m10) / s;
+                q.z = (m.m02 + m.m20) / s;
+            }
+            else if (m.m11 > m.m22)
+            {
+                float s = Mathf.Sqrt(1.0f + m.m11 - m.m00 - m.m22) * 2; // s = 4 * qy
+                q.w = (m.m02 - m.m20) / s;
+                q.x = (m.m01 + m.m10) / s;
+                q.y = 0.25f * s;
+                q.z = (m.m12 + m.m21) / s;
+            }
+            else
+            {
+                float s = Mathf.Sqrt(1.0f + m.m22 - m.m00 - m.m11) * 2; // s = 4 * qz
+                q.w = (m.m10 - m.m01) / s;
+                q.x = (m.m02 + m.m20) / s;
+                q.y = (m.m12 + m.m21) / s;
+                q.z = 0.25f * s;
+            }
+            return q;
+        }
 
 
-        // 해당 BDObject의 모든 Parent Transform을 적용한 WorldMatrix 반환
-        // public static Matrix4x4 GetWorldMatrix(BdObject bdObject)
-        // {
-        //     BdObject obj = bdObject;
-        //     Matrix4x4 transforms = GetMatrix(bdObject.Transforms);
-
-        //     while (obj.Parent != null)
-        //     {
-        //         BdObject parent = obj.Parent;
-        //         Matrix4x4 parentMatrix = GetMatrix(parent.Transforms);
-
-        //         transforms = parentMatrix * transforms;
-        //         obj = parent;
-        //     }
-
-        //     return transforms;
-        // }
 
         /// <summary>
         /// 최상위 부모 오브젝트(root)로부터 시작하여,
@@ -107,8 +130,11 @@ namespace BDObjectSystem.Utility
         {
             var result = new Dictionary<string, Matrix4x4>();
 
+            //Matrix4x4 bigMatrix = ScaleMatrixUp(Matrix4x4.identity, 10f);
+
             // 재귀 호출 시작: 처음 parentWorld는 단위행렬(Identity)로 시작
             TraverseAndCollectLeaf(root, Matrix4x4.identity, result);
+            //TraverseAndCollectLeaf(root, bigMatrix, result);
 
             return result;
         }
@@ -143,6 +169,7 @@ namespace BDObjectSystem.Utility
                 }
             }
         }
+
 
     }
 }

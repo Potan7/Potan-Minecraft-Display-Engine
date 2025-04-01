@@ -112,31 +112,8 @@ namespace Animation.AnimFrame
                     
                     // 이때 보간점프일 수 있으므로, GetFrameRealMatrix를 사용하여 aData 계산
                     aData = GetFrameRealMatrix(indexOf - 1, b.tick, display.ID);
-                    
-
                     childTransform = InterpolateMatrixTRS(aData, bData, t);
 
-
-                    // // A→B 보간 점프 상황: A 보간이 완료되지 않았을 때 B 프레임이 시작한 경우
-                    // if (indexOf > 1 && a.tick + a.interpolation > b.tick)
-                    // {
-                    //     Matrix4x4 newAData = aData;
-                    //     Frame beforeA = _frames.Values[indexOf - 2];
-                    //     if (beforeA.worldTransforms.TryGetValue(display.ID, out var beforeData))
-                    //     {
-                    //         // B 프레임이 도착한 시점에서 A 보간 진행률 계산
-                    //         float jumpRatio = (float)(b.tick - a.tick) / a.interpolation;
-                    //         // 보간 점프로 계산된 A의 중간 상태를 구함
-                    //         newAData = InterpolateMatrixTRS(beforeData, aData, jumpRatio);
-                    //     }
-                    //     // 여기서 newAData가 바로 '효과적인 A 상태'로, 이후 B→C 보간의 출발점으로 사용되어야 함.
-                    //     childTransform = InterpolateMatrixTRS(newAData, bData, t);
-                    // }
-                    // else
-                    // {
-                    //     // 일반적인 A→B 선형 보간
-                    //     childTransform = InterpolateMatrixTRS(aData, bData, t);
-                    // }
                 }
                 // display에 변환 적용
                 display.SetTransformation(childTransform);

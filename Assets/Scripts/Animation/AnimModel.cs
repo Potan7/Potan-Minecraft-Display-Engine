@@ -1,5 +1,4 @@
 using BDObjectSystem.Utility;
-using Unity.Mathematics;
 using UnityEngine;
 
 namespace Animation
@@ -14,6 +13,7 @@ namespace Animation
         {
             name = id;
             Model = Instantiate(model, transform);
+
             SetTransformation(transforms);
             ID = id;
         }
@@ -21,6 +21,7 @@ namespace Animation
         public void SetTransformation(in Matrix4x4 transforms)
         {
             Transforms = transforms;
+            // AffineTransformation.ApplyMatrixToTransform(Model.transform, transforms);
             AffineTransformation.ApplyMatrixToTransform(transform, transforms);
         }
     }
