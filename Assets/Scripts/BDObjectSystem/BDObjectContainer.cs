@@ -8,7 +8,7 @@ namespace BDObjectSystem
     public class BdObjectContainer : MonoBehaviour
     {
         public string bdObjectID;
-        
+
         public BdObject BdObject;
         public DisplayObject displayObj;
 
@@ -16,17 +16,7 @@ namespace BDObjectSystem
         public BdObjectContainer Parent;
 
         public Matrix4x4 transformation;
-
-        public Vector3 pos;
-        public Vector3 scale;
-        public Quaternion rotation;
-
-        void Update()
-        {
-            pos = transform.position;
-            scale = transform.lossyScale;
-            rotation = transform.localRotation;
-        }
+        public Matrix4x4 parentWorldMatrix;
 
         public void Init(BdObject bdObject, BdObjectManager manager)
         {
@@ -37,7 +27,7 @@ namespace BDObjectSystem
 
             // 그룹과 디스플레이 구분 
             if (!bdObject.IsBlockDisplay && !bdObject.IsItemDisplay && !bdObject.IsTextDisplay) return;
-            
+
             // 디스플레이 공통부분
             var typeStart = bdObject.Name.IndexOf('[');
             if (typeStart == -1)
@@ -56,7 +46,7 @@ namespace BDObjectSystem
                 displayObj = obj;
 
                 // blockDisplay�� ��ġ�� ���� �ϴܿ� ����
-                obj.transform.localPosition = -obj.AABBBound.min/2;
+                obj.transform.localPosition = -obj.AABBBound.min / 2;
             }
             // 아이템 디스플레이
             else if (bdObject.IsItemDisplay)
@@ -91,6 +81,18 @@ namespace BDObjectSystem
         public void SetTransformation(float[] mat)
         {
             transformation = AffineTransformation.GetMatrix(mat);
+            AffineTransformation.ApplyMatrixToTransform(transform, transformation);
+        }
+
+        public void SetTransformation(in Matrix4x4 mat)
+        {
+            // 부모의 스케일을 제거한 순수 회전 및 이동 행렬을 사용해 역행렬을 계산
+            Matrix4x4 parentWorldInv = parentWorldMatrix.inverse;
+
+            // local 변환 행렬 계산
+            Matrix4x4 localTransform = parentWorldInv * mat;
+
+            transformation = localTransform;
             AffineTransformation.ApplyMatrixToTransform(transform, transformation);
         }
     }

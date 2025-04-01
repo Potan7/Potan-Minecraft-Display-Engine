@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NUnit.Framework.Internal.Commands;
 using UnityEngine;
 
 namespace BDObjectSystem.Utility
@@ -76,10 +77,10 @@ namespace BDObjectSystem.Utility
         }
 
         /// <summary>
-        /// 주어진 회전 행렬(Matrix4x4)을 Quaternion으로 변환하는 사용자 정의 함수.
-        /// 참고: 행렬의 3x3 부분이 순수 회전을 나타낸다고 가정.
+        /// 주어진 회전 행렬(Matrix4x4)의 3x3 부분으로부터 Quaternion을 추출한다.
+        /// 결과 Quaternion은 정규화되어 반환된다.
         /// </summary>
-        private static Quaternion QuaternionFromMatrix(in Matrix4x4 m)
+        private static Quaternion QuaternionFromMatrix(Matrix4x4 m)
         {
             Quaternion q = new Quaternion();
             float trace = m.m00 + m.m11 + m.m22;
@@ -115,9 +116,75 @@ namespace BDObjectSystem.Utility
                 q.y = (m.m12 + m.m21) / s;
                 q.z = 0.25f * s;
             }
-            return q;
+            return q.normalized;
         }
 
+        /// <summary>
+        /// 입력 행렬 m에서 스케일을 제거하여, translation과 순수 회전만 포함하는 TRS 행렬을 반환한다.
+        /// </summary>
+        public static Matrix4x4 RemoveScale(Matrix4x4 m)
+        {
+            // 1. Translation 추출
+            Vector3 pos = m.GetColumn(3);
+
+            // 2. 회전 부분 추출: 각 컬럼을 정규화하여 스케일 제거
+            Vector3 col0 = m.GetColumn(0);
+            Vector3 col1 = m.GetColumn(1);
+            Vector3 col2 = m.GetColumn(2);
+
+            if (col0.sqrMagnitude > 0) col0.Normalize();
+            if (col1.sqrMagnitude > 0) col1.Normalize();
+            if (col2.sqrMagnitude > 0) col2.Normalize();
+
+            // 3. 정규화된 컬럼으로 순수 회전 행렬 구성
+            Matrix4x4 rotMat = new Matrix4x4();
+            rotMat.SetColumn(0, new Vector4(col0.x, col0.y, col0.z, 0));
+            rotMat.SetColumn(1, new Vector4(col1.x, col1.y, col1.z, 0));
+            rotMat.SetColumn(2, new Vector4(col2.x, col2.y, col2.z, 0));
+            rotMat.SetColumn(3, new Vector4(0, 0, 0, 1));
+
+            // 4. 회전 행렬을 Quaternion으로 변환하고, 반드시 정규화
+            Quaternion rot = QuaternionFromMatrix(rotMat);
+
+            // 5. 스케일은 (1,1,1)로 설정한 TRS 행렬 반환
+            return Matrix4x4.TRS(pos, rot, Vector3.one);
+        }
+
+        /// <summary>
+        /// root를 시작으로 순회하며 display 노드의 바로 상위 부모 월드 역행렬을 구해 설정한다.
+        /// 그렇게 구한 월드 행렬을 각 display 노드의 parentWorldMatrix에 저장한다.
+        /// </summary>
+        /// <param name="root"></param>
+        public static void SetParentInverseWorldMatrix(BdObjectContainer root)
+        {
+            if (root == null) return;
+
+            TraverseAndSet(root, Matrix4x4.identity);
+        }
+
+        private static void TraverseAndSet(BdObjectContainer node, Matrix4x4 parentWorld)
+        {
+            // 현재 노드의 local 행렬
+            Matrix4x4 local = node.transformation;
+
+            // 현재 노드의 world 행렬 = 부모의 world * 자신의 local
+            Matrix4x4 currentWorld = parentWorld * local;
+
+            // 자식이 displayObj를 가지고 있다면 → 현재 노드가 display의 상위 부모임
+            if (node.children != null)
+            {
+                foreach (var child in node.children)
+                {
+                    if (child.BdObject.IsDisplay)
+                    {
+                        child.parentWorldMatrix = currentWorld;
+                    }
+
+                    // 재귀 호출
+                    TraverseAndSet(child, currentWorld);
+                }
+            }
+        }
 
 
         /// <summary>
@@ -154,8 +221,7 @@ namespace BDObjectSystem.Utility
             // 2) 부모 월드행렬 x 로컬행렬 => 현재 노드의 월드행렬
             Matrix4x4 worldMatrix = parentWorld * localMatrix;
 
-            // 3) 자식이 없으면 => 잎(leaf) 노드
-            if (node.Children == null || node.Children.Length == 0)
+            if (node.IsDisplay)
             {
                 // result에 기록
                 result[node.ID] = worldMatrix;

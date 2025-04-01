@@ -59,6 +59,8 @@ namespace BDObjectSystem
             // 디스플레이만 모아놓은 리스트 생성 
             var displayList = BdObjectHelper.SetDisplayList(currentBdObject);
 
+            AffineTransformation.SetParentInverseWorldMatrix(currentBdObject);
+
             // 저장하기
             BdObjects[fileName] = new BDObjectData(currentBdObject, displayList);
         }
