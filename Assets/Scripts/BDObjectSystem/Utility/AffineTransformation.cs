@@ -177,7 +177,7 @@ namespace BDObjectSystem.Utility
                 {
                     if (child.BdObject.IsDisplay)
                     {
-                        child.parentWorldMatrix = currentWorld;
+                        child.parentWorldMatrix = currentWorld.inverse;
                     }
 
                     // 재귀 호출

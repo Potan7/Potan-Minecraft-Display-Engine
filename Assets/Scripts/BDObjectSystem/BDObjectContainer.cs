@@ -84,16 +84,19 @@ namespace BDObjectSystem
             AffineTransformation.ApplyMatrixToTransform(transform, transformation);
         }
 
-        public void SetTransformation(in Matrix4x4 mat)
+        public void SetTransformation(Matrix4x4 mat)
         {
-            // 부모의 스케일을 제거한 순수 회전 및 이동 행렬을 사용해 역행렬을 계산
-            Matrix4x4 parentWorldInv = parentWorldMatrix.inverse;
-
-            // local 변환 행렬 계산
-            Matrix4x4 localTransform = parentWorldInv * mat;
-
-            transformation = localTransform;
-            AffineTransformation.ApplyMatrixToTransform(transform, transformation);
+            AffineTransformation.ApplyMatrixToTransform(transform, mat);
         }
+
+        public void SetTransformation()
+        {
+            // local 변환 행렬 계산
+            Matrix4x4 localTransform = parentWorldMatrix * transformation;
+
+            // transformation = localTransform;
+            AffineTransformation.ApplyMatrixToTransform(transform, localTransform);
+        }
+
     }
 }

@@ -32,8 +32,16 @@ namespace Animation.AnimFrame
             if (left < 0) return;
             var leftFrame = _frames.Values[left];
 
+            if (left == 0)
+            {
+                foreach (var display in _displayList)
+                {
+                    // display에 변환 적용
+                    display.SetTransformation();
+                }
+            }
             // 보간 없이 적용해야 하는 경우: interpolation이 0이거나, 보간 종료됐거나, 첫 프레임인 경우
-            if (leftFrame.interpolation == 0 || leftFrame.tick + leftFrame.interpolation < tick || left == 0)
+            else if (leftFrame.interpolation == 0 || leftFrame.tick + leftFrame.interpolation < tick)
             {
                 SetObjectTransformation(leftFrame);
             }
@@ -46,6 +54,7 @@ namespace Animation.AnimFrame
         // 단일 Frame의 변환을 각 display에 적용 (보간 없이)
         private void SetObjectTransformation(Frame frame)
         {
+
             foreach (var display in _displayList)
             {
                 if (!frame.worldTransforms.TryGetValue(display.bdObjectID, out var worldTransform))
@@ -97,7 +106,7 @@ namespace Animation.AnimFrame
                 else
                 {
                     // A->B 보간하기
-                    
+
                     // 이때 보간점프일 수 있으므로, GetFrameRealMatrix를 사용하여 aData 계산
                     aData = GetFrameRealMatrix(indexOf - 1, b.tick, display.bdObjectID);
                     childTransform = InterpolateMatrixTRS(aData, bData, t);
