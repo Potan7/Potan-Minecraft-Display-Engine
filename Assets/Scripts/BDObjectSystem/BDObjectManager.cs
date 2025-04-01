@@ -73,7 +73,11 @@ namespace BDObjectSystem
             {
                 var animModel = Instantiate(animModelPrefab, animParent);
                 animModel.Init(IDWorldDict[displayList[i].BdObject.ID], displayList[i].displayObj.gameObject, displayList[i].BdObject.ID);
+                //animModel.Init(displayList[i].transform.localToWorldMatrix, displayList[i].displayObj.gameObject, displayList[i].BdObject.ID);
                 animList.Add(animModel);
+
+                //displayList[i].WorldTransformation = IDWorldDict[displayList[i].BdObject.ID];
+                //displayList[i].transform.SetParent(null);
             }
 
             // 저장하기

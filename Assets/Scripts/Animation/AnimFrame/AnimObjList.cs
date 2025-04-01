@@ -8,7 +8,7 @@ using FileSystem;
 
 namespace Animation.AnimFrame
 {
-    public class AnimObjList : MonoBehaviour
+    public class AnimObjList : BaseManager
     {
         public RectTransform importButton;
         public float jump;
@@ -35,13 +35,21 @@ namespace Animation.AnimFrame
             var animObject = Instantiate(animObjectPrefab, frameParent);
             animObject.Init(fileName, this);
             animObject.rect.anchoredPosition = new Vector2(animObject.rect.anchoredPosition.x, importButton.anchoredPosition.y - 60f);
-            animObjects.Add(animObject);
 
             importButton.anchoredPosition = new Vector2(importButton.anchoredPosition.x, importButton.anchoredPosition.y - jump);
 
             var animMan = GameManager.GetManager<AnimManager>();
             animMan.Tick = 0;
             animMan.timeline.SetTickTexts(0);
+
+            var SaveMan = GameManager.GetManager<SaveManager>();
+
+            // 최초 삽입 시 세이브 파일 생성
+            if (SaveMan.IsNoneSaved)
+            {
+                SaveMan.MakeNewMDEFile(fileName);
+            }
+            animObjects.Add(animObject);
             
             return animObject;
         }
@@ -62,6 +70,11 @@ namespace Animation.AnimFrame
             importButton.anchoredPosition = new Vector2(importButton.anchoredPosition.x, importButton.anchoredPosition.y + jump);
 
             CustomLog.Log("Line Removed: " + obj.bdFileName);
+        }
+
+        public void SetByMCDEFile()
+        {
+            
         }
     }
 }

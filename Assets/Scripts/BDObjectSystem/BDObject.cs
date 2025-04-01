@@ -4,6 +4,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using BDObjectSystem.Utility;
+using UnityEngine;
 
 //[System.Serializable]
 namespace BDObjectSystem
@@ -20,6 +21,7 @@ namespace BDObjectSystem
 
         public JObject Options;
         public BdObject[] Children;
+        
         [JsonExtensionData]
         public Dictionary<string, object> ExtraData;
 

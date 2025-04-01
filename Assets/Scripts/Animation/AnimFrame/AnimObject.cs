@@ -18,14 +18,14 @@ namespace Animation.AnimFrame
         public Frame firstFrame;
         
         private TransformationManager _transformationManager;
-        private SortedList<int, Frame> _frames = new SortedList<int, Frame>();
+        public SortedList<int, Frame> frames = new SortedList<int, Frame>();
         public string bdFileName;
         
-        private int MaxTick => _frames.Count == 0 ? 0 : _frames.Values[_frames.Count - 1].tick;
+        private int MaxTick => frames.Count == 0 ? 0 : frames.Values[frames.Count - 1].tick;
 
         private AnimObjList _manager;
 
-        private BdObjectContainer _root;
+        public BdObjectContainer rootBDObj;
         // private Dictionary<string, BdObjectContainer> _idDict;
         private List<AnimModel> _displayList;
 
@@ -41,16 +41,16 @@ namespace Animation.AnimFrame
         public void InitAnimModelData()
         {
             var bdObject = GameManager.GetManager<BdObjectManager>().BdObjects[bdFileName];
-            _root = bdObject.RootObject;
+            rootBDObj = bdObject.RootObject;
             // _idDict = bdObject.Item2;
             _displayList = bdObject.AnimObjects;
 
             GetTickAndInterByFileName(bdFileName, out _, out var inter);
-            firstFrame.Init(bdFileName, 0, inter, _root.BdObject, this, _manager.timeline);
+            firstFrame.Init(bdFileName, 0, inter, rootBDObj.BdObject, this, _manager.timeline);
 
-            _frames[0] = firstFrame;
+            frames[0] = firstFrame;
             
-            _transformationManager = new TransformationManager(_frames, _displayList);
+            _transformationManager = new TransformationManager(frames, _displayList);
 
             AnimManager.TickChanged += _transformationManager.OnTickChanged;
         }
@@ -77,19 +77,19 @@ namespace Animation.AnimFrame
             var frame = Instantiate(_manager.framePrefab, transform.GetChild(0));
 
             // if already exists, tick increment
-            while (_frames.ContainsKey(tick))
+            while (frames.ContainsKey(tick))
             {
                 tick++;
             }
 
-            _frames.Add(tick, frame);
+            frames.Add(tick, frame);
             frame.Init(fileName, tick, inter, frameInfo, this, _manager.timeline);
         }
 
         // add frame with fileName
         public void AddFrame(BdObject frameInfo, string fileName)
         {
-            CustomLog.Log("AddFrame : " + fileName);    
+            //CustomLog.Log("AddFrame : " + fileName);    
             GetTickAndInterByFileName(fileName, out var tick, out var inter);
             AddFrame(fileName, frameInfo, tick, inter);
         }
@@ -139,18 +139,18 @@ namespace Animation.AnimFrame
         // remove frame
         public void RemoveFrame(Frame frame)
         {
-            if (_frames == null) return;
+            if (frames == null) return;
 
-            _frames.Remove(frame.tick);
+            frames.Remove(frame.tick);
             Destroy(frame.gameObject);
 
-            if (_frames.Count == 0)
+            if (frames.Count == 0)
             {
                 RemoveAnimObj();
             }
             else if (frame.tick == 0)
             {
-                _frames.Values[0].SetTick(0);
+                frames.Values[0].SetTick(0);
             }
 
         }
@@ -159,8 +159,8 @@ namespace Animation.AnimFrame
         public void RemoveAnimObj()
         {
             AnimManager.TickChanged -= _transformationManager.OnTickChanged;
-            var frame = _frames;
-            _frames = null;
+            var frame = frames;
+            frames = null;
             while (frame.Count > 0)
             {
                 frame.Values[0].RemoveFrame();
@@ -177,10 +177,10 @@ namespace Animation.AnimFrame
             if (firstTick == changedTick) return true;
             
             // if already exists, return false
-            if (_frames.ContainsKey(changedTick)) return false;
+            if (frames.ContainsKey(changedTick)) return false;
 
-            _frames.Remove(firstTick);
-            _frames.Add(changedTick, frame);
+            frames.Remove(firstTick);
+            frames.Add(changedTick, frame);
 
             _transformationManager.OnTickChanged(GameManager.GetManager<AnimManager>().Tick);
             return true;

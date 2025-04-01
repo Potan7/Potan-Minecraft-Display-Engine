@@ -26,6 +26,7 @@ namespace Animation.UI
         private void Start()
         {
             _manager = GetComponent<AnimManager>();
+
             animPanel = dragPanel.animPanel;
             _initPos = new Vector2(0, 225);
             AnimManager.TickChanged += AnimManager_TickChanged;
@@ -37,20 +38,21 @@ namespace Animation.UI
 
         private void Update()
         {
-            // 마우스가 패널 안에 있으면 카메라 이동 불가능
-            if (RectTransformUtility.RectangleContainsScreenPoint(
+            isMouseEnter = RectTransformUtility.RectangleContainsScreenPoint(
                     animPanel, Input.mousePosition, null
-                ))
-            {
-                isMouseEnter = true;
-                BdEngineStyleCameraMovement.CurrentCameraStatus |= BdEngineStyleCameraMovement.CameraStatus.OnAnimPanel;
-            }
-            else
-            {
-                isMouseEnter = false;
-                BdEngineStyleCameraMovement.CurrentCameraStatus &= ~BdEngineStyleCameraMovement.CameraStatus.OnAnimPanel;
+                );
 
+            // 마우스가 패널 안에 있으면 카메라 이동 불가능
+
+            if (!isMouseEnter && UIManager.CurrentUIStatus.HasFlag(UIManager.UIStatus.OnAnimUIPanel))
+            {
+                UIManager.CurrentUIStatus &= ~UIManager.UIStatus.OnAnimUIPanel;
             }
+            else if (isMouseEnter && !UIManager.CurrentUIStatus.HasFlag(UIManager.UIStatus.OnAnimUIPanel))
+            {
+                UIManager.CurrentUIStatus |= UIManager.UIStatus.OnAnimUIPanel;
+            }
+            
         }
 
         public void OnTickFieldEndEdit(string value)

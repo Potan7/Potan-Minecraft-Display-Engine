@@ -7,28 +7,22 @@ namespace GameSystem
     public class BdEngineStyleCameraMovement : MonoBehaviour
     {
         //public static bool CanMoveCamera { get; set; } = true;
-        [Flags]
-        public enum CameraStatus {
-            None = 0,
-            OnAnimPanel = 1 << 0,
-            OnSettingPanel = 1 << 1,
-            OnExportPanel = 1 << 2,
-            OnDraggingPanel = 1 << 3,
-        }
-        public static CameraStatus CurrentCameraStatus { get; set; } = CameraStatus.None;
 
         [Header("References")]
-        public Transform pivot; // ī�޶� �ٶ� �ǹ�
+        public Transform pivot; // camera pivot point (target)
 
         [Header("Camera Movement Settings")]
-        public float cameraRotateSpeed;
-        public float rotationSpeedRange = 12f;
+        public float rotateSpeed;
+        public float rotationSpeedRange = 15f;
+        public float minRotationSpeed = 1f; // cameraRotateSpeed * rotationSpeedRange + minRotationSpeed
 
         public float panSpeed;
-        public float panSpeedRange = -10f;
+        public float panSpeedRange = -9f;
+        public float minPanSpeed = -1f; // panSpeed * panSpeedRange + minPanSpeed
 
         public float zoomSpeed;
         public float zoomSpeedRange = 50f;
+        public float minZoomSpeed = 1f; // zoomSpeed * zoomSpeedRange + minZoomSpeed
         public float minDistance = 2f;    // ī�޶�~�ǹ� �ּ� �Ÿ�
         public float maxDistance = 50f;   // ī�޶�~�ǹ� �ִ� �Ÿ�
 
@@ -90,7 +84,7 @@ namespace GameSystem
         private void Update()
         {
             //if (!CanMoveCamera) return;
-            if (CurrentCameraStatus != CameraStatus.None) return; // Only when no panel is open
+            if (UIManager.CurrentUIStatus != UIManager.UIStatus.None) return; // Only when no panel is open
 
             // Action�� ���� �� �б�
             var rotatePressed = _rotateAction.ReadValue<float>() > 0.5f;   // ���콺 ���� ��ư
@@ -119,8 +113,9 @@ namespace GameSystem
 
         private void RotateAroundPivot(Vector2 delta, float dt)
         {
-            var yaw = delta.x * cameraRotateSpeed * rotationSpeedRange * dt;
-            var pitch = -delta.y * cameraRotateSpeed * rotationSpeedRange * dt; // ���� �̵��� ��(-)
+            var speed = rotateSpeed * rotationSpeedRange + minRotationSpeed;
+            var yaw = delta.x * speed * dt;
+            var pitch = -delta.y * speed * dt; // ���� �̵��� ��(-)
 
             // 1) yaw : pivot ���� ���� Up
             transform.RotateAround(pivot.position, Vector3.up, yaw);
@@ -136,8 +131,9 @@ namespace GameSystem
 
         private void PanCamera(Vector2 delta, float dt)
         {
-            var rightMovement = transform.right * (delta.x * panSpeed * panSpeedRange * dt);
-            var upMovement = transform.up * (delta.y * panSpeed * panSpeedRange * dt);
+            var speed = panSpeed * panSpeedRange + minPanSpeed;
+            var rightMovement = transform.right * (delta.x * speed * dt);
+            var upMovement = transform.up * (delta.y * speed * dt);
             var panMovement = rightMovement + upMovement;
 
             transform.position += panMovement;
@@ -146,7 +142,8 @@ namespace GameSystem
 
         private void ZoomCamera(float zoomValue, float dt)
         {
-            _currentDistance -= zoomValue * zoomSpeed * zoomSpeedRange * dt;
+            var speed = zoomSpeed * zoomSpeedRange + minZoomSpeed;
+            _currentDistance -= zoomValue * speed * dt;
             _currentDistance = Mathf.Clamp(_currentDistance, minDistance, maxDistance);
 
             var direction = (transform.position - pivot.position).normalized;

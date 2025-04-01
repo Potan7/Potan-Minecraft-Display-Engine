@@ -9,145 +9,145 @@ namespace Animation.AnimFrame
     public class TransformationManager
     {
         private readonly HashSet<string> _noID = new HashSet<string>();
-        private readonly HashSet<string> _visitedNodes = new HashSet<string>();
 
         private readonly SortedList<int, Frame> _frames;
         private readonly List<AnimModel> _displayList;
+        // 각 display의 효과적인(실제 화면에 반영된) 변환 상태를 저장하는 캐시
+        private readonly Dictionary<string, Matrix4x4> _effectiveTransforms = new Dictionary<string, Matrix4x4>();
 
         public TransformationManager(SortedList<int, Frame> frames, List<AnimModel> displayList)
         {
             _frames = frames;
             _displayList = displayList;
-
         }
 
         public void OnTickChanged(float tick)
         {
             if (tick <= 0.01f)
+            {
                 _noID.Clear();
+                _effectiveTransforms.Clear(); // 초기화 시 캐시도 비움
+            }
 
-            // get left frame
+            // get left frame index
             var left = GetLeftFrame(tick);
             if (left < 0) return;
             var leftFrame = _frames.Values[left];
 
-            // no interpolation
-            if (leftFrame.interpolation == 0 || leftFrame.tick + leftFrame.interpolation <= tick || left == 0)
+            // 보간 없이 적용해야 하는 경우: interpolation이 0이거나, 보간 종료됐거나, 첫 프레임인 경우
+            if (leftFrame.interpolation == 0 || leftFrame.tick + leftFrame.interpolation < tick || left == 0)
             {
-                // SetObjectTransformation(_root.BdObject.ID, leftFrame.Info);
                 SetObjectTransformation(leftFrame);
             }
             else
             {
-                // interpolation ratio
-                var t = (tick - leftFrame.tick) / leftFrame.interpolation;
-
-                SetObjectTransformationInterpolation(t, left);
+                SetObjectTransformationInterpolation(tick, left);
             }
         }
 
-
-        // 보간 없이, 단일 Frame에서 변환 적용
+        // 단일 Frame의 변환을 각 display에 적용 (보간 없이)
         private void SetObjectTransformation(Frame frame)
         {
             foreach (var display in _displayList)
             {
-                // 1) 현재 display에 해당하는 데이터 찾기
                 if (!frame.worldTransforms.TryGetValue(display.ID, out var worldTransform))
                 {
-
-                    // 한 번도 없는 bdObjectID라면 로그만 찍고 넘어감
                     if (_noID.Contains(display.ID))
                         continue;
-
                     CustomLog.LogError("Target not found, name : " + display.ID);
                     _noID.Add(display.ID);
                     continue;
                 }
-
-                // 2) 현재 display의 변환 적용
+                // display에 변환 적용
                 display.SetTransformation(worldTransform);
-
-                // 3) 부모 노드 변환 순차 적용
-                //ApplyChainTransformations(idData.Parent, display.Parent, _visitedNodes);
+                // 캐시 업데이트: 이 display의 효과적인 상태는 키 프레임 상태임
+                _effectiveTransforms[display.ID] = worldTransform;
             }
-
-            _visitedNodes.Clear();
         }
 
-        // -----------------------------------------------------------
-        // 두 Frame(a, b) 사이에서 t만큼 보간하여 변환 적용
-        private void SetObjectTransformationInterpolation(float t, int IndexOf)
+        // 두 Frame(a, b) 사이에서 보간 적용 (보간 점프 처리를 포함)
+        private void SetObjectTransformationInterpolation(float tick, int indexOf)
         {
-            Frame a = _frames.Values[IndexOf - 1];
-            Frame b = _frames.Values[IndexOf];
+            Frame a = _frames.Values[indexOf - 1];
+            Frame b = _frames.Values[indexOf];
+
+            // b 프레임 기준 보간 비율 t 계산 (0~1로 클램프)
+            float t = Mathf.Clamp01((tick - b.tick) / b.interpolation);
 
             foreach (var display in _displayList)
             {
-                // var aContains = a.IDDataDict.TryGetValue(display.bdObjectID, out var aData);
-                // var bContains = b.IDDataDict.TryGetValue(display.bdObjectID, out var bData);
-                var aContains = a.worldTransforms.TryGetValue(display.ID, out var aData);
-                var bContains = b.worldTransforms.TryGetValue(display.ID, out var bData);
+                // 보간 시 시작 상태를 결정할 때,
+                // 만약 캐시에 효과적인 상태가 있다면(이전에 A→B 보간 점프가 적용되었으면) 그것을 사용
+                Matrix4x4 aData;
+                bool aExists = _effectiveTransforms.TryGetValue(display.ID, out aData);
+                if (!aExists)
+                {
+                    // 캐시에 없으면, a 프레임의 원래 데이터를 사용
+                    aExists = a.worldTransforms.TryGetValue(display.ID, out aData);
+                }
 
-                // a, b 어느 쪽에도 없으면 스킵
-                if (!aContains && !bContains)
+                bool bExists = b.worldTransforms.TryGetValue(display.ID, out var bData);
+
+                if (!aExists && !bExists)
                 {
                     if (_noID.Contains(display.ID))
                         continue;
-
                     CustomLog.LogError("Target not found, name : " + display.ID);
                     _noID.Add(display.ID);
                     continue;
                 }
 
-                // 1) 자식(현재 display) 자체 변환 계산
                 Matrix4x4 childTransform;
-                if (!aContains)
+                if (!aExists)
                 {
-                    // aFrame에는 없고 bFrame에만 있다면 bTransform 그대로
                     childTransform = bData;
                 }
-                else if (!bContains)
+                else if (!bExists)
                 {
-                    // bFrame에는 없고 aFrame에만 있다면 aTransform 그대로
                     childTransform = aData;
                 }
                 else
                 {
-                    var newAData = aData;
-                    // aFrame의 보간이 끝나지 않았는데 다음 프레임 도달 시 그때의 aFrame의 위치를 보간
-                    if (IndexOf > 1 && a.tick + a.interpolation > b.tick)
-                    {
-                        var beforeA = _frames.Values[IndexOf - 2];
-                        float ratio = (b.tick - a.tick) / (float) (a.tick + a.interpolation - a.tick);
-                        newAData = InterpolateMatrixTRS(beforeA.worldTransforms[display.ID], aData, ratio);
-                    }
+                    // A->B 보간하기
                     
+                    // 이때 보간점프일 수 있으므로, GetFrameRealMatrix를 사용하여 aData 계산
+                    aData = GetFrameRealMatrix(indexOf - 1, b.tick, display.ID);
+                    childTransform = InterpolateMatrixTRS(aData, bData, t);
 
-                    // a, b 모두 있으니 보간
-                    childTransform = InterpolateMatrixTRS(newAData, bData, t);
                 }
-
-                // display에 설정
+                // display에 변환 적용
                 display.SetTransformation(childTransform);
+                // 캐시 업데이트: 현재 화면에 반영된 결과를 저장
+                _effectiveTransforms[display.ID] = childTransform;
             }
-
-            _visitedNodes.Clear();
         }
 
-        // -----------------------------------------------------------
-        // 행렬(혹은 float[16]) 보간 메서드
-        // private static float[] InterpolateTransforms(float[] aMatrix, float[] bMatrix, float t)
-        // {
-        //     // 길이 16의 두 행렬 a, b를 원소별 선형 보간
-        //     var result = new float[16];
-        //     var invT = 1f - t;
-        //     for (var i = 0; i < 16; i++)
-        //     {
-        //         result[i] = aMatrix[i] * invT + bMatrix[i] * t;
-        //     }
-        //     return result;
-        // }
+        // 주어진 Frame의 변환을 계산하여 반환
+        // 이때 해당 프레임이 보간 점프라면 이전 프레임을 사용하여 보간 점프를 계산함
+        // 그 이전도 보간 점프일 수 있으니 재귀 함수를 사용
+        private Matrix4x4 GetFrameRealMatrix(int idx, float tick, string ID)
+        {
+            if (idx < 0) return Matrix4x4.identity;
+            Frame frame = _frames.Values[idx];
+
+            if (!frame.worldTransforms.TryGetValue(ID, out var worldTransform))
+            {
+                return Matrix4x4.identity;
+            }
+
+            if (frame.interpolation == 0 || frame.tick + frame.interpolation < tick || idx == 0)
+            {
+                // 보간 없이 적용해야 하는 경우: interpolation이 0이거나, 보간 종료됐거나, 첫 프레임인 경우
+                return worldTransform;
+            }
+            else
+            {
+                float t = Mathf.Clamp01((tick - frame.tick) / frame.interpolation);
+
+                Matrix4x4 newAData = GetFrameRealMatrix(idx - 1, frame.tick, ID);
+                return InterpolateMatrixTRS(newAData, worldTransform, t);
+            }
+        }
 
         private static Matrix4x4 InterpolateMatrixTRS(in Matrix4x4 a, in Matrix4x4 b, float t)
         {
@@ -156,7 +156,7 @@ namespace Animation.AnimFrame
             Vector3 posB = b.GetColumn(3);
             Vector3 pos = Vector3.Lerp(posA, posB, t);
 
-            // 2) 회전(Rotation) 보간 - Unity 제공 프로퍼티 사용
+            // 2) 회전(Rotation) 보간
             Quaternion rotA = a.rotation;
             Quaternion rotB = b.rotation;
             Quaternion rot = Quaternion.Slerp(rotA, rotB, t);
@@ -172,20 +172,17 @@ namespace Animation.AnimFrame
 
             Vector3 scale = Vector3.Lerp(scaleA, scaleB, t);
 
-            // 4) 최종 TRS 행렬로 재구성
+            // 4) 최종 TRS 행렬 재구성
             return Matrix4x4.TRS(pos, rot, scale);
         }
 
-
-        // find left frame by tick
+        // 현재 tick에 맞는 왼쪽 프레임의 인덱스를 찾음 (binary search)
         private int GetLeftFrame(float tick)
         {
             tick = (int)tick;
-            // 1. if tick is smaller than first frame (<0)
             if (_frames.Values[0].tick > tick)
                 return -1;
 
-            // 2. binary search
             var left = 0;
             var right = _frames.Count - 1;
             var keys = _frames.Keys;
@@ -204,14 +201,7 @@ namespace Animation.AnimFrame
                     right = mid - 1;
                 }
             }
-
-            // 3. return found index
-            if (idx >= 0)
-            {
-                return idx;
-            }
-
-            return -1;
+            return idx >= 0 ? idx : -1;
         }
     }
 }

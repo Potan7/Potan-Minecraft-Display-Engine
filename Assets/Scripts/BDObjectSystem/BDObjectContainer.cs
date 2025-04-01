@@ -17,6 +17,17 @@ namespace BDObjectSystem
 
         public Matrix4x4 transformation;
 
+        public Vector3 pos;
+        public Vector3 scale;
+        public Quaternion rotation;
+
+        void Update()
+        {
+            pos = transform.position;
+            scale = transform.lossyScale;
+            rotation = transform.localRotation;
+        }
+
         public void Init(BdObject bdObject, BdObjectManager manager)
         {
             // 기본 정보 설정
