@@ -77,7 +77,7 @@ namespace BDObjectSystem
                 animList.Add(animModel);
 
                 //displayList[i].WorldTransformation = IDWorldDict[displayList[i].BdObject.ID];
-                //displayList[i].transform.SetParent(null);
+                //displayList[i].transform.SetParent(null, true);
             }
 
             // 저장하기

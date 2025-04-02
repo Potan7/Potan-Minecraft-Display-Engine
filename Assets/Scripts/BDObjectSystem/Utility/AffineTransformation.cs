@@ -42,7 +42,7 @@ namespace BDObjectSystem.Utility
         public static void ApplyMatrixToTransform(Transform target, in Matrix4x4 matrix)
         {
             // 1) 위치 (Translation)
-            Vector3 translation = matrix.GetColumn(3);
+            Vector3 translation = matrix.GetPosition();
 
             // 2) 스케일 및 회전용 3x3 부분 추출
             Vector3 col0 = matrix.GetColumn(0);
@@ -56,18 +56,19 @@ namespace BDObjectSystem.Utility
             Vector3 scale = new Vector3(scaleX, scaleY, scaleZ);
 
             // 컬럼 벡터를 정규화하여 순수 회전 행렬을 만듦
-            if (scaleX != 0) col0 /= scaleX;
-            if (scaleY != 0) col1 /= scaleY;
-            if (scaleZ != 0) col2 /= scaleZ;
+            // if (scaleX != 0) col0 /= scaleX;
+            // if (scaleY != 0) col1 /= scaleY;
+            // if (scaleZ != 0) col2 /= scaleZ;
 
             // 3) 회전: 정규화된 컬럼으로 회전 행렬 생성 후 Quaternion 변환
-            Matrix4x4 rotationMatrix = new Matrix4x4();
-            rotationMatrix.SetColumn(0, new Vector4(col0.x, col0.y, col0.z, 0));
-            rotationMatrix.SetColumn(1, new Vector4(col1.x, col1.y, col1.z, 0));
-            rotationMatrix.SetColumn(2, new Vector4(col2.x, col2.y, col2.z, 0));
-            rotationMatrix.SetColumn(3, new Vector4(0, 0, 0, 1));
+            // Matrix4x4 rotationMatrix = new Matrix4x4();
+            // rotationMatrix.SetColumn(0, new Vector4(col0.x, col0.y, col0.z, 0));
+            // rotationMatrix.SetColumn(1, new Vector4(col1.x, col1.y, col1.z, 0));
+            // rotationMatrix.SetColumn(2, new Vector4(col2.x, col2.y, col2.z, 0));
+            // rotationMatrix.SetColumn(3, new Vector4(0, 0, 0, 1));
 
-            Quaternion rotation = QuaternionFromMatrix(rotationMatrix);
+            // Quaternion rotation = QuaternionFromMatrix(rotationMatrix);
+            Quaternion rotation = matrix.rotation;
 
             // 4) 실제 Transform에 적용
             target.localPosition = translation;
@@ -79,44 +80,44 @@ namespace BDObjectSystem.Utility
         /// 주어진 회전 행렬(Matrix4x4)을 Quaternion으로 변환하는 사용자 정의 함수.
         /// 참고: 행렬의 3x3 부분이 순수 회전을 나타낸다고 가정.
         /// </summary>
-        private static Quaternion QuaternionFromMatrix(in Matrix4x4 m)
-        {
-            Quaternion q = new Quaternion();
-            float trace = m.m00 + m.m11 + m.m22;
-            if (trace > 0)
-            {
-                float s = Mathf.Sqrt(trace + 1.0f) * 2; // s = 4 * qw
-                q.w = 0.25f * s;
-                q.x = (m.m21 - m.m12) / s;
-                q.y = (m.m02 - m.m20) / s;
-                q.z = (m.m10 - m.m01) / s;
-            }
-            else if ((m.m00 > m.m11) && (m.m00 > m.m22))
-            {
-                float s = Mathf.Sqrt(1.0f + m.m00 - m.m11 - m.m22) * 2; // s = 4 * qx
-                q.w = (m.m21 - m.m12) / s;
-                q.x = 0.25f * s;
-                q.y = (m.m01 + m.m10) / s;
-                q.z = (m.m02 + m.m20) / s;
-            }
-            else if (m.m11 > m.m22)
-            {
-                float s = Mathf.Sqrt(1.0f + m.m11 - m.m00 - m.m22) * 2; // s = 4 * qy
-                q.w = (m.m02 - m.m20) / s;
-                q.x = (m.m01 + m.m10) / s;
-                q.y = 0.25f * s;
-                q.z = (m.m12 + m.m21) / s;
-            }
-            else
-            {
-                float s = Mathf.Sqrt(1.0f + m.m22 - m.m00 - m.m11) * 2; // s = 4 * qz
-                q.w = (m.m10 - m.m01) / s;
-                q.x = (m.m02 + m.m20) / s;
-                q.y = (m.m12 + m.m21) / s;
-                q.z = 0.25f * s;
-            }
-            return q;
-        }
+        // private static Quaternion QuaternionFromMatrix(in Matrix4x4 m)
+        // {
+        //     Quaternion q = new Quaternion();
+        //     float trace = m.m00 + m.m11 + m.m22;
+        //     if (trace > 0)
+        //     {
+        //         float s = Mathf.Sqrt(trace + 1.0f) * 2; // s = 4 * qw
+        //         q.w = 0.25f * s;
+        //         q.x = (m.m21 - m.m12) / s;
+        //         q.y = (m.m02 - m.m20) / s;
+        //         q.z = (m.m10 - m.m01) / s;
+        //     }
+        //     else if ((m.m00 > m.m11) && (m.m00 > m.m22))
+        //     {
+        //         float s = Mathf.Sqrt(1.0f + m.m00 - m.m11 - m.m22) * 2; // s = 4 * qx
+        //         q.w = (m.m21 - m.m12) / s;
+        //         q.x = 0.25f * s;
+        //         q.y = (m.m01 + m.m10) / s;
+        //         q.z = (m.m02 + m.m20) / s;
+        //     }
+        //     else if (m.m11 > m.m22)
+        //     {
+        //         float s = Mathf.Sqrt(1.0f + m.m11 - m.m00 - m.m22) * 2; // s = 4 * qy
+        //         q.w = (m.m02 - m.m20) / s;
+        //         q.x = (m.m01 + m.m10) / s;
+        //         q.y = 0.25f * s;
+        //         q.z = (m.m12 + m.m21) / s;
+        //     }
+        //     else
+        //     {
+        //         float s = Mathf.Sqrt(1.0f + m.m22 - m.m00 - m.m11) * 2; // s = 4 * qz
+        //         q.w = (m.m10 - m.m01) / s;
+        //         q.x = (m.m02 + m.m20) / s;
+        //         q.y = (m.m12 + m.m21) / s;
+        //         q.z = 0.25f * s;
+        //     }
+        //     return q;
+        // }
 
 
 
