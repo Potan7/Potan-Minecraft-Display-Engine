@@ -50,15 +50,19 @@ public class BDObjectAnimator
     public void ApplyTransformation(List<BdObject> a, List<BdObject> b, float ratio)
     {
         visitedObjects.Clear();
-        // 자식에서 부모로 올라가면서 변환을 적용합니다.
-        for (int i = 0; i < a.Count; i++)
+        // a 리스트의 각 노드에 대해 ID를 기준으로 b 리스트에서 매칭된 노드를 찾음
+        foreach (var nodeA in a)
         {
-            if (!modelDict.TryGetValue(a[i].ID, out var model)) continue;
+            // b 리스트에서 같은 ID를 가진 노드를 찾습니다.
+            var nodeB = b.Find(x => x.ID == nodeA.ID);
+            if (nodeB == null) continue; // 매칭되지 않으면 넘어감
 
-            // 부모 올라가면서 변환적용
+            // 모델 사전에서 해당 노드를 찾음
+            if (!modelDict.TryGetValue(nodeA.ID, out var model)) continue;
+
             var modelRef = model;
-            var aRef = a[i];
-            var bRef = b[i];
+            var aRef = nodeA;
+            var bRef = nodeB;
             while (modelRef != null && aRef != null && bRef != null)
             {
                 if (visitedObjects.Contains(modelRef)) break;
@@ -79,6 +83,7 @@ public class BDObjectAnimator
             }
         }
     }
+
 
     public static Matrix4x4 InterpolateMatrixTRS(in Matrix4x4 a, in Matrix4x4 b, float t)
     {
@@ -101,34 +106,55 @@ public class BDObjectAnimator
 
     public static void DecomposeMatrix(in Matrix4x4 m, out Vector3 pos, out Quaternion rot, out Vector3 scale)
     {
-        // 1) Translation: 4번째 컬럼
         pos = m.GetColumn(3);
 
-        // 2) 3x3 부분 추출 (회전, 스케일, shear가 섞여 있음)
         Vector3 col0 = m.GetColumn(0);
         Vector3 col1 = m.GetColumn(1);
         Vector3 col2 = m.GetColumn(2);
 
+        // 최소값 epsilon (수치 불안정 방지용)
+        const float epsilon = 1e-5f;
+
         // a) X축 스케일 및 정규화
         float scaleX = col0.magnitude;
-        Vector3 normX = (scaleX != 0f) ? col0 / scaleX : Vector3.zero;
+        if (scaleX < epsilon) scaleX = epsilon;
+        Vector3 normX = col0 / scaleX;
 
         // b) X-Y shear: normX와 col1의 내적
         float shearXY = Vector3.Dot(normX, col1);
-        // col1에서 normX 방향의 shear 성분 제거
         Vector3 col1NoShear = col1 - normX * shearXY;
         float scaleY = col1NoShear.magnitude;
-        Vector3 normY = (scaleY != 0f) ? col1NoShear / scaleY : Vector3.zero;
+        Vector3 normY;
+        if (scaleY < epsilon)
+        {
+            // scaleY가 너무 작다면, normY를 normX와 col2의 외적으로 계산하여 보완
+            normY = Vector3.Cross(normX, col2);
+            if (normY.sqrMagnitude < epsilon)
+            {
+                normY = Vector3.up; // 극한 상황의 기본값
+            }
+            else
+            {
+                normY.Normalize();
+            }
+            // scaleY는 col1의 normY 성분으로 재계산
+            scaleY = Mathf.Abs(Vector3.Dot(col1, normY));
+            // 재구성한 col1NoShear
+            col1NoShear = normY * scaleY;
+        }
+        else
+        {
+            normY = col1NoShear / scaleY;
+        }
 
-        // c) X-Z 및 Y-Z shear: normX, normY와 col2의 내적
+        // c) X-Z 및 Y-Z shear 제거
         float shearXZ = Vector3.Dot(normX, col2);
         float shearYZ = Vector3.Dot(normY, col2);
-        // col2에서 normX, normY 방향의 shear 성분 제거
         Vector3 col2NoShear = col2 - normX * shearXZ - normY * shearYZ;
         float scaleZ = col2NoShear.magnitude;
-        Vector3 normZ = (scaleZ != 0f) ? col2NoShear / scaleZ : Vector3.zero;
+        if (scaleZ < epsilon) scaleZ = epsilon;
+        Vector3 normZ = col2NoShear / scaleZ;
 
-        // 최종 스케일
         scale = new Vector3(scaleX, scaleY, scaleZ);
 
         // 순수 회전 행렬 구성 (shear 제거된 정규화된 축)
@@ -141,6 +167,7 @@ public class BDObjectAnimator
         // Quaternion으로 변환 (이미 정규화된 회전 행렬)
         rot = AffineTransformation.QuaternionFromMatrix(pureRotation);
     }
+
 
 
     /// <summary>
