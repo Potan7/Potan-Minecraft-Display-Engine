@@ -30,6 +30,8 @@ namespace Animation.AnimFrame
         public BdObject Info;
         public List<BdObject> leafObjects;
 
+        public bool modelDiffrent;
+
         private Timeline _timeline;
 
 
@@ -49,6 +51,14 @@ namespace Animation.AnimFrame
 
             //IDDataDict = BdObjectHelper.SetDisplayIDDictionary(info);
             leafObjects = BdObjectHelper.SetDisplayList(info);
+
+            modelDiffrent = animObject.animator.RootObject.bdObjectID != info.ID;
+            //Debug.Log(animObject.animator);
+            if (modelDiffrent)
+            {
+                Debug.Log($"Model is different, name : {fileName}\nModel : {animObject.animator.RootObject.bdObjectID}\nInfo : {info.ID}");
+                //Debug.Log("Model is different, name : " + animObject.animator.RootObject.bdObjectID);
+            }
         }
 
         public int SetTick(int newTick)
@@ -94,6 +104,10 @@ namespace Animation.AnimFrame
             return true;
         }
 
+        /// <summary>
+        /// Interpolation Bar를 업데이트합니다.
+        /// Interpolation이 0일 경우에는 Bar를 비활성화합니다.
+        /// </summary>
         private void UpdateInterpolationBar()
         {
             if (interpolation == 0)
@@ -125,9 +139,11 @@ namespace Animation.AnimFrame
             }
         }
 
-
-
-
+        /// <summary>
+        /// Frame을 클릭했을 때 호출됩니다.
+        /// 좌클릭일 경우 선택 상태로 변경하고, 우클릭일 경우 ContextMenu를 띄웁니다.
+        /// </summary>
+        /// <param name="eventData"></param>
         public void OnPointerDown(PointerEventData eventData)
         {
             if (eventData.button == PointerEventData.InputButton.Left)
@@ -163,7 +179,6 @@ namespace Animation.AnimFrame
             _timeline.OnGridChanged -= UpdatePos;
             animObject.RemoveFrame(this);
         }
-
 
     }
 }

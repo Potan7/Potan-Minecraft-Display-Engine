@@ -21,7 +21,7 @@ namespace BDObjectSystem
 
         public JObject Options;
         public BdObject[] Children;
-        
+
         [JsonExtensionData]
         public Dictionary<string, object> ExtraData;
 
@@ -32,7 +32,7 @@ namespace BDObjectSystem
 
         [JsonIgnore]
         public BdObject Parent;
-        
+
         public bool IsDisplay => IsBlockDisplay || IsItemDisplay || IsTextDisplay;
 
         [OnDeserialized]
@@ -55,23 +55,54 @@ namespace BDObjectSystem
         private string GetID()
         {
             if (!string.IsNullOrEmpty(_id)) return _id;
-        
-            if (Children == null) _id = Name;
+
+            if (Children == null || Children.Length == 0)
+            {
+                _id = Name;
+            }
             else
             {
-                var childSum = new StringBuilder();
+                List<string> childIds = new List<string>();
                 foreach (var child in Children)
                 {
-                    childSum.Append(child.ID);
-                    // childSum += child.GetID();
+                    childIds.Add(child.GetID()); // 재귀적으로 자식 ID 얻기
                 }
 
-                if (Children.Length <= 1) childSum.Append("g");
-                _id = childSum.ToString();
+                // 순서 무관하도록 정렬
+                childIds.Sort();
+
+                var combined = string.Join("", childIds);
+
+                // 자식이 하나일 때는 구분자 추가
+                if (childIds.Count <= 1) combined += "g";
+
+                _id = combined;
             }
-            
+
             return _id;
         }
+
+
+        // private string GetID()
+        // {
+        //     if (!string.IsNullOrEmpty(_id)) return _id;
+
+        //     if (Children == null) _id = Name;
+        //     else
+        //     {
+        //         var childSum = new StringBuilder();
+        //         foreach (var child in Children)
+        //         {
+        //             childSum.Append(child.ID);
+        //             // childSum += child.GetID();
+        //         }
+
+        //         if (Children.Length <= 1) childSum.Append("g");
+        //         _id = childSum.ToString();
+        //     }
+
+        //     return _id;
+        // }
     }
 }
 

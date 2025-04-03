@@ -41,21 +41,12 @@ namespace BDObjectSystem
         #region Make BDObject
 
 
-        public async Task AddObject(BdObject bdObject)
+        public async Task AddObject(BdObject bdObject, string fileName)
         {
             bdObjectCount = 0;
             // BDObjectContainer 생성하기 
             currentBdObject = await CreateObjectHierarchyAsync(bdObject, bdObjectParent);
 
-            // var idDict = BdObjectHelper.SetDictionary(
-            //     rootObj,
-            //     obj => obj.BdObject,
-            //     obj => obj.children ?? Enumerable.Empty<BdObjectContainer>()
-            // );
-        }
-
-        public void EndFileImport(string fileName)
-        {
             BDObjectAnim[fileName] = new BDObjectAnimator(currentBdObject);
         }
 

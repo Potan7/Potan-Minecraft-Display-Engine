@@ -174,8 +174,6 @@ namespace FileSystem
                 await Task.Delay(500);
             }
 
-            bdObjManager.EndFileImport(mainName);
-            mainAnimObject.InitAnimModelData();
             FrameInfo.Clear();
 
             CustomLog.Log($"Import 완료! BDObject 개수: {bdObjManager.bdObjectCount}");
@@ -189,8 +187,8 @@ namespace FileSystem
             // 파일 → BDObject
             var bdObject = await FileProcessingHelper.ProcessFileAsync(filePath);
 
-            // BdObjectManager 등록 (AddObject 자체가 코루틴이면, 별도 래핑이 필요할 수도 있음)
-            await bdObjManager.AddObject(bdObject);
+            // BdObjectManager 등록
+            await bdObjManager.AddObject(bdObject, fileName);
 
             return animObjList.AddAnimObject(fileName);
         }

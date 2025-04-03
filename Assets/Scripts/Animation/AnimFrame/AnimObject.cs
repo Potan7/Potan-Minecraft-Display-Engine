@@ -17,10 +17,10 @@ namespace Animation.AnimFrame
         public RectTransform rect;
         public TextMeshProUGUI title;
         public Frame firstFrame;
-        
+
         public SortedList<int, Frame> frames = new SortedList<int, Frame>();
         public string bdFileName;
-        
+
         private int MaxTick => frames.Count == 0 ? 0 : frames.Values[frames.Count - 1].tick;
 
         private AnimObjList _manager;
@@ -30,17 +30,15 @@ namespace Animation.AnimFrame
         private readonly HashSet<string> _noID = new HashSet<string>();
         #endregion
 
+        #region Functions
         // Set initial values and initialize first frame
         public void Init(string fileName, AnimObjList list)
         {
             title.text = fileName;
             _manager = list;
             bdFileName = fileName;
-        }
 
-        public void InitAnimModelData()
-        {
-            animator = GameManager.GetManager<BdObjectManager>().BDObjectAnim[bdFileName];
+            animator = GameManager.GetManager<BdObjectManager>().BDObjectAnim[fileName];
 
             GetTickAndInterByFileName(bdFileName, out _, out var inter);
             firstFrame.Init(bdFileName, 0, inter, animator.RootObject.BdObject, this, _manager.timeline);
@@ -49,6 +47,71 @@ namespace Animation.AnimFrame
 
             AnimManager.TickChanged += OnTickChanged;
         }
+        
+        #region Transform
+
+        public void OnTickChanged(float tick)
+        {
+            if (tick <= 0.01f)
+            {
+                _noID.Clear();
+            }
+
+            // get left frame index
+            var left = GetLeftFrame(tick);
+            if (left < 0) return;
+            var leftFrame = frames.Values[left];
+
+            // 보간 없이 적용해야 하는 경우: interpolation이 0이거나, 보간 종료됐거나, 첫 프레임인 경우
+            if (leftFrame.interpolation == 0 || leftFrame.tick + leftFrame.interpolation < tick || left == 0)
+            {
+                animator.ApplyTransformation(leftFrame.leafObjects);
+            }
+            else
+            {
+                SetObjectTransformationInterpolation(tick, left);
+            }
+        }
+
+        private void SetObjectTransformationInterpolation(float tick, int indexOf)
+        {
+            Frame a = frames.Values[indexOf - 1];
+            Frame b = frames.Values[indexOf];
+
+            // b 프레임 기준 보간 비율 t 계산 (0~1로 클램프)
+            float t = Mathf.Clamp01((tick - b.tick) / b.interpolation);
+            animator.ApplyTransformation(a.leafObjects, b.leafObjects, t);
+        }
+
+        // 현재 tick에 맞는 왼쪽 프레임의 인덱스를 찾음 (binary search)
+        private int GetLeftFrame(float tick)
+        {
+            tick = (int)tick;
+            if (frames.Values[0].tick > tick)
+                return -1;
+
+            var left = 0;
+            var right = frames.Count - 1;
+            var keys = frames.Keys;
+            var idx = -1;
+
+            while (left <= right)
+            {
+                var mid = (left + right) / 2;
+                if (keys[mid] <= tick)
+                {
+                    idx = mid;
+                    left = mid + 1;
+                }
+                else
+                {
+                    right = mid - 1;
+                }
+            }
+            return idx >= 0 ? idx : -1;
+        }
+        #endregion
+
 
         #region EditFrame
 
@@ -170,7 +233,7 @@ namespace Animation.AnimFrame
         {
             //Debug.Log("firstTick : " + firstTick + ", changedTick : " +  changedTick);
             if (firstTick == changedTick) return true;
-            
+
             // if already exists, return false
             if (frames.ContainsKey(changedTick)) return false;
 
@@ -180,6 +243,7 @@ namespace Animation.AnimFrame
             OnTickChanged(GameManager.GetManager<AnimManager>().Tick);
             return true;
         }
+        #endregion
         #endregion
     }
 }
