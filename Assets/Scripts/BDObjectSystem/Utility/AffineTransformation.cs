@@ -151,43 +151,6 @@ namespace BDObjectSystem.Utility
         }
 
         /// <summary>
-        /// root를 시작으로 순회하며 display 노드의 바로 상위 부모 월드 역행렬을 구해 설정한다.
-        /// 그렇게 구한 월드 행렬을 각 display 노드의 parentWorldMatrix에 저장한다.
-        /// </summary>
-        /// <param name="root"></param>
-        public static void SetParentInverseWorldMatrix(BdObjectContainer root)
-        {
-            if (root == null) return;
-
-            TraverseAndSet(root, Matrix4x4.identity);
-        }
-
-        private static void TraverseAndSet(BdObjectContainer node, Matrix4x4 parentWorld)
-        {
-            // 현재 노드의 local 행렬
-            Matrix4x4 local = node.transformation;
-
-            // 현재 노드의 world 행렬 = 부모의 world * 자신의 local
-            Matrix4x4 currentWorld = parentWorld * local;
-
-            // 자식이 displayObj를 가지고 있다면 → 현재 노드가 display의 상위 부모임
-            if (node.children != null)
-            {
-                foreach (var child in node.children)
-                {
-                    if (child.BdObject.IsDisplay)
-                    {
-                        child.parentWorldMatrix = currentWorld.inverse;
-                    }
-
-                    // 재귀 호출
-                    TraverseAndSet(child, currentWorld);
-                }
-            }
-        }
-
-
-        /// <summary>
         /// 최상위 부모 오브젝트(root)로부터 시작하여,
         /// 트리 구조 내의 모든 '잎(leaf) 노드'들의 월드 행렬을 구해 반환한다.
         /// </summary>

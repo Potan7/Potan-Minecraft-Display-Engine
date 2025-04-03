@@ -28,8 +28,8 @@ namespace Animation.AnimFrame
 
         [Header("BDObject Info")]
         public BdObject Info;
-        public Dictionary<string, BdObject> IDDataDict;
-        public Dictionary<string, Matrix4x4> worldTransforms;
+        public List<BdObject> leafObjects;
+
         private Timeline _timeline;
 
 
@@ -47,8 +47,8 @@ namespace Animation.AnimFrame
             UpdatePos();
             _timeline.OnGridChanged += UpdatePos;
 
-            IDDataDict = BdObjectHelper.SetDisplayIDDictionary(info);
-            worldTransforms = AffineTransformation.GetAllLeafWorldMatrices(info);
+            //IDDataDict = BdObjectHelper.SetDisplayIDDictionary(info);
+            leafObjects = BdObjectHelper.SetDisplayList(info);
         }
 
         public int SetTick(int newTick)

@@ -13,10 +13,9 @@ namespace BDObjectSystem
         public DisplayObject displayObj;
 
         public BdObjectContainer[] children;
-        public BdObjectContainer Parent;
+        public BdObjectContainer parent;
 
         public Matrix4x4 transformation;
-        public Matrix4x4 parentWorldMatrix;
 
         public void Init(BdObject bdObject, BdObjectManager manager)
         {
@@ -78,24 +77,12 @@ namespace BDObjectSystem
             //}
         }
 
-        public void SetTransformation(float[] mat)
+        public void SetTransformation(float[] transform) => SetTransformation(AffineTransformation.GetMatrix(transform));
+
+        public void SetTransformation(in Matrix4x4 mat)
         {
-            transformation = AffineTransformation.GetMatrix(mat);
+            transformation = mat;
             AffineTransformation.ApplyMatrixToTransform(transform, transformation);
-        }
-
-        public void SetTransformation(Matrix4x4 mat)
-        {
-            AffineTransformation.ApplyMatrixToTransform(transform, mat);
-        }
-
-        public void SetTransformation()
-        {
-            // local 변환 행렬 계산
-            Matrix4x4 localTransform = parentWorldMatrix * transformation;
-
-            // transformation = localTransform;
-            AffineTransformation.ApplyMatrixToTransform(transform, localTransform);
         }
 
     }

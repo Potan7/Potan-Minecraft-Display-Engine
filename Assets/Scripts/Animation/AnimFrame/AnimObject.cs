@@ -11,13 +11,13 @@ using FileSystem;
 
 namespace Animation.AnimFrame
 {
-    public class AnimObject : MonoBehaviour
+    public partial class AnimObject : MonoBehaviour
     {
+        #region Variables
         public RectTransform rect;
         public TextMeshProUGUI title;
         public Frame firstFrame;
         
-        private TransformationManager _transformationManager;
         public SortedList<int, Frame> frames = new SortedList<int, Frame>();
         public string bdFileName;
         
@@ -25,14 +25,14 @@ namespace Animation.AnimFrame
 
         private AnimObjList _manager;
 
-        public BdObjectContainer rootBDObj;
-        // private Dictionary<string, BdObjectContainer> _idDict;
-        private List<BdObjectContainer> _displayList;
+        public BDObjectAnimator animator;
+
+        private readonly HashSet<string> _noID = new HashSet<string>();
+        #endregion
 
         // Set initial values and initialize first frame
         public void Init(string fileName, AnimObjList list)
         {
-            
             title.text = fileName;
             _manager = list;
             bdFileName = fileName;
@@ -40,19 +40,14 @@ namespace Animation.AnimFrame
 
         public void InitAnimModelData()
         {
-            var bdObject = GameManager.GetManager<BdObjectManager>().BdObjects[bdFileName];
-            rootBDObj = bdObject.RootObject;
-            // _idDict = bdObject.Item2;
-            _displayList = bdObject.DisplayList;
+            animator = GameManager.GetManager<BdObjectManager>().BDObjectAnim[bdFileName];
 
             GetTickAndInterByFileName(bdFileName, out _, out var inter);
-            firstFrame.Init(bdFileName, 0, inter, rootBDObj.BdObject, this, _manager.timeline);
+            firstFrame.Init(bdFileName, 0, inter, animator.RootObject.BdObject, this, _manager.timeline);
 
             frames[0] = firstFrame;
-            
-            _transformationManager = new TransformationManager(frames, _displayList);
 
-            AnimManager.TickChanged += _transformationManager.OnTickChanged;
+            AnimManager.TickChanged += OnTickChanged;
         }
 
         #region EditFrame
@@ -158,7 +153,7 @@ namespace Animation.AnimFrame
         // remove self
         public void RemoveAnimObj()
         {
-            AnimManager.TickChanged -= _transformationManager.OnTickChanged;
+            AnimManager.TickChanged -= OnTickChanged;
             var frame = frames;
             frames = null;
             while (frame.Count > 0)
@@ -182,7 +177,7 @@ namespace Animation.AnimFrame
             frames.Remove(firstTick);
             frames.Add(changedTick, frame);
 
-            _transformationManager.OnTickChanged(GameManager.GetManager<AnimManager>().Tick);
+            OnTickChanged(GameManager.GetManager<AnimManager>().Tick);
             return true;
         }
         #endregion
