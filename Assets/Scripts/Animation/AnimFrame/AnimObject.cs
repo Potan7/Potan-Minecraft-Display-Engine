@@ -65,7 +65,7 @@ namespace Animation.AnimFrame
             // 보간 없이 적용해야 하는 경우: interpolation이 0이거나, 보간 종료됐거나, 첫 프레임인 경우
             if (leftFrame.interpolation == 0 || leftFrame.tick + leftFrame.interpolation < tick || left == 0)
             {
-                animator.ApplyTransformation(leftFrame.leafObjects);
+                animator.ApplyTransformation(leftFrame);
             }
             else
             {
@@ -80,7 +80,7 @@ namespace Animation.AnimFrame
 
             // b 프레임 기준 보간 비율 t 계산 (0~1로 클램프)
             float t = Mathf.Clamp01((tick - b.tick) / b.interpolation);
-            animator.ApplyTransformation(a.leafObjects, b.leafObjects, t);
+            animator.ApplyTransformation(a, b, t);
         }
 
         // 현재 tick에 맞는 왼쪽 프레임의 인덱스를 찾음 (binary search)
@@ -109,6 +109,14 @@ namespace Animation.AnimFrame
                 }
             }
             return idx >= 0 ? idx : -1;
+        }
+
+        public void UpdateAllFrameInterJump()
+        {
+            foreach (var frame in frames.Values)
+            {
+                frame.UpdateInterpolationJump();
+            }
         }
         #endregion
 

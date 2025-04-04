@@ -1,4 +1,4 @@
-using System;
+using UnityEngine;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -90,10 +90,11 @@ namespace BDObjectSystem.Utility
 
         /// <summary>
         /// SetDisplayList: BDObject의 자식중 모든 display 오브젝트를 BFS로 탐색하여 리스트에 저장
+        /// 또한 입력으로 들어온 Dictionary에 모든 ID-Matrix를 저장합니다.
         /// </summary>
         /// <param name="root"></param>
         /// <returns></returns>
-        public static List<BdObject> SetDisplayList(BdObject root)
+        public static List<BdObject> SetDisplayList(BdObject root, Dictionary<string, Matrix4x4> ModelMatrix)
         {
             var resultList = new List<BdObject>();
             var queue = new Queue<BdObject>();
@@ -102,6 +103,7 @@ namespace BDObjectSystem.Utility
             while (queue.Count > 0)
             {
                 var obj = queue.Dequeue();
+                ModelMatrix[obj.ID] = obj.Transforms.GetMatrix();
             
                 if (obj.IsDisplay)
                 {

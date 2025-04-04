@@ -5,6 +5,7 @@ using UnityEngine.EventSystems;
 using BDObjectSystem.Utility;
 using UnityEngine.UI;
 using Animation.UI;
+using System;
 
 namespace Animation.AnimFrame
 {
@@ -31,6 +32,8 @@ namespace Animation.AnimFrame
         public List<BdObject> leafObjects;
 
         public bool modelDiffrent;
+        public Dictionary<string, Matrix4x4> modelMatrixDict = new Dictionary<string, Matrix4x4>();
+        public bool IsJump = false;
 
         private Timeline _timeline;
 
@@ -49,8 +52,7 @@ namespace Animation.AnimFrame
             UpdatePos();
             _timeline.OnGridChanged += UpdatePos;
 
-            //IDDataDict = BdObjectHelper.SetDisplayIDDictionary(info);
-            leafObjects = BdObjectHelper.SetDisplayList(info);
+            leafObjects = BdObjectHelper.SetDisplayList(info, modelMatrixDict);
 
             modelDiffrent = animObject.animator.RootObject.bdObjectID != info.ID;
             //Debug.Log(animObject.animator);
@@ -59,6 +61,18 @@ namespace Animation.AnimFrame
                 Debug.Log($"Model is different, name : {fileName}\nModel : {animObject.animator.RootObject.bdObjectID}\nInfo : {info.ID}");
                 //Debug.Log("Model is different, name : " + animObject.animator.RootObject.bdObjectID);
             }
+
+
+        }
+
+        public Matrix4x4 GetMatrix(string id)
+        {
+            if (modelMatrixDict.TryGetValue(id, out var matrix))
+            {
+                return matrix;
+            }
+            Debug.LogError($"Matrix not found for ID: {id}");
+            return Matrix4x4.identity;
         }
 
         public int SetTick(int newTick)
@@ -70,6 +84,7 @@ namespace Animation.AnimFrame
 
             tick = newTick;
             UpdatePos();
+            animObject.UpdateAllFrameInterJump();
             return newTick;
 
         }
@@ -100,6 +115,8 @@ namespace Animation.AnimFrame
 
             interpolation = inter;
             UpdateInterpolationBar();
+
+            animObject.UpdateAllFrameInterJump();
 
             return true;
         }
@@ -136,6 +153,85 @@ namespace Animation.AnimFrame
                 width += line.rect.rect.width / 2; // line의 rect width 반영
 
                 interpolationRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+            }
+        }
+
+        /// <summary>
+        /// Interpolation Jump를 업데이트합니다.
+        /// </summary>
+        public void UpdateInterpolationJump()
+        {
+            int idx = animObject.frames.IndexOfKey(tick);
+            if (idx <= 0 || idx >= animObject.frames.Count - 1) return;
+            // ↑ 범위 밖이면 업데이트 불가
+
+            // 다음 프레임
+            Frame nextFrame = animObject.frames.Values[idx + 1];
+
+            // 매번 dict를 초기화
+           
+
+            // (1) 점프 발생 여부 체크
+            // "tick + interpolation > nextFrame.tick" → 보간점프 발생
+            bool isJump = tick + interpolation > nextFrame.tick;
+
+            if (!isJump)
+            {
+                modelMatrixDict.Clear();
+                // (2) 점프가 아닌 경우
+                // "현재 leafObjects의 Transforms 그대로" or "일반 보간"
+                // 여기서는 예시로, "그냥 현재 상태 그대로"를 저장
+                foreach (var obj in leafObjects)
+                {
+                    var current = obj;
+                    while (current != null)
+                    {
+                        // 이미 넣었다면 중복 방지
+                        if (modelMatrixDict.ContainsKey(current.ID))
+                            break;
+
+                        // '현재' transform 행렬 그대로
+                        Matrix4x4 mat = current.Transforms.GetMatrix();
+                        modelMatrixDict.Add(current.ID, mat);
+
+                        current = current.Parent;
+                    }
+                }
+                IsJump = isJump;
+            }
+            else if (isJump)
+            {
+                modelMatrixDict.Clear();
+                // (3) 점프가 발생하는 경우
+                // tick + interpolation > nextFrame.tick
+                float ratio = Mathf.Clamp01((nextFrame.tick - tick) / (float)interpolation);
+
+                // 예: 이전 프레임 beforeFrame = frames.Values[idx - 1];
+                // 만약 idx==0이면 이전 프레임이 없으니, 안전장치 필요
+
+                Frame beforeFrame = animObject.frames.Values[idx - 1];
+
+                foreach (var obj in leafObjects)
+                {
+                    var current = obj;
+                    while (current != null)
+                    {
+                        if (modelMatrixDict.ContainsKey(current.ID))
+                            break;
+
+                        // 현재 상태
+                        Matrix4x4 aMatrix = current.Transforms.GetMatrix();
+                        // 이전 프레임 상태
+                        Matrix4x4 bMatrix = beforeFrame.GetMatrix(current.ID);
+
+                        // 부분 보간
+                        Matrix4x4 lerpedMatrix = BDObjectAnimator.InterpolateMatrixTRS(aMatrix, bMatrix, ratio);
+                        modelMatrixDict.Add(current.ID, lerpedMatrix);
+
+                        current = current.Parent;
+                    }
+                }
+                IsJump = isJump;
             }
         }
 

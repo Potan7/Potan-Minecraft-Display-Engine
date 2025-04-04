@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Animation.AnimFrame;
 using BDObjectSystem;
 using BDObjectSystem.Utility;
 using UnityEngine;
@@ -21,11 +22,11 @@ public class BDObjectAnimator
     /// 부모를 따라 순회하며 변환을 적용합니다.
     /// </summary>
     /// <param name="bdObj"></param>
-    public void ApplyTransformation(List<BdObject> target)
+    public void ApplyTransformation(Frame targetFrame)
     {
         visitedObjects.Clear();
         // 자식에서 부모로 올라가면서 변환을 적용합니다.
-        foreach (var obj in target)
+        foreach (var obj in targetFrame.leafObjects)
         {
             if (!modelDict.TryGetValue(obj.ID, out var model)) continue;
 
@@ -37,7 +38,7 @@ public class BDObjectAnimator
 
                 if (modelRef.bdObjectID == targetRef.ID)
                 {
-                    modelRef.SetTransformation(targetRef.Transforms);
+                    modelRef.SetTransformation(targetFrame.GetMatrix(targetRef.ID));
                     visitedObjects.Add(modelRef);
                 }
 
@@ -47,30 +48,35 @@ public class BDObjectAnimator
         }
     }
 
-    public void ApplyTransformation(List<BdObject> a, List<BdObject> b, float ratio)
+    public void ApplyTransformation(Frame aFrame, Frame bFrame, float ratio)
     {
         visitedObjects.Clear();
-        // a 리스트의 각 노드에 대해 ID를 기준으로 b 리스트에서 매칭된 노드를 찾음
-        foreach (var nodeA in a)
-        {
-            // b 리스트에서 같은 ID를 가진 노드를 찾습니다.
-            var nodeB = b.Find(x => x.ID == nodeA.ID);
-            if (nodeB == null) continue; // 매칭되지 않으면 넘어감
 
-            // 모델 사전에서 해당 노드를 찾음
-            if (!modelDict.TryGetValue(nodeA.ID, out var model)) continue;
+        // aFrame의 leafObjects를 순회
+        foreach (var leafA in aFrame.leafObjects)
+        {
+            // bFrame의 leafObjects에서 같은 ID를 가진 노드를 찾습니다.
+            var leafB = bFrame.leafObjects.Find(x => x.ID == leafA.ID);
+            if (leafB == null) continue;
+
+            // 모델 사전에서 해당 노드를 찾습니다.
+            if (!modelDict.TryGetValue(leafA.ID, out var model)) continue;
 
             var modelRef = model;
-            var aRef = nodeA;
-            var bRef = nodeB;
+            var aRef = leafA;
+            var bRef = leafB;
+
             while (modelRef != null && aRef != null && bRef != null)
             {
-                if (visitedObjects.Contains(modelRef)) break;
+                if (visitedObjects.Contains(modelRef))
+                    break;
 
                 if (modelRef.bdObjectID == aRef.ID)
                 {
-                    Matrix4x4 aMatrix = aRef.Transforms.GetMatrix();
+                    // aFrame, bFrame 각각에서 해당 ID의 행렬을 가져와 보간
+                    Matrix4x4 aMatrix = aFrame.GetMatrix(aRef.ID);
                     Matrix4x4 bMatrix = bRef.Transforms.GetMatrix();
+
                     Matrix4x4 lerpedMatrix = InterpolateMatrixTRS(aMatrix, bMatrix, ratio);
 
                     modelRef.SetTransformation(lerpedMatrix);
@@ -83,6 +89,7 @@ public class BDObjectAnimator
             }
         }
     }
+
 
 
     public static Matrix4x4 InterpolateMatrixTRS(in Matrix4x4 a, in Matrix4x4 b, float t)
