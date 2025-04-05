@@ -102,6 +102,10 @@ namespace BDObjectSystem
         {
             if (BDObjectAnim.Remove(bdName, out var obj))
             {
+                foreach (var leaf in obj.modelDict.Values)
+                {
+                    Destroy(leaf.gameObject);
+                }
                 Destroy(obj.RootObject.gameObject);
             }
         }
