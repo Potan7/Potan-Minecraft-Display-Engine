@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NUnit.Framework.Internal.Commands;
 using UnityEngine;
 
 namespace BDObjectSystem.Utility
@@ -7,7 +8,7 @@ namespace BDObjectSystem.Utility
     public static class AffineTransformation
     {
 
-        public static Matrix4x4 GetMatrix(float[] t)
+        public static Matrix4x4 GetMatrix(this float[] t)
         {
             if (t.Length == 16)
             {
@@ -41,45 +42,68 @@ namespace BDObjectSystem.Utility
         }
         public static void ApplyMatrixToTransform(Transform target, in Matrix4x4 matrix)
         {
-            // 1) 위치 (Translation)
+            // 1) Translation 추출 (4번째 컬럼)
             Vector3 translation = matrix.GetColumn(3);
 
-            // 2) 스케일 및 회전용 3x3 부분 추출
+            // 2) 3x3 부분 추출 (스케일, shear, 회전 포함)
             Vector3 col0 = matrix.GetColumn(0);
             Vector3 col1 = matrix.GetColumn(1);
             Vector3 col2 = matrix.GetColumn(2);
 
-            // 스케일은 각 컬럼 벡터의 크기
+            // a) X축 스케일과 정규화 벡터 'a' 계산
             float scaleX = col0.magnitude;
-            float scaleY = col1.magnitude;
-            float scaleZ = col2.magnitude;
-            Vector3 scale = new Vector3(scaleX, scaleY, scaleZ);
+            Vector3 a = (scaleX != 0) ? col0 / scaleX : Vector3.zero;
 
-            // 컬럼 벡터를 정규화하여 순수 회전 행렬을 만듦
-            if (scaleX != 0) col0 /= scaleX;
-            if (scaleY != 0) col1 /= scaleY;
-            if (scaleZ != 0) col2 /= scaleZ;
+            // b) X-Y shear: a와 col1의 내적
+            float shearXY = Vector3.Dot(a, col1);
+            // col1에서 a 방향 성분 제거
+            Vector3 col1NoShear = col1 - a * shearXY;
+            float scaleY = col1NoShear.magnitude;
+            Vector3 b = (scaleY != 0) ? col1NoShear / scaleY : Vector3.zero;
 
-            // 3) 회전: 정규화된 컬럼으로 회전 행렬 생성 후 Quaternion 변환
+            // c) X-Z, Y-Z shear 계산: a와 col2, b와 col2의 내적
+            float shearXZ = Vector3.Dot(a, col2);
+            float shearYZ = Vector3.Dot(b, col2);
+            // col2에서 a, b 방향 성분 제거
+            Vector3 col2NoShear = col2 - a * shearXZ - b * shearYZ;
+            float scaleZ = col2NoShear.magnitude;
+            Vector3 c = (scaleZ != 0) ? col2NoShear / scaleZ : Vector3.zero;
+
+            // 이제 a, b, c는 순수 회전을 나타내는 정규화된 축 벡터입니다.
+            // 순수 회전 행렬 생성
             Matrix4x4 rotationMatrix = new Matrix4x4();
-            rotationMatrix.SetColumn(0, new Vector4(col0.x, col0.y, col0.z, 0));
-            rotationMatrix.SetColumn(1, new Vector4(col1.x, col1.y, col1.z, 0));
-            rotationMatrix.SetColumn(2, new Vector4(col2.x, col2.y, col2.z, 0));
+            rotationMatrix.SetColumn(0, new Vector4(a.x, a.y, a.z, 0));
+            rotationMatrix.SetColumn(1, new Vector4(b.x, b.y, b.z, 0));
+            rotationMatrix.SetColumn(2, new Vector4(c.x, c.y, c.z, 0));
             rotationMatrix.SetColumn(3, new Vector4(0, 0, 0, 1));
 
+            // Quaternion 추출 (이미 정규화된 회전 행렬에서)
             Quaternion rotation = QuaternionFromMatrix(rotationMatrix);
 
-            // 4) 실제 Transform에 적용
+            // 최종 스케일 (shear는 따로 Transform에 적용할 수 없으므로 보통 무시)
+            Vector3 scale = new Vector3(scaleX, scaleY, scaleZ);
+
+            // 4) 결과를 Transform에 적용 (로컬 기준)
             target.localPosition = translation;
-            target.localScale = scale;
             target.localRotation = rotation;
+            target.localScale = scale;
+
+            // 참고: 추출된 shear 값은
+            // shearXY, shearXZ, shearYZ 에 저장되어 있습니다.
+            // 필요시 별도로 로깅하거나 디버깅할 수 있습니다.
+            
+            // shear 값이 존재하면 출력
+            if (Mathf.Abs(shearXY) > 0.01f || Mathf.Abs(shearXZ) > 0.01f || Mathf.Abs(shearYZ) > 0.01f)
+            {
+                Debug.Log($"Shear values: XY={shearXY}, XZ={shearXZ}, YZ={shearYZ}");
+            }
         }
 
         /// <summary>
-        /// 주어진 회전 행렬(Matrix4x4)을 Quaternion으로 변환하는 사용자 정의 함수.
-        /// 참고: 행렬의 3x3 부분이 순수 회전을 나타낸다고 가정.
+        /// 주어진 회전 행렬(Matrix4x4)의 3x3 부분으로부터 Quaternion을 추출한다.
+        /// 결과 Quaternion은 정규화되어 반환된다.
         /// </summary>
-        private static Quaternion QuaternionFromMatrix(in Matrix4x4 m)
+        public static Quaternion QuaternionFromMatrix(Matrix4x4 m)
         {
             Quaternion q = new Quaternion();
             float trace = m.m00 + m.m11 + m.m22;
@@ -115,8 +139,9 @@ namespace BDObjectSystem.Utility
                 q.y = (m.m12 + m.m21) / s;
                 q.z = 0.25f * s;
             }
-            return q;
+            return q.normalized;
         }
+
 
 
 
@@ -142,6 +167,7 @@ namespace BDObjectSystem.Utility
         /// <summary>
         /// 현재 노드(node)와 누적 월드행렬(parentWorld)을 받아,
         /// 자식들이 있으면 순회하고, 없으면 잎이므로 result에 저장
+        /// 이때 월드행렬은 부모의 월드행렬과 현재 노드의 로컬행렬을 곱하여 계산
         /// </summary>
         private static void TraverseAndCollectLeaf(
             BdObject node,
@@ -149,13 +175,12 @@ namespace BDObjectSystem.Utility
             Dictionary<string, Matrix4x4> result)
         {
             // 1) 현재 노드의 로컬 행렬
-            Matrix4x4 localMatrix = GetMatrix(node.Transforms);
+            Matrix4x4 localMatrix = node.Transforms.GetMatrix();
 
             // 2) 부모 월드행렬 x 로컬행렬 => 현재 노드의 월드행렬
             Matrix4x4 worldMatrix = parentWorld * localMatrix;
 
-            // 3) 자식이 없으면 => 잎(leaf) 노드
-            if (node.Children == null || node.Children.Length == 0)
+            if (node.IsDisplay)
             {
                 // result에 기록
                 result[node.ID] = worldMatrix;

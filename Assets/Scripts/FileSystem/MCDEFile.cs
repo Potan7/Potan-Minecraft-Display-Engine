@@ -30,7 +30,7 @@ namespace FileSystem
         public void SetInformation(AnimObject animObject)
         {
             name = animObject.bdFileName;
-            model = animObject.rootBDObj.BdObject;
+            model = animObject.animator.RootObject.BdObject;
 
             int frameCount = animObject.frames.Count;
             if (frameFiles == null || frameFiles.Length != frameCount)
@@ -76,17 +76,17 @@ namespace FileSystem
             else
                 worldTransforms.Clear();
 
-            foreach (var display in frame.worldTransforms)
-            {
-                if (!worldTransforms.TryGetValue(display.Key, out var array) || array == null || array.Length != 16)
-                {
-                    array = new float[16];
-                    worldTransforms[display.Key] = array;
-                }
+            // foreach (var display in frame.worldTransforms)
+            // {
+            //     if (!worldTransforms.TryGetValue(display.Key, out var array) || array == null || array.Length != 16)
+            //     {
+            //         array = new float[16];
+            //         worldTransforms[display.Key] = array;
+            //     }
 
-                AffineTransformation.MatrixToArray(display.Value, array);
+            //     AffineTransformation.MatrixToArray(display.Value, array);
 
-            }
+            // }
         }
 
 

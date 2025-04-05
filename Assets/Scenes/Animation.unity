@@ -3109,7 +3109,6 @@ MonoBehaviour:
   bdObjTransportMaterial: {fileID: 2100000, guid: 376723b8be6a77d4dafb0437ee29173d, type: 2}
   bdObjHeadMaterial: {fileID: 2100000, guid: fbccec779437b8642bc9151962a35f84, type: 2}
   bdObjectParent: {fileID: 1893827789}
-  animObjectParent: {fileID: 903727140}
   bdObjectCount: 0
   currentBdObject: {fileID: 0}
   bdObjectPrefab: {fileID: 3325262981676524368, guid: 92b0cb02693e70e4883b2def08d6a5ab, type: 3}
@@ -3120,7 +3119,6 @@ MonoBehaviour:
   itemPrefab: {fileID: 7713049700123038392, guid: 67070e5c2dcccfb42ae268e55ae9b033, type: 3}
   blockPrefab: {fileID: 9111335049543586871, guid: b9f6dc4d5503c7349bcf9564751d82da, type: 3}
   headPrefab: {fileID: 8305422446642277749, guid: 88189d21db670fd4d9633fa6d83c7cea, type: 3}
-  animModelPrefab: {fileID: 3800544938045871121, guid: ab31d88223476b4419bef4286bcabe99, type: 3}
 --- !u!114 &257885227
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3889,7 +3887,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 314702548}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
   m_Name: 
@@ -12459,37 +12457,6 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!1 &903727139
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 903727140}
-  m_Layer: 0
-  m_Name: AnimModelObjects
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &903727140
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 903727139}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: -1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &908097898
 GameObject:
   m_ObjectHideFlags: 0
@@ -27064,7 +27031,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 1858387180}
   m_OnClick:
     m_PersistentCalls:
@@ -31744,12 +31711,11 @@ SceneRoots:
   m_Roots:
   - {fileID: 257885224}
   - {fileID: 995055659}
-  - {fileID: 295057851}
   - {fileID: 330585546}
   - {fileID: 280487879}
   - {fileID: 1651067627}
   - {fileID: 832575519}
   - {fileID: 1386441637}
   - {fileID: 1893827789}
-  - {fileID: 903727140}
   - {fileID: 433026522}
+  - {fileID: 295057851}
