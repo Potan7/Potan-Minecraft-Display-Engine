@@ -76,6 +76,14 @@ namespace Animation
         {
             visitedObjects.Clear();
 
+            // 모델의 부모 자식 구조가 다를 경우
+            if (aFrame.IsModelDiffrent || bFrame.IsModelDiffrent)
+            {
+                // aFrame, bFrame 각각에서 해당 ID의 행렬을 가져와 보간
+                ApplyDiffrentStructureTransform(aFrame, bFrame, ratio);
+                return;
+            }
+
             // aFrame의 leafObjects를 순회
             foreach (var leafA in aFrame.leafObjects)
             {
@@ -85,6 +93,11 @@ namespace Animation
 
                 // 모델 사전에서 해당 노드를 찾습니다.
                 if (!modelDict.TryGetValue(leafA.ID, out var model)) continue;
+
+                if (model.transform.parent == noParentTransform)
+                {
+                    model.transform.SetParent(model.parent.transform, true);
+                }
 
                 var modelRef = model;
                 var aRef = leafA;
@@ -131,6 +144,26 @@ namespace Animation
                 }
 
                 model.SetTransformation(worldMat);
+            }
+        }
+
+        public void ApplyDiffrentStructureTransform(Frame aFrame, Frame bFrame, float ratio)
+        {
+            foreach (var obj in aFrame.leafObjects)
+            {
+                if (!modelDict.TryGetValue(obj.ID, out var model)) continue;
+
+                var worldMatA = aFrame.GetWorldMatrix(obj.ID);
+                var worldMatB = bFrame.GetWorldMatrix(obj.ID);
+
+                Matrix4x4 lerpedMatrix = InterpolateMatrixTRS(worldMatA, worldMatB, ratio);
+
+                if (model.transform.parent != noParentTransform)
+                {
+                    model.transform.SetParent(noParentTransform);
+                }
+
+                model.SetTransformation(lerpedMatrix);
             }
         }
         #endregion
