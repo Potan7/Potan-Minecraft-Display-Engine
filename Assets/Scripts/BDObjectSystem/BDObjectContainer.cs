@@ -1,4 +1,4 @@
-using Manager;
+using GameSystem;
 using UnityEngine;
 using BDObjectSystem.Display;
 using BDObjectSystem.Utility;
@@ -8,14 +8,15 @@ namespace BDObjectSystem
     public class BdObjectContainer : MonoBehaviour
     {
         public string bdObjectID;
-        
+
         public BdObject BdObject;
         public DisplayObject displayObj;
 
         public BdObjectContainer[] children;
-        public BdObjectContainer Parent;
+        public BdObjectContainer parent;
 
         public Matrix4x4 transformation;
+        public Matrix4x4 parentMatrix;
 
         public void Init(BdObject bdObject, BdObjectManager manager)
         {
@@ -26,7 +27,7 @@ namespace BDObjectSystem
 
             // 그룹과 디스플레이 구분 
             if (!bdObject.IsBlockDisplay && !bdObject.IsItemDisplay && !bdObject.IsTextDisplay) return;
-            
+
             // 디스플레이 공통부분
             var typeStart = bdObject.Name.IndexOf('[');
             if (typeStart == -1)
@@ -45,7 +46,7 @@ namespace BDObjectSystem
                 displayObj = obj;
 
                 // blockDisplay�� ��ġ�� ���� �ϴܿ� ����
-                obj.transform.localPosition = -obj.AABBBound.min/2;
+                obj.transform.localPosition = -obj.AABBBound.min / 2;
             }
             // 아이템 디스플레이
             else if (bdObject.IsItemDisplay)
@@ -77,10 +78,13 @@ namespace BDObjectSystem
             //}
         }
 
-        public void SetTransformation(float[] mat)
+        public void SetTransformation(float[] transform) => SetTransformation(AffineTransformation.GetMatrix(transform));
+
+        public void SetTransformation(in Matrix4x4 mat)
         {
-            transformation = AffineTransformation.GetMatrix(mat);
+            transformation = mat;
             AffineTransformation.ApplyMatrixToTransform(transform, transformation);
         }
+
     }
 }

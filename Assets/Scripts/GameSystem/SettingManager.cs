@@ -1,13 +1,13 @@
 using System;
 using Animation;
-using CameraMovement;
+using GameSystem;
 using TMPro;
-using ToolSystem;
+using FileSystem;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-namespace Manager
+namespace GameSystem
 {
     public class SettingManager : BaseManager
     {
@@ -134,8 +134,8 @@ namespace Manager
             }
             if (PlayerPrefs.HasKey("cameraSpeed"))
             {
-                cameraMovement.cameraRotateSpeed = PlayerPrefs.GetFloat("cameraSpeed");
-                sliders[(int)SliderType.CameraSpeed].value = cameraMovement.cameraRotateSpeed;
+                cameraMovement.rotateSpeed = PlayerPrefs.GetFloat("cameraSpeed");
+                sliders[(int)SliderType.CameraSpeed].value = cameraMovement.rotateSpeed;
             }
             if (PlayerPrefs.HasKey("cameraMoveSpeed"))
             {
@@ -160,11 +160,11 @@ namespace Manager
             settingPanel.SetActive(isOn);
             if (isOn)
             {
-                BdEngineStyleCameraMovement.CurrentCameraStatus |= BdEngineStyleCameraMovement.CameraStatus.OnSettingPanel;
+                UIManager.CurrentUIStatus |= UIManager.UIStatus.OnSettingPanel;
             }
             else
             {
-                BdEngineStyleCameraMovement.CurrentCameraStatus &= ~BdEngineStyleCameraMovement.CameraStatus.OnSettingPanel;
+                UIManager.CurrentUIStatus &= ~UIManager.UIStatus.OnSettingPanel;
             }
         }
 
@@ -238,7 +238,7 @@ namespace Manager
             switch (type)
             {
                 case SliderType.CameraSpeed:
-                    cameraMovement.cameraRotateSpeed = value;
+                    cameraMovement.rotateSpeed = value;
                     PlayerPrefs.SetFloat("cameraSpeed", value);
                     break;
                 case SliderType.CameraMoveSpeed:

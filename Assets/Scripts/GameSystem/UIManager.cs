@@ -1,15 +1,38 @@
 using JetBrains.Annotations;
 using Riten.Native.Cursors;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
-using BDObjectSystem;
 using TMPro;
+using FileSystem;
+using System;
 
-namespace Manager
+namespace GameSystem
 {
-    public class UIManger : BaseManager
+    public class UIManager : BaseManager
     {
+
+        [Flags]
+        public enum UIStatus {
+            None = 0,
+            OnAnimUIPanel = 1 << 0,
+            OnSettingPanel = 1 << 1,
+            OnPopupPanel = 1 << 2,
+            OnDraggingPanel = 1 << 3,
+            OnMenuBarPanel = 1 << 4,
+        }
+        
+        private static UIStatus _currentUIStatus = UIStatus.None;
+        public static UIStatus CurrentUIStatus 
+        {
+            get => _currentUIStatus; 
+            set
+            {
+                _currentUIStatus = value;
+                GameManager.SetPlayerInput((_currentUIStatus | UIStatus.OnMenuBarPanel | UIStatus.OnPopupPanel) != UIStatus.None);
+                //Debug.Log($"CurrentUIStatus: {_currentUIStatus}");
+            }
+        }
+
         const string DefaultLoadingText = "Loading...";
 
         private FileLoadManager _fileManager;
@@ -22,7 +45,8 @@ namespace Manager
         private void Start()
         {
             _fileManager = GameManager.GetManager<FileLoadManager>();
-            GameManager.GetManager<BdObjectManager>();
+            
+            _currentUIStatus = UIStatus.None;
         }
 
         public void SetLoadingPanel(bool isOn)

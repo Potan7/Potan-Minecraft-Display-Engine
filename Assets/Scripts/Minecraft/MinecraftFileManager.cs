@@ -6,7 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
-using Manager;
+using GameSystem;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -68,9 +68,15 @@ namespace Minecraft
             sw.Stop();
             CustomLog.Log($"Reading JAR file took {sw.ElapsedMilliseconds}ms");
 
+            // string log = string.Empty;
+            // foreach (var file in _isTextureAnimated)
+            // {
+            //     log += file + "\n";
+            // }
+            // CustomLog.Log(log);
         }
 
-        #region Static �Լ���
+        #region Static functions
 
         public static JObject GetJsonData(string path)
         {
@@ -87,10 +93,10 @@ namespace Minecraft
         }
 
         /// <summary>
-        /// �� �����͸� �����ɴϴ�.
-        /// ���� hardcodeNames�� �ִ� �̸��� Ȯ���ϰ�, �� ���� jsonFiles�� �ִ��� Ȯ���մϴ�.
+        /// Get model data from the path.
+        /// If the model is hardcoded, it will load from the hardcoded folder.
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path">dont need .json</param>
         /// <returns></returns>
         public static MinecraftModelData GetModelData(string path)
         {
@@ -118,7 +124,6 @@ namespace Minecraft
             return null;
         }
 
-        // ReSharper disable Unity.PerformanceAnalysis
         public static Texture2D GetTextureFile(string path)
         {
             if (_instance._textureFiles.TryGetValue(path, out var file))
@@ -141,17 +146,17 @@ namespace Minecraft
 
         public static bool IsTextureAnimated(string path)
         {
+            //CustomLog.Log(path);
             return _instance._isTextureAnimated.Contains(path + ".mcmeta");
         }
 
         public static string RemoveNamespace(string path) => path.Replace("minecraft:", "");
         #endregion
 
-        #region ���� �ε�
-
+        #region Read Minecraft JAR file
                 private async Task ReadJarFile(string path, string targetFolder)
         {
-            // ó���� �ε��ϰ� �����Ƿ� ���⼭ ���� �� �޸𸮿� �ø��� �ʰ� ó��
+            // 1회용으로 읽을 폴더들
             string[] readTexturesFolders =
             {
                 "textures/block", "textures/item", "textures/entity/bed", "textures/entity/shulker",
@@ -223,7 +228,7 @@ namespace Minecraft
                             }
                             else if (entry.FullName.EndsWith(".mcmeta"))
                             {
-                                _isTextureAnimated.Add(entry.FullName.Replace("assets/minecraft/", ""));
+                                _isTextureAnimated.Add(entry.FullName.Replace("assets/minecraft/textures/", ""));
                                 //lock (isTextureAnimated)
                                 //{
                                 //    isTextureAnimated.Add(entry.FullName.Replace("assets/minecraft/", ""));

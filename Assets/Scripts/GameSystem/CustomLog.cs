@@ -1,5 +1,5 @@
 using UnityEngine;
-using ToolSystem;
+using GameSystem;
 
 public static class CustomLog
 {

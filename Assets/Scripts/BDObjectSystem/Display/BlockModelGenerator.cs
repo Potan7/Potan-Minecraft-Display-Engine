@@ -1,5 +1,5 @@
 using System;
-using Manager;
+using GameSystem;
 using Minecraft;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -192,7 +192,8 @@ namespace BDObjectSystem.Display
 
                 if (isAnimated)
                 {
-                    // �ִϸ��̼��� ��� ù��° ĭ ����
+                    // Animated Texture
+                    //Debug.Log("Animated Texture: " + blockTexture.name);
                     var uvY = 16.0f * (16.0f / blockTexture.height);
                     var uv = new Vector4(0, 0, 16, uvY);
                     mat.SetVector(uvFace, uv);

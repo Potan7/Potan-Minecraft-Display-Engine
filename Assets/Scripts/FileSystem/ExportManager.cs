@@ -1,11 +1,10 @@
 using System.Collections;
-using CameraMovement;
-using Manager;
+using GameSystem;
 using SimpleFileBrowser;
 using TMPro;
 using UnityEngine;
 
-namespace ToolSystem
+namespace FileSystem
 {
     public class ExportManager : MonoBehaviour
     {
@@ -24,12 +23,9 @@ namespace ToolSystem
         }
         private string currentPath;
 
-        private AnimExporter exporter;
-
         private void Start()
         {
             SetPathText(Application.dataPath);
-            exporter = new AnimExporter();
         }
 
         private void SetPathText(string path)
@@ -44,11 +40,11 @@ namespace ToolSystem
             if (isShow)
             {
                 SetPathText(currentPath);
-                BdEngineStyleCameraMovement.CurrentCameraStatus |= BdEngineStyleCameraMovement.CameraStatus.OnExportPanel;
+                UIManager.CurrentUIStatus |= UIManager.UIStatus.OnPopupPanel;
             }
             else
             {
-                BdEngineStyleCameraMovement.CurrentCameraStatus &= ~BdEngineStyleCameraMovement.CameraStatus.OnExportPanel;
+                UIManager.CurrentUIStatus &= ~UIManager.UIStatus.OnPopupPanel;
             }
         }
 
@@ -68,7 +64,11 @@ namespace ToolSystem
         public void OnExportButton()
         {
             //Debug.Log("Exporting to: " + currentPath);
-            exporter.ExportAnimation(currentPath);
+        }
+
+        public void ExportAnimation()
+        {
+            
         }
     }
 }

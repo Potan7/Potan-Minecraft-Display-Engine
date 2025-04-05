@@ -1,4 +1,4 @@
-using CameraMovement;
+using GameSystem;
 using Riten.Native.Cursors.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -58,7 +58,7 @@ namespace Animation.UI
                 if (Input.GetMouseButtonUp(0))
                 {
                     _isDragging = false;
-                    BdEngineStyleCameraMovement.CurrentCameraStatus &= ~BdEngineStyleCameraMovement.CameraStatus.OnDraggingPanel;
+                    UIManager.CurrentUIStatus &= ~UIManager.UIStatus.OnDraggingPanel;
                 }
             }
         }
@@ -68,7 +68,7 @@ namespace Animation.UI
             if (!isOnOff) return;
 
             _isDragging = true;
-            BdEngineStyleCameraMovement.CurrentCameraStatus |= BdEngineStyleCameraMovement.CameraStatus.OnDraggingPanel;
+            UIManager.CurrentUIStatus |= UIManager.UIStatus.OnDraggingPanel;
         }
 
         public void SetPanelSize(float y)

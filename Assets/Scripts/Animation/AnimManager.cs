@@ -1,5 +1,5 @@
 using System;
-using Manager;
+using GameSystem;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Animation.UI;

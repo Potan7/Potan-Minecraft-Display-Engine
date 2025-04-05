@@ -4,10 +4,13 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using BDObjectSystem.Utility;
+using UnityEngine;
+using System.Linq;
 
 //[System.Serializable]
 namespace BDObjectSystem
 {
+    [System.Serializable]
     public class BdObject
     {
         // JSON Property
@@ -20,17 +23,19 @@ namespace BDObjectSystem
 
         public JObject Options;
         public BdObject[] Children;
+
         [JsonExtensionData]
         public Dictionary<string, object> ExtraData;
 
         // Additional Property
+        [SerializeField]
         [JsonIgnore] private string _id;
         public string ID => GetID();
         // [field: JsonIgnore] public string ID { get; set; }
 
         [JsonIgnore]
         public BdObject Parent;
-        
+
         public bool IsDisplay => IsBlockDisplay || IsItemDisplay || IsTextDisplay;
 
         [OnDeserialized]
@@ -53,23 +58,56 @@ namespace BDObjectSystem
         private string GetID()
         {
             if (!string.IsNullOrEmpty(_id)) return _id;
-        
-            if (Children == null) _id = Name;
+
+            if (Children == null || Children.Length == 0)
+            {
+                _id = Name;
+            }
             else
             {
-                var childSum = new StringBuilder();
+                List<string> childIds = new List<string>();
                 foreach (var child in Children)
                 {
-                    childSum.Append(child.ID);
-                    // childSum += child.GetID();
+                    childIds.Add(child.GetID()); // 자식의 ID 재귀 호출
                 }
 
-                if (Children.Length <= 1) childSum.Append("g");
-                _id = childSum.ToString();
+                childIds.Sort(); // 순서 무시
+
+                // 구조 포함된 식별자 생성
+                string groupID = $"[{string.Join(",", childIds)}]";
+
+                // // 자식이 하나일 경우 구분자 추가 (중간 그룹 존재 인식용)
+                // if (childIds.Count == 1)
+                //     groupID += "g";
+
+                _id = groupID;
             }
-            
+
             return _id;
         }
+
+
+
+        // private string GetID()
+        // {
+        //     if (!string.IsNullOrEmpty(_id)) return _id;
+
+        //     if (Children == null) _id = Name;
+        //     else
+        //     {
+        //         var childSum = new StringBuilder();
+        //         foreach (var child in Children)
+        //         {
+        //             childSum.Append(child.ID);
+        //             // childSum += child.GetID();
+        //         }
+
+        //         if (Children.Length <= 1) childSum.Append("g");
+        //         _id = childSum.ToString();
+        //     }
+
+        //     return _id;
+        // }
     }
 }
 
