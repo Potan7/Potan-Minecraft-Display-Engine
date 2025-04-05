@@ -5,6 +5,7 @@ using UnityEngine.EventSystems;
 using BDObjectSystem.Utility;
 using UnityEngine.UI;
 using Animation.UI;
+using Animation;
 using System;
 
 namespace Animation.AnimFrame
@@ -31,7 +32,10 @@ namespace Animation.AnimFrame
         public BdObject Info;
         public List<BdObject> leafObjects;
 
-        public bool modelDiffrent;
+        // 모델의 부모 자식 구조가 다를 경우
+        public bool IsModelDiffrent;
+        public Dictionary<string, Matrix4x4> worldMatrixDict = null;
+        // 모델의 모든 노드 ID:Matrix4x4을 저장하는 딕셔너리
         public Dictionary<string, Matrix4x4> modelMatrixDict = new Dictionary<string, Matrix4x4>();
         public bool IsJump = false;
 
@@ -54,12 +58,12 @@ namespace Animation.AnimFrame
 
             leafObjects = BdObjectHelper.SetDisplayList(info, modelMatrixDict);
 
-            modelDiffrent = animObject.animator.RootObject.bdObjectID != info.ID;
+            IsModelDiffrent = animObject.animator.RootObject.bdObjectID != info.ID;
             //Debug.Log(animObject.animator);
-            if (modelDiffrent)
+            if (IsModelDiffrent)
             {
                 Debug.Log($"Model is different, name : {fileName}\nModel : {animObject.animator.RootObject.bdObjectID}\nInfo : {info.ID}");
-                //Debug.Log("Model is different, name : " + animObject.animator.RootObject.bdObjectID);
+                worldMatrixDict = AffineTransformation.GetAllLeafWorldMatrices(info);
             }
 
 
@@ -72,6 +76,16 @@ namespace Animation.AnimFrame
                 return matrix;
             }
             Debug.LogError($"Matrix not found for ID: {id}");
+            return Matrix4x4.identity;
+        }
+
+        public Matrix4x4 GetWorldMatrix(string id)
+        {
+            if (worldMatrixDict != null && worldMatrixDict.TryGetValue(id, out var matrix))
+            {
+                return matrix;
+            }
+            Debug.LogError($"World Matrix not found for ID: {id}");
             return Matrix4x4.identity;
         }
 

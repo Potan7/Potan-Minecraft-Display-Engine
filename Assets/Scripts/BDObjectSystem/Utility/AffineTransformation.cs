@@ -167,6 +167,7 @@ namespace BDObjectSystem.Utility
         /// <summary>
         /// 현재 노드(node)와 누적 월드행렬(parentWorld)을 받아,
         /// 자식들이 있으면 순회하고, 없으면 잎이므로 result에 저장
+        /// 이때 월드행렬은 부모의 월드행렬과 현재 노드의 로컬행렬을 곱하여 계산
         /// </summary>
         private static void TraverseAndCollectLeaf(
             BdObject node,

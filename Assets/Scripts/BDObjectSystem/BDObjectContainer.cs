@@ -16,6 +16,7 @@ namespace BDObjectSystem
         public BdObjectContainer parent;
 
         public Matrix4x4 transformation;
+        public Matrix4x4 parentMatrix;
 
         public void Init(BdObject bdObject, BdObjectManager manager)
         {

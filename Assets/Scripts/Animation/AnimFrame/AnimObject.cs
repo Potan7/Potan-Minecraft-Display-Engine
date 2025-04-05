@@ -8,6 +8,7 @@ using UnityEngine.EventSystems;
 using Animation.UI;
 using BDObjectSystem.Utility;
 using FileSystem;
+using Animation;
 
 namespace Animation.AnimFrame
 {
@@ -65,7 +66,10 @@ namespace Animation.AnimFrame
             // 보간 없이 적용해야 하는 경우: interpolation이 0이거나, 보간 종료됐거나, 첫 프레임인 경우
             if (leftFrame.interpolation == 0 || leftFrame.tick + leftFrame.interpolation < tick || left == 0)
             {
-                animator.ApplyTransformation(leftFrame);
+                if (leftFrame.IsModelDiffrent)
+                    animator.ApplyDiffrentStructureTransform(leftFrame);
+                else
+                    animator.ApplyTransformation(leftFrame);
             }
             else
             {
