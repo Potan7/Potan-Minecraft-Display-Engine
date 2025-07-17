@@ -4,10 +4,6 @@
 
 BDEngine의 파일들을 불러와 애니메이션을 재생시킬 수 있습니다.
 
-## 기본적인 사용법
-
-
-
 
 ## 제작지원
 
@@ -20,3 +16,10 @@ BDEngine의 파일들을 불러와 애니메이션을 재생시킬 수 있습니
 - Zoropic : 테스트 모델 제공
 
 - Seo Yipo : 아이콘, 로고 제작
+
+## 사용한 에셋
+1. DoTween ([Github](https://github.com/Demigiant/dotween?tab=readme-ov-file))
+2. Simple Tooltip 
+3. StandaloneFileBrowser ([Github](https://github.com/gkngkc/UnityStandaloneFileBrowser))
+4. RuntimeTransformHandles ([Github](https://github.com/manaporkun/UnityRuntimeTransformHandles))
+    자체 수정본

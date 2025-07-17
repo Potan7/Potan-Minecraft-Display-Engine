@@ -51,12 +51,12 @@ public class CursorManager : MonoBehaviour
     void LoadTextures()
     {
         // "cursor"라는 스프라이트 시트에서 슬라이스된 스프라이트들을 로드
-        Sprite[] cursorSprites = Resources.LoadAll<Sprite>("cursor");
+        Sprite[] cursorSprites = Resources.LoadAll<Sprite>("UI/cursor");
         defaultCursorTexture = ConvertSpriteToTexture2D(cursorSprites[0]);
         dragCursorTexture = ConvertSpriteToTexture2D(cursorSprites[1]);
 
         // "loading"이라는 스프라이트 시트에서 로딩 애니메이션 프레임들을 로드
-        Sprite[] loadingSprites = Resources.LoadAll<Sprite>("loading");
+        Sprite[] loadingSprites = Resources.LoadAll<Sprite>("UI/loading");
         loadingCursorAnimationFrames = new Texture2D[loadingSprites.Length];
         for (int i = 0; i < loadingSprites.Length; i++)
         {

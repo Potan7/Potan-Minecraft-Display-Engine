@@ -22,6 +22,7 @@
 
 # Visual Studio cache directory
 .vs/
+.vscode/
 
 # Gradle cache directory
 .gradle/
@@ -72,3 +73,4 @@ crashlytics-build.properties
 # Custom
 /[Aa]ssets/TestModel/*
 /Packages/com.singularitygroup.hotreload/*
+/Import/Demigiant/*
