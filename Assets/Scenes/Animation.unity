@@ -565,7 +565,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 89562470}
-  - component: {fileID: 89562471}
+  - component: {fileID: 89562472}
   m_Layer: 5
   m_Name: SetStartScore
   m_TagString: Untagged
@@ -594,7 +594,7 @@ RectTransform:
   m_AnchoredPosition: {x: 350, y: -354.5027}
   m_SizeDelta: {x: 700, y: 65.52281}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &89562471
+--- !u!114 &89562472
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -603,13 +603,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 89562469}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uACB0\uACFC\uBB3C\uC758 \uC560\uB2C8\uBA54\uC774\uC158 \uC2DC\uC791
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uACB0\uACFC\uBB3C\uC758 \uC560\uB2C8\uBA54\uC774\uC158 \uC2DC\uC791
     \uC2A4\uCF54\uC5B4\uAC12\uC744 \uACB0\uC815\uD569\uB2C8\uB2E4."
-  infoRight: 
 --- !u!1 &120198669
 GameObject:
   m_ObjectHideFlags: 0
@@ -696,7 +696,7 @@ GameObject:
   m_Component:
   - component: {fileID: 142212751}
   - component: {fileID: 142212753}
-  - component: {fileID: 142212752}
+  - component: {fileID: 142212754}
   m_Layer: 5
   m_Name: Toggle (1)
   m_TagString: Untagged
@@ -725,22 +725,6 @@ RectTransform:
   m_AnchoredPosition: {x: 96, y: -5.4824}
   m_SizeDelta: {x: 111.6033, y: 56.524}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &142212752
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 142212750}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uACB0\uACFC\uBB3C\uC758 \uC5D4\uD2F0\uD2F0\uBD80\uBD84\uC744 \uC9C1\uC811
-    \uC124\uC815\uD569\uB2C8\uB2E4."
-  infoRight: 
 --- !u!114 &142212753
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -789,6 +773,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!114 &142212754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 142212750}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uACB0\uACFC\uBB3C\uC758 \uC5D4\uD2F0\uD2F0\uBD80\uBD84\uC744 \uC9C1\uC811
+    \uC124\uC815\uD569\uB2C8\uB2E4."
 --- !u!1 &148077507
 GameObject:
   m_ObjectHideFlags: 0
@@ -2179,7 +2179,7 @@ RectTransform:
   m_GameObject: {fileID: 211108862}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 7, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1700859658}
@@ -2861,7 +2861,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 234944586}
-  - component: {fileID: 234944587}
+  - component: {fileID: 234944588}
   m_Layer: 5
   m_Name: SetTickInterval
   m_TagString: Untagged
@@ -2888,9 +2888,9 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &234944587
+--- !u!114 &234944588
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2899,13 +2899,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 234944585}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uC5EC\uB7EC \uD504\uB808\uC784\uC744 \uAC00\uC838\uC62C \uB54C \uAE30\uBCF8\uC73C\uB85C
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uC5EC\uB7EC \uD504\uB808\uC784\uC744 \uAC00\uC838\uC62C \uB54C \uAE30\uBCF8\uC73C\uB85C
     \uC124\uC815\uB418\uB294 \uAC04\uACA9\uC785\uB2C8\uB2E4.\n(1 \uC774\uC0C1)"
-  infoRight: 
 --- !u!1 &240487669
 GameObject:
   m_ObjectHideFlags: 0
@@ -5106,7 +5106,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &349316458
 GameObject:
@@ -5117,7 +5117,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 349316459}
-  - component: {fileID: 349316460}
+  - component: {fileID: 349316461}
   m_Layer: 5
   m_Name: SetScoreName
   m_TagString: Untagged
@@ -5146,7 +5146,7 @@ RectTransform:
   m_AnchoredPosition: {x: 350, y: -288.97986}
   m_SizeDelta: {x: 700, y: 65.52281}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &349316460
+--- !u!114 &349316461
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -5155,12 +5155,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 349316458}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uC800\uC7A5\uD560 \uC2A4\uCF54\uC5B4\uBCF4\uB4DC\uC758 \uC774\uB984\uC785\uB2C8\uB2E4."
-  infoRight: 
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uC800\uC7A5\uD560 \uC2A4\uCF54\uC5B4\uBCF4\uB4DC\uC758 \uC774\uB984\uC785\uB2C8\uB2E4."
 --- !u!1001 &350178300
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6406,7 +6406,7 @@ RectTransform:
   m_GameObject: {fileID: 392516464}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 7, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1386273675}
@@ -6568,7 +6568,7 @@ GameObject:
   - component: {fileID: 399176753}
   - component: {fileID: 399176752}
   - component: {fileID: 399176751}
-  - component: {fileID: 399176754}
+  - component: {fileID: 399176755}
   m_Layer: 5
   m_Name: AddScore
   m_TagString: Untagged
@@ -6690,7 +6690,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 399176749}
   m_CullTransparentMesh: 1
---- !u!114 &399176754
+--- !u!114 &399176755
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -6699,13 +6699,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 399176749}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uC2A4\uCF54\uC5B4\uB97C 1 \uC99D\uAC00\uC2DC\uD0A4\uB294 \uBA85\uB839\uC5B4\uB97C
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uC2A4\uCF54\uC5B4\uB97C 1 \uC99D\uAC00\uC2DC\uD0A4\uB294 \uBA85\uB839\uC5B4\uB97C
     \uB123\uC2B5\uB2C8\uB2E4."
-  infoRight: 
 --- !u!1001 &404635702
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8605,8 +8605,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 300, y: -448.4437}
-  m_SizeDelta: {x: 600, y: 458.2481}
+  m_AnchoredPosition: {x: 300, y: -461.917}
+  m_SizeDelta: {x: 600, y: 485.204}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &499513356
 MonoBehaviour:
@@ -8626,11 +8626,11 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 4
-  m_Spacing: 70
+  m_Spacing: 25
   m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 1
+  m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
-  m_ChildControlHeight: 1
+  m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
@@ -9119,7 +9119,7 @@ GameObject:
   m_Component:
   - component: {fileID: 547224892}
   - component: {fileID: 547224893}
-  - component: {fileID: 547224894}
+  - component: {fileID: 547224895}
   m_Layer: 5
   m_Name: NameSetting
   m_TagString: Untagged
@@ -9145,7 +9145,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 416, y: 5}
+  m_AnchoredPosition: {x: 416, y: 0}
   m_SizeDelta: {x: 325, y: 70}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &547224893
@@ -9208,7 +9208,7 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   m_IsOn: 1
---- !u!114 &547224894
+--- !u!114 &547224895
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -9217,15 +9217,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 547224891}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uC5EC\uB7EC \uD504\uB808\uC784\uC744 \uB123\uC744 \uB54C \uD30C\uC77C\uBA85\uC758
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uC5EC\uB7EC \uD504\uB808\uC784\uC744 \uB123\uC744 \uB54C \uD30C\uC77C\uBA85\uC758
     s1 i1 \uD0A4\uC6CC\uB4DC\uB97C \uC778\uC2DD\uD574\uC11C \uD504\uB808\uC784\uC5D0
     \uBC18\uC601\uD569\uB2C8\uB2E4.\nf : \uD504\uB808\uC784 \uC21C\uC11C, s : \uD2F1
     \uAC04\uACA9, i : \uBCF4\uAC04)"
-  infoRight: 
 --- !u!1 &548071654
 GameObject:
   m_ObjectHideFlags: 0
@@ -9351,7 +9351,7 @@ RectTransform:
   m_GameObject: {fileID: 562810774}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 7, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1042274024}
@@ -11302,7 +11302,7 @@ GameObject:
   m_Component:
   - component: {fileID: 633848238}
   - component: {fileID: 633848240}
-  - component: {fileID: 633848239}
+  - component: {fileID: 633848241}
   m_Layer: 5
   m_Name: Toggle
   m_TagString: Untagged
@@ -11331,22 +11331,6 @@ RectTransform:
   m_AnchoredPosition: {x: -43, y: -2.4}
   m_SizeDelta: {x: 122.798, y: 50.3596}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &633848239
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 633848237}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uACB0\uACFC\uBB3C\uC758 \uC5D4\uD2F0\uD2F0\uB97C @s\uB85C \uC124\uC815\uD569\uB2C8\uB2E4.\n(execute
-    as \uB4F1\uC73C\uB85C \uC2E4\uD589\uC2DC\uCF1C\uC57C\uD568)"
-  infoRight: 
 --- !u!114 &633848240
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11395,6 +11379,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 0
+--- !u!114 &633848241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 633848237}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uACB0\uACFC\uBB3C\uC758 \uC5D4\uD2F0\uD2F0\uB97C @s\uB85C \uC124\uC815\uD569\uB2C8\uB2E4.\n(execute
+    as \uB4F1\uC73C\uB85C \uC2E4\uD589\uC2DC\uCF1C\uC57C\uD568)"
 --- !u!1001 &640198469
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11547,7 +11547,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &650268842
 GameObject:
@@ -12347,6 +12347,103 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a760bcee17554b4b97324097f1bcb05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1001 &671337601
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 620894947162761179, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8236597730761607438, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
+      propertyPath: m_Name
+      value: TooltipCanvas
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4bd9f75c7b308434d818dd18e2b0c6fa, type: 3}
 --- !u!1001 &672993004
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12753,7 +12850,7 @@ GameObject:
   m_Component:
   - component: {fileID: 705214063}
   - component: {fileID: 705214064}
-  - component: {fileID: 705214065}
+  - component: {fileID: 705214066}
   m_Layer: 5
   m_Name: UseFxSort
   m_TagString: Untagged
@@ -12842,7 +12939,7 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   m_IsOn: 1
---- !u!114 &705214065
+--- !u!114 &705214066
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -12851,15 +12948,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 705214062}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uC5EC\uB7EC \uD504\uB808\uC784\uC744 \uB123\uC744 \uB54C \uD30C\uC77C\uBA85\uC5D0
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uC5EC\uB7EC \uD504\uB808\uC784\uC744 \uB123\uC744 \uB54C \uD30C\uC77C\uBA85\uC5D0
     f1 f2 \uB4F1 f(\uC22B\uC790) \uD0A4\uC6CC\uB4DC\uB97C \uBC14\uD0D5\uC73C\uB85C
     \uC815\uB82C\uD569\uB2C8\uB2E4.\n\uC774\uB984 \uC608\uC2DC (name f1, name f2,
     name f3)"
-  infoRight: 
 --- !u!1 &708323563
 GameObject:
   m_ObjectHideFlags: 0
@@ -17863,7 +17960,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1005808322
 CanvasRenderer:
@@ -22502,7 +22599,7 @@ GameObject:
   - component: {fileID: 1223108761}
   - component: {fileID: 1223108760}
   - component: {fileID: 1223108759}
-  - component: {fileID: 1223108762}
+  - component: {fileID: 1223108763}
   m_Layer: 5
   m_Name: AddReset
   m_TagString: Untagged
@@ -22624,7 +22721,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1223108757}
   m_CullTransparentMesh: 1
---- !u!114 &1223108762
+--- !u!114 &1223108763
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -22633,14 +22730,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1223108757}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uB9C8\uC9C0\uB9C9 \uD504\uB808\uC784\uC758 \uBCF4\uAC04 \uC885\uB8CC
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uB9C8\uC9C0\uB9C9 \uD504\uB808\uC784\uC758 \uBCF4\uAC04 \uC885\uB8CC
     \uC2DC\uC810\uC5D0 \uC2A4\uCF54\uC5B4\uB97C 0\uC73C\uB85C \uBC14\uAFB8\uB294
     \uBA85\uB839\uC5B4\uB97C \uCD94\uAC00\uD569\uB2C8\uB2E4."
-  infoRight: 
 --- !u!1 &1241610733
 GameObject:
   m_ObjectHideFlags: 0
@@ -24173,7 +24270,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1339933225}
-  - component: {fileID: 1339933226}
+  - component: {fileID: 1339933227}
   m_Layer: 5
   m_Name: SetFakePlayer
   m_TagString: Untagged
@@ -24202,7 +24299,7 @@ RectTransform:
   m_AnchoredPosition: {x: 350, y: -223.45703}
   m_SizeDelta: {x: 700, y: 65.52281}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1339933226
+--- !u!114 &1339933227
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -24211,14 +24308,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1339933224}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uC2A4\uCF54\uC5B4\uBCF4\uB4DC\uAC00 \uC800\uC7A5\uB420 \uC5D4\uD2F0\uD2F0
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uC2A4\uCF54\uC5B4\uBCF4\uB4DC\uAC00 \uC800\uC7A5\uB420 \uC5D4\uD2F0\uD2F0
     \uC774\uB984\uC785\uB2C8\uB2E4.\n(\uC9C1\uC811 \uBAA8\uB4DC\uC758 \uACBD\uC6B0
     @s\uB85C \uACE0\uC815\uB428)"
-  infoRight: 
 --- !u!1 &1343569398
 GameObject:
   m_ObjectHideFlags: 0
@@ -25349,7 +25446,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1395233662}
-  - component: {fileID: 1395233663}
+  - component: {fileID: 1395233664}
   m_Layer: 5
   m_Name: Namespace
   m_TagString: Untagged
@@ -25378,7 +25475,7 @@ RectTransform:
   m_AnchoredPosition: {x: 350, y: -420.0255}
   m_SizeDelta: {x: 700, y: 65.52281}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1395233663
+--- !u!114 &1395233664
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -25387,12 +25484,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1395233661}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uB370\uC774\uD130\uD329\uC758 \uB124\uC784\uC2A4\uD398\uC774\uC2A4\uC785\uB2C8\uB2E4."
-  infoRight: 
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uB370\uC774\uD130\uD329\uC758 \uB124\uC784\uC2A4\uD398\uC774\uC2A4\uC785\uB2C8\uB2E4."
 --- !u!1 &1405007212
 GameObject:
   m_ObjectHideFlags: 0
@@ -25811,7 +25908,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1438346621}
   - component: {fileID: 1438346623}
-  - component: {fileID: 1438346622}
+  - component: {fileID: 1438346624}
   m_Layer: 5
   m_Name: Datapack
   m_TagString: Untagged
@@ -25840,22 +25937,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 360.647, y: 50.9622}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1438346622
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1438346620}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uD568\uC218\uB9CC \uB0B4\uBCF4\uB0B4\uB294 \uAC83\uC774 \uC544\uB2CC
-    \uB370\uC774\uD130\uD329 \uD615\uC2DD\uC73C\uB85C \uB0B4\uBCF4\uB0C5\uB2C8\uB2E4."
-  infoRight: 
 --- !u!114 &1438346623
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -25904,6 +25985,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!114 &1438346624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1438346620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uD568\uC218\uB9CC \uB0B4\uBCF4\uB0B4\uB294 \uAC83\uC774 \uC544\uB2CC
+    \uB370\uC774\uD130\uD329 \uD615\uC2DD\uC73C\uB85C \uB0B4\uBCF4\uB0C5\uB2C8\uB2E4."
 --- !u!1 &1438658598
 GameObject:
   m_ObjectHideFlags: 0
@@ -26423,7 +26520,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1481283120}
-  - component: {fileID: 1481283121}
+  - component: {fileID: 1481283122}
   m_Layer: 5
   m_Name: FramePerTick
   m_TagString: Untagged
@@ -26450,9 +26547,9 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1481283121
+--- !u!114 &1481283122
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -26461,14 +26558,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1481283119}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "1 tick\uB2F9 \uC7AC\uC0DD\uB418\uB294 \uD504\uB808\uC784\uC785\uB2C8\uB2E4.\n\uB192\uC744\uC218\uB85D
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "1 tick\uB2F9 \uC7AC\uC0DD\uB418\uB294 \uD504\uB808\uC784\uC785\uB2C8\uB2E4.\n\uB192\uC744\uC218\uB85D
     \uBD80\uB4DC\uB7EC\uC6B4 \uC560\uB2C8\uBA54\uC774\uC158 \uBBF8\uB9AC\uBCF4\uAE30\uAC00
     \uAC00\uB2A5\uD569\uB2C8\uB2E4."
-  infoRight: 
 --- !u!1 &1481496109
 GameObject:
   m_ObjectHideFlags: 0
@@ -27329,7 +27426,7 @@ GameObject:
   - component: {fileID: 1532529072}
   - component: {fileID: 1532529075}
   - component: {fileID: 1532529074}
-  - component: {fileID: 1532529073}
+  - component: {fileID: 1532529076}
   m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -27356,22 +27453,6 @@ RectTransform:
   m_AnchoredPosition: {x: 124, y: 0}
   m_SizeDelta: {x: 218, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1532529073
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1532529071}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uC0DD\uC131\uB41C \uD568\uC218 \uD30C\uC77C\uC5D0\uC11C \uC5D4\uD2F0\uD2F0\uB97C
-    \uC5B4\uB5BB\uAC8C \uC120\uD0DD\uD560\uC9C0 \uACB0\uC815\uD569\uB2C8\uB2E4."
-  infoRight: 
 --- !u!114 &1532529074
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27471,6 +27552,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1532529071}
   m_CullTransparentMesh: 1
+--- !u!114 &1532529076
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1532529071}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uC0DD\uC131\uB41C \uD568\uC218 \uD30C\uC77C\uC5D0\uC11C \uC5D4\uD2F0\uD2F0\uB97C
+    \uC5B4\uB5BB\uAC8C \uC120\uD0DD\uD560\uC9C0 \uACB0\uC815\uD569\uB2C8\uB2E4."
 --- !u!1 &1535460864
 GameObject:
   m_ObjectHideFlags: 0
@@ -29591,7 +29688,6 @@ GameObject:
   - component: {fileID: 1637580355}
   - component: {fileID: 1637580357}
   - component: {fileID: 1637580356}
-  - component: {fileID: 1637580358}
   - component: {fileID: 1637580359}
   m_Layer: 5
   m_Name: ImportHeader
@@ -29616,8 +29712,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 300, y: -168}
-  m_SizeDelta: {x: 600, y: 245.79004}
+  m_AnchoredPosition: {x: 300, y: -189}
+  m_SizeDelta: {x: 600, y: 65.2209}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1637580356
 MonoBehaviour:
@@ -29720,21 +29816,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1637580354}
   m_CullTransparentMesh: 1
---- !u!114 &1637580358
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1637580354}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uD30C\uC77C\uC744 \uAC00\uC838\uC624 \uB54C \uAE30\uBCF8 \uC124\uC815\uC785\uB2C8\uB2E4."
-  infoRight: 
 --- !u!114 &1637580359
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29748,7 +29829,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 0
+  playAnimationType: 5
+  tooltip: "\uD30C\uC77C\uC744 \uAC00\uC838\uC62C \uB54C \uAE30\uBCF8 \uC124\uC815\uC785\uB2C8\uB2E4."
 --- !u!1 &1643657970
 GameObject:
   m_ObjectHideFlags: 0
@@ -30985,7 +31067,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1705459189
 GameObject:
@@ -34009,7 +34091,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1909006234}
-  - component: {fileID: 1909006235}
+  - component: {fileID: 1909006236}
   m_Layer: 5
   m_Name: SetDefaultInter
   m_TagString: Untagged
@@ -34036,9 +34118,9 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1909006235
+--- !u!114 &1909006236
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -34047,13 +34129,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1909006233}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uD504\uB808\uC784\uC5D0 \uAE30\uBCF8\uC73C\uB85C \uC124\uC815\uB418\uB294
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uD504\uB808\uC784\uC5D0 \uAE30\uBCF8\uC73C\uB85C \uC124\uC815\uB418\uB294
     \uBCF4\uAC04\uAC12\uC785\uB2C8\uB2E4."
-  infoRight: 
 --- !u!1 &1909726107
 GameObject:
   m_ObjectHideFlags: 0
@@ -35260,7 +35342,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1976899710}
-  - component: {fileID: 1976899711}
+  - component: {fileID: 1976899712}
   m_Layer: 5
   m_Name: FrameFileName
   m_TagString: Untagged
@@ -35289,7 +35371,7 @@ RectTransform:
   m_AnchoredPosition: {x: 350, y: -485.54834}
   m_SizeDelta: {x: 700, y: 65.52281}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1976899711
+--- !u!114 &1976899712
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -35298,12 +35380,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1976899709}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99634edca86565b4a96a0b7b261787f8, type: 3}
+  m_Script: {fileID: 11500000, guid: 2473d2e89942bfe4caf3f6a2a40c1f2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simpleTooltipStyle: {fileID: 11400000, guid: f1d1c287ded68be43934c42c517f05d2, type: 2}
-  infoLeft: "\uACB0\uACFC\uBB3C\uC758 frame \uD568\uC218\uC758 \uC774\uB984\uC785\uB2C8\uB2E4."
-  infoRight: 
+  toolTipRect: {fileID: 0}
+  playAnimationType: 5
+  tooltip: "\uACB0\uACFC\uBB3C\uC758 frame \uD568\uC218\uC758 \uC774\uB984\uC785\uB2C8\uB2E4."
 --- !u!1 &2001718488
 GameObject:
   m_ObjectHideFlags: 0
@@ -38119,3 +38201,4 @@ SceneRoots:
   - {fileID: 341146509}
   - {fileID: 2084850027}
   - {fileID: 4917521467770876230}
+  - {fileID: 671337601}
