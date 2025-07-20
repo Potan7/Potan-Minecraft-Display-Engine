@@ -1,0 +1,38 @@
+.root {
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+}
+
+.left-panel {
+    width: 200px;
+    flex-shrink: 0;
+    height: 100%;
+    background-color: rgb(82, 82, 82);
+}
+
+.right-panel {
+    width: 200px;
+    flex-shrink: 0;
+    height: 100%;
+    background-color: rgb(82, 82, 82);
+}
+
+.content {
+    flex-grow: 1;
+    height: 100%;
+}
+
+.unity-scroll-view {
+}
+
+.section {
+    background-color: rgb(197, 197, 197);
+}
+
+.section-header {
+}
+
+.right-panel-container {
+    background-color: rgb(135, 135, 135);
+}

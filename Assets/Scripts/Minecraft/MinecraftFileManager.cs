@@ -53,6 +53,7 @@ namespace Minecraft
 
         public static readonly List<string> SurportedVersions = new List<string>
         {
+            "1.21.8",
             "1.21.7",
             "1.21.6",
             "1.21.5",

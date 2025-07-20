@@ -607,7 +607,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uACB0\uACFC\uBB3C\uC758 \uC560\uB2C8\uBA54\uC774\uC158 \uC2DC\uC791
     \uC2A4\uCF54\uC5B4\uAC12\uC744 \uACB0\uC815\uD569\uB2C8\uB2E4."
 --- !u!1 &120198669
@@ -786,7 +786,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uACB0\uACFC\uBB3C\uC758 \uC5D4\uD2F0\uD2F0\uBD80\uBD84\uC744 \uC9C1\uC811
     \uC124\uC815\uD569\uB2C8\uB2E4."
 --- !u!1 &148077507
@@ -2885,10 +2885,10 @@ RectTransform:
   - {fileID: 1056880876}
   m_Father: {fileID: 499513355}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 50}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 300, y: -47.602005}
+  m_SizeDelta: {x: 600, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &234944588
 MonoBehaviour:
@@ -2903,7 +2903,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uC5EC\uB7EC \uD504\uB808\uC784\uC744 \uAC00\uC838\uC62C \uB54C \uAE30\uBCF8\uC73C\uB85C
     \uC124\uC815\uB418\uB294 \uAC04\uACA9\uC785\uB2C8\uB2E4.\n(1 \uC774\uC0C1)"
 --- !u!1 &240487669
@@ -5103,10 +5103,10 @@ RectTransform:
   - {fileID: 1478250178}
   m_Father: {fileID: 499513355}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 30}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 300, y: -392.602}
+  m_SizeDelta: {x: 600, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &349316458
 GameObject:
@@ -5159,7 +5159,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uC800\uC7A5\uD560 \uC2A4\uCF54\uC5B4\uBCF4\uB4DC\uC758 \uC774\uB984\uC785\uB2C8\uB2E4."
 --- !u!1001 &350178300
 PrefabInstance:
@@ -5432,9 +5432,9 @@ RectTransform:
   - {fileID: 1714781315}
   m_Father: {fileID: 464063398}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 130, y: -40}
   m_SizeDelta: {x: 200, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &354887335
@@ -6703,7 +6703,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uC2A4\uCF54\uC5B4\uB97C 1 \uC99D\uAC00\uC2DC\uD0A4\uB294 \uBA85\uB839\uC5B4\uB97C
     \uB123\uC2B5\uB2C8\uB2E4."
 --- !u!1001 &404635702
@@ -9221,7 +9221,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uC5EC\uB7EC \uD504\uB808\uC784\uC744 \uB123\uC744 \uB54C \uD30C\uC77C\uBA85\uC758
     s1 i1 \uD0A4\uC6CC\uB4DC\uB97C \uC778\uC2DD\uD574\uC11C \uD504\uB808\uC784\uC5D0
     \uBC18\uC601\uD569\uB2C8\uB2E4.\nf : \uD504\uB808\uC784 \uC21C\uC11C, s : \uD2F1
@@ -11392,7 +11392,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uACB0\uACFC\uBB3C\uC758 \uC5D4\uD2F0\uD2F0\uB97C @s\uB85C \uC124\uC815\uD569\uB2C8\uB2E4.\n(execute
     as \uB4F1\uC73C\uB85C \uC2E4\uD589\uC2DC\uCF1C\uC57C\uD568)"
 --- !u!1001 &640198469
@@ -11544,10 +11544,10 @@ RectTransform:
   - {fileID: 384795412}
   m_Father: {fileID: 499513355}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 30}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 300, y: -447.602}
+  m_SizeDelta: {x: 600, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &650268842
 GameObject:
@@ -12952,7 +12952,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uC5EC\uB7EC \uD504\uB808\uC784\uC744 \uB123\uC744 \uB54C \uD30C\uC77C\uBA85\uC5D0
     f1 f2 \uB4F1 f(\uC22B\uC790) \uD0A4\uC6CC\uB4DC\uB97C \uBC14\uD0D5\uC73C\uB85C
     \uC815\uB82C\uD569\uB2C8\uB2E4.\n\uC774\uB984 \uC608\uC2DC (name f1, name f2,
@@ -14911,7 +14911,7 @@ RectTransform:
   m_Father: {fileID: 826428891}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -17957,10 +17957,10 @@ RectTransform:
   - {fileID: 705214063}
   m_Father: {fileID: 499513355}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 50}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 300, y: -197.602}
+  m_SizeDelta: {x: 600, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1005808322
 CanvasRenderer:
@@ -18160,7 +18160,7 @@ RectTransform:
   m_Father: {fileID: 1779823293}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -18754,7 +18754,7 @@ RectTransform:
   m_Father: {fileID: 73724831}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -20184,7 +20184,7 @@ RectTransform:
   m_Father: {fileID: 1190526231}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -22734,7 +22734,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uB9C8\uC9C0\uB9C9 \uD504\uB808\uC784\uC758 \uBCF4\uAC04 \uC885\uB8CC
     \uC2DC\uC810\uC5D0 \uC2A4\uCF54\uC5B4\uB97C 0\uC73C\uB85C \uBC14\uAFB8\uB294
     \uBA85\uB839\uC5B4\uB97C \uCD94\uAC00\uD569\uB2C8\uB2E4."
@@ -23656,7 +23656,7 @@ RectTransform:
   m_Father: {fileID: 650268843}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -24312,7 +24312,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uC2A4\uCF54\uC5B4\uBCF4\uB4DC\uAC00 \uC800\uC7A5\uB420 \uC5D4\uD2F0\uD2F0
     \uC774\uB984\uC785\uB2C8\uB2E4.\n(\uC9C1\uC811 \uBAA8\uB4DC\uC758 \uACBD\uC6B0
     @s\uB85C \uACE0\uC815\uB428)"
@@ -25488,7 +25488,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uB370\uC774\uD130\uD329\uC758 \uB124\uC784\uC2A4\uD398\uC774\uC2A4\uC785\uB2C8\uB2E4."
 --- !u!1 &1405007212
 GameObject:
@@ -25998,7 +25998,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uD568\uC218\uB9CC \uB0B4\uBCF4\uB0B4\uB294 \uAC83\uC774 \uC544\uB2CC
     \uB370\uC774\uD130\uD329 \uD615\uC2DD\uC73C\uB85C \uB0B4\uBCF4\uB0C5\uB2C8\uB2E4."
 --- !u!1 &1438658598
@@ -26544,10 +26544,10 @@ RectTransform:
   - {fileID: 835182522}
   m_Father: {fileID: 499513355}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 50}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 300, y: -272.602}
+  m_SizeDelta: {x: 600, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1481283122
 MonoBehaviour:
@@ -26562,7 +26562,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "1 tick\uB2F9 \uC7AC\uC0DD\uB418\uB294 \uD504\uB808\uC784\uC785\uB2C8\uB2E4.\n\uB192\uC744\uC218\uB85D
     \uBD80\uB4DC\uB7EC\uC6B4 \uC560\uB2C8\uBA54\uC774\uC158 \uBBF8\uB9AC\uBCF4\uAE30\uAC00
     \uAC00\uB2A5\uD569\uB2C8\uB2E4."
@@ -27565,7 +27565,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uC0DD\uC131\uB41C \uD568\uC218 \uD30C\uC77C\uC5D0\uC11C \uC5D4\uD2F0\uD2F0\uB97C
     \uC5B4\uB5BB\uAC8C \uC120\uD0DD\uD560\uC9C0 \uACB0\uC815\uD569\uB2C8\uB2E4."
 --- !u!1 &1535460864
@@ -29195,7 +29195,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1607631366
 RectTransform:
   m_ObjectHideFlags: 0
@@ -29829,7 +29829,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uD30C\uC77C\uC744 \uAC00\uC838\uC62C \uB54C \uAE30\uBCF8 \uC124\uC815\uC785\uB2C8\uB2E4."
 --- !u!1 &1643657970
 GameObject:
@@ -31064,10 +31064,10 @@ RectTransform:
   - {fileID: 1525366942}
   m_Father: {fileID: 499513355}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 30}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 300, y: -337.602}
+  m_SizeDelta: {x: 600, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1705459189
 GameObject:
@@ -33200,7 +33200,7 @@ RectTransform:
   m_Father: {fileID: 778448296}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -34115,10 +34115,10 @@ RectTransform:
   - {fileID: 2056504516}
   m_Father: {fileID: 499513355}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 50}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 300, y: -122.602005}
+  m_SizeDelta: {x: 600, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1909006236
 MonoBehaviour:
@@ -34133,7 +34133,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uD504\uB808\uC784\uC5D0 \uAE30\uBCF8\uC73C\uB85C \uC124\uC815\uB418\uB294
     \uBCF4\uAC04\uAC12\uC785\uB2C8\uB2E4."
 --- !u!1 &1909726107
@@ -35384,7 +35384,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolTipRect: {fileID: 0}
-  playAnimationType: 5
+  playAnimationType: 0
   tooltip: "\uACB0\uACFC\uBB3C\uC758 frame \uD568\uC218\uC758 \uC774\uB984\uC785\uB2C8\uB2E4."
 --- !u!1 &2001718488
 GameObject:

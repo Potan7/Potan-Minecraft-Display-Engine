@@ -11,8 +11,8 @@ namespace TransformHandles
         public Camera mainCamera;
         
         [Header("Prefabs")]
-        [SerializeField] private GameObject transformHandlePrefab;
-        [SerializeField] private GameObject ghostPrefab;
+        [SerializeField] private Handle transformHandlePrefab;
+        [SerializeField] private Ghost ghostPrefab;
         
         [Header("Settings")]
         [SerializeField] private LayerMask layerMask;
@@ -84,7 +84,7 @@ namespace TransformHandles
             var ghost = CreateGhost();
             ghost.Initialize();
 
-            var transformHandle = Instantiate(transformHandlePrefab).GetComponent<Handle>();
+            var transformHandle = Instantiate(transformHandlePrefab);
             transformHandle.Enable(ghost.transform);            
             
             var group = new TransformGroup(ghost, transformHandle);
@@ -107,7 +107,7 @@ namespace TransformHandles
             var ghost = CreateGhost();
             ghost.Initialize();
 
-            var transformHandle = Instantiate(transformHandlePrefab).GetComponent<Handle>();
+            var transformHandle = Instantiate(transformHandlePrefab);
             transformHandle.Enable(ghost.transform);      
             
             var group = new TransformGroup(ghost, transformHandle);
@@ -141,7 +141,7 @@ namespace TransformHandles
             }
             else
             {
-                ghost = Instantiate(ghostPrefab).GetComponent<Ghost>();
+                ghost = Instantiate(ghostPrefab);
             }
             
             return ghost;

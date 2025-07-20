@@ -27,7 +27,6 @@ namespace GameSystem
         }
 
         public static UIStatus CurrentUIStatus { get; private set; } = UIStatus.None;
-
         public static void SetUIStatus(UIStatus status, bool isOn = true)
         {
             if (isOn)
@@ -41,6 +40,9 @@ namespace GameSystem
 
             bool checkPanelStatus = (CurrentUIStatus & (UIStatus.OnExportPanel | UIStatus.OnPopupPanel | UIStatus.OnSettingPanel)) == 0;
             GameManager.SetPlayerInput(checkPanelStatus);
+
+            GameManager.GetManager<BdEngineStyleCameraMovement>().enableCameraMovement = (CurrentUIStatus == UIStatus.None);
+            
         }
 
         const string DefaultLoadingText = "Loading...";
@@ -50,8 +52,6 @@ namespace GameSystem
 
         [FormerlySerializedAs("LoadingPanel")] public GameObject loadingPanel;
         public TextMeshProUGUI loadingText;
-
-        private int _cursorID;
 
         public CanvasGroup canvasGroup;
 

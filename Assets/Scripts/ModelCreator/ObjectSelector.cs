@@ -1,20 +1,14 @@
 using UnityEngine;
-using TransformHandles;
 using UnityEngine.EventSystems;
+using GameSystem;
 
+[RequireComponent(typeof(Collider))]
 public class ObjectSelector : MonoBehaviour, IPointerClickHandler
 {
-    public Handle handle;
-    void Start()
-    {
-        handle = TransformHandleManager.Instance.CreateHandle(transform);
-        
-    }
-
     public void OnPointerClick(PointerEventData eventData)
     {
-        Debug.Log("Object selected: " + gameObject.name);
-
-        handle.Enable(transform);
+        Debug.Log($"ObjectSelector: {gameObject.name} clicked");
+        // HandleManager를 찾아서 선택 요청을 보냅니다.
+        GameManager.GetManager<HandleManager>().SelectTarget(transform);
     }
 }

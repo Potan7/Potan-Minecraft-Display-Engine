@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 
 namespace GameSystem
 {
-    public class BdEngineStyleCameraMovement : MonoBehaviour
+    public class BdEngineStyleCameraMovement : BaseManager
     {
         //public static bool CanMoveCamera { get; set; } = true;
 
@@ -12,6 +12,7 @@ namespace GameSystem
         public Transform pivot; // camera pivot point (target)
 
         [Header("Camera Movement Settings")]
+        public bool enableCameraMovement = true; // Enable/Disable camera movement
         public float rotateSpeed;
         public float rotationSpeedRange = 15f;
         public float minRotationSpeed = 1f; // cameraRotateSpeed * rotationSpeedRange + minRotationSpeed
@@ -84,7 +85,7 @@ namespace GameSystem
         private void Update()
         {
             //if (!CanMoveCamera) return;
-            if (UIManager.CurrentUIStatus != UIManager.UIStatus.None) return; // Only when no panel is open
+            if (!enableCameraMovement) return; // Only when no panel is open
 
             // Action의 현재 값 읽기
             var rotatePressed = _rotateAction.ReadValue<float>() > 0.5f;   // 마우스 우클릭 버튼

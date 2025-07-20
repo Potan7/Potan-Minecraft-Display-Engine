@@ -14,7 +14,7 @@ public class Singleton<T> : MonoBehaviour where T : Singleton<T>
             }
 
             if (_instance != null) return _instance;
-            _instance = FindObjectOfType<T>();
+            _instance = FindFirstObjectByType<T>();
 
             if (_instance != null) return _instance;
             var obj = new GameObject(typeof(T).Name);

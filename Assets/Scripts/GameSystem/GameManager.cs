@@ -23,7 +23,7 @@ public class GameManager : MonoBehaviour
 
     // public static SettingManager Setting => GetManager<SettingManager>();
 
-    public PlayerInput playerInput;
+    public PlayerInput playerInput { get; private set; }
 
     // Get Manager
     public static T GetManager<T>() where T : BaseManager
