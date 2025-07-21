@@ -4,15 +4,15 @@
         <ui:VisualElement name="LeftPanel" class="left-panel">
             <ui:Button text="Create Cube" name="CreateCube" />
         </ui:VisualElement>
-        <ui:VisualElement name="Content" picking-mode="Ignore" class="content" style="picking-mode: Ignore;" />
+        <ui:VisualElement name="Content" picking-mode="Ignore" class="content" />
         <ui:VisualElement name="RightPanel" class="right-panel">
             <ui:VisualElement name="HierarchySection" class="section">
                 <ui:Label text="Hierarchy" class="section-header" />
-                <ui:TreeView name="HierarchyView" class="right-panel-container" style="min-height: 150px; max-height: 300px; flex-shrink: 0;" />
+                <ui:TreeView name="HierarchyView" class="right-panel-container" />
             </ui:VisualElement>
-            <ui:VisualElement name="InspectorSection" class="section" style="flex-grow: 1;">
+            <ui:VisualElement name="InspectorSection" class="section">
                 <ui:Label text="Inspector" class="section-header" />
-                <ui:ScrollView name="InspectorScrollView" class="right-panel-container" style="flex-grow: 1;">
+                <ui:ScrollView name="InspectorScrollView" class="right-panel-container">
                     <ui:VisualElement name="InspectorContent" />
                 </ui:ScrollView>
             </ui:VisualElement>
