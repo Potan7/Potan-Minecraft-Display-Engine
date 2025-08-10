@@ -9,6 +9,14 @@ namespace BDObjectSystem
     /// </summary>
     public class BdObject
     {
+        public enum DisplayType
+        {
+            None,
+            BlockDisplay,
+            ItemDisplay,
+            TextDisplay
+        }
+
         public BdObjectData Data { get; } // 원본 데이터
 
         public float[] Transforms => Data.transforms;
@@ -28,6 +36,16 @@ namespace BDObjectSystem
         public string ID => GetID();
 
         public bool IsDisplay => Data.isBlockDisplay || Data.isItemDisplay || Data.isTextDisplay;
+        public DisplayType Type
+        {
+            get
+            {
+                if (Data.isBlockDisplay) return DisplayType.BlockDisplay;
+                if (Data.isItemDisplay) return DisplayType.ItemDisplay;
+                if (Data.isTextDisplay) return DisplayType.TextDisplay;
+                return DisplayType.None; // 기본값은 None으로 설정
+            }
+        }
         public bool IsHeadDisplay { get; private set; }
 
         private bool _isNameParsed = false;
@@ -72,6 +90,8 @@ namespace BDObjectSystem
             {
                 _id = tag;
             }
+
+            
         }
 
         private void ParseNameIfNeeded()

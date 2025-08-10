@@ -45,7 +45,7 @@ namespace BDObjectSystem.Display
         }
     }
 
-    public abstract class ModelDisPlayObject : DisplayObject
+    public abstract class ModelDisplayObject : DisplayObject
     {
         public MinecraftModelData ModelData;
 

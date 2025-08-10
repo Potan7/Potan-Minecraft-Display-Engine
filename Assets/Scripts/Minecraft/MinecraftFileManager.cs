@@ -33,6 +33,9 @@ namespace Minecraft
 
         //public Dictionary<string, string> jsonFiles = new Dictionary<string, string>();
         private readonly ConcurrentDictionary<string, string> _jsonFiles = new();
+        
+        // PreviewImgGenerator가 모델 목록에 접근할 수 있도록 public 프로퍼티를 추가합니다.
+        public IReadOnlyDictionary<string, string> AllJsonFiles => _jsonFiles;
 
         // readPreReadedFiles�� �ִ� ���ϵ��� �̸� �о��
         private readonly Dictionary<string, MinecraftModelData> _importantModels = new();

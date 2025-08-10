@@ -165,7 +165,21 @@ namespace Mainmenu
 
         public void OnDisplayMakerButton()
         {
+            var loadScene = SceneManager.LoadSceneAsync("ModelCreator");
 
+            loadScene.allowSceneActivation = false;
+            menu.interactable = false;
+            menu.transform.DOScale(0f, 1f).SetEase(Ease.InOutBack);
+            menu.DOFade(0f, 1f).SetEase(Ease.InOutBack);
+
+            if (ColorUtility.TryParseHtmlString("#" + backgroundColor, out Color color))
+            {
+                var cam = Camera.main;
+                cam.DOColor(color, 1f).SetEase(Ease.InQuad).OnComplete(() =>
+                {
+                    loadScene.allowSceneActivation = true;
+                });
+            }
         }
 
         public void OnOpenGoogleFormButton()

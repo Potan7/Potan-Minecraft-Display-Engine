@@ -6,36 +6,40 @@ namespace GameSystem
 {
     public class BdEngineStyleCameraMovement : BaseManager
     {
-        //public static bool CanMoveCamera { get; set; } = true;
-
         [Header("References")]
-        public Transform pivot; // camera pivot point (target)
+        public Transform pivot;
 
         [Header("Camera Movement Settings")]
-        public bool enableCameraMovement = true; // Enable/Disable camera movement
-        public float rotateSpeed;
-        public float rotationSpeedRange = 15f;
-        public float minRotationSpeed = 1f; // cameraRotateSpeed * rotationSpeedRange + minRotationSpeed
+        public bool enableCameraMovement = true;
+        
+        // 개선: 직관적인 감도(Sensitivity) 변수로 변경
+        [Space]
+        [Tooltip("카메라 회전 감도")]
+        public float rotateSensitivity = 1.0f;
+        [Tooltip("카메라 이동(Pan) 감도")]
+        public float panSensitivity = 1.0f;
+        [Tooltip("카메라 줌 감도")]
+        public float zoomSensitivity = 1.0f;
 
-        public float panSpeed;
-        public float panSpeedRange = -9f;
-        public float minPanSpeed = -1f; // panSpeed * panSpeedRange + minPanSpeed
+        [Space]
+        [Tooltip("카메라 상하 회전 최소/최대 각도")]
+        public Vector2 pitchClamp = new Vector2(-89f, 89f);
+        [Tooltip("카메라와 피봇 사이의 최소/최대 거리")]
+        public Vector2 distanceClamp = new Vector2(2f, 50f);
 
-        public float zoomSpeed;
-        public float zoomSpeedRange = 50f;
-        public float minZoomSpeed = 1f; // zoomSpeed * zoomSpeedRange + minZoomSpeed
-        public float minDistance = 2f;    // ī�޶�~�ǹ� �ּ� �Ÿ�
-        public float maxDistance = 50f;   // ī�޶�~�ǹ� �ִ� �Ÿ�
+        // 카메라의 현재 상태를 저장하는 변수들
+        private float _currentDistance;
+        private float _yaw;   // 수평 회전 (Y축 기준)
+        private float _pitch; // 수직 회전 (X축 기준)
 
-        private float _currentDistance;    // ���� ī�޶�~�ǹ� �Ÿ�
-        private Vector3 _pivotInitPos;     // �ǹ� �ʱ� ��ġ
-        private float _initDistance;       // ī�޶� �ʱ� �Ÿ�
+        // 초기 상태 저장을 위한 변수들
+        private Vector3 _initialPivotPosition;
+        private float _initialDistance;
+        private float _initialYaw;
+        private float _initialPitch;
 
         [Header("Input Actions")]
-        // MyCameraActions.inputactions (Asset) ����
         public InputActionAsset inputActions;
-
-        // ���ο��� ã�Ƽ� �� Action Map �� Action ����
         private InputActionMap _cameraMap;
         private InputAction _rotateAction;
         private InputAction _panAction;
@@ -44,7 +48,6 @@ namespace GameSystem
 
         private void OnEnable()
         {
-            // �ǹ��� ������ ��ũ��Ʈ �ߴ�
             if (pivot == null)
             {
                 Debug.LogError("Pivot is not assigned.");
@@ -52,115 +55,111 @@ namespace GameSystem
                 return;
             }
 
-            // �ʱ� �� ����
+            // --- 초기 상태 저장 ---
             _currentDistance = Vector3.Distance(transform.position, pivot.position);
-            _initDistance = _currentDistance;
-            _pivotInitPos = pivot.position;
-            transform.LookAt(pivot);
+            Vector3 initialAngles = transform.eulerAngles;
+            _yaw = initialAngles.y;
+            _pitch = initialAngles.x;
 
-            // --- 1) Action Map �������� ---
-            //    (InputActionAsset �ȿ� "Camera" ���� �����ؾ� ��)
+            _initialPivotPosition = pivot.position;
+            _initialDistance = _currentDistance;
+            _initialYaw = _yaw;
+            _initialPitch = _pitch;
+
+            // --- Input System 설정 ---
             _cameraMap = inputActions.FindActionMap("Camera", throwIfNotFound: true);
-
-            // --- 2) Action ���� ã�� ---
-            _rotateAction = _cameraMap.FindAction("Rotate", throwIfNotFound: true);      // Button
-            _panAction = _cameraMap.FindAction("Pan", throwIfNotFound: true);           // Button
-            _lookDeltaAction = _cameraMap.FindAction("LookDelta", throwIfNotFound: true); // Vector2
-            _zoomAction = _cameraMap.FindAction("Zoom", throwIfNotFound: true);         // float
-
-            // --- 3) Enable ---
-            _cameraMap.Enable(); // or rotateAction.Enable(); panAction.Enable(); ...
-
-            // ����: cameraMap.Enable() �� ȣ���ϸ� 
-            //       cameraMap �ȿ� �ִ� ��� �׼��� �� ���� Enable �˴ϴ�.
+            _rotateAction = _cameraMap.FindAction("Rotate", throwIfNotFound: true);
+            _panAction = _cameraMap.FindAction("Pan", throwIfNotFound: true);
+            _lookDeltaAction = _cameraMap.FindAction("LookDelta", throwIfNotFound: true);
+            _zoomAction = _cameraMap.FindAction("Zoom", throwIfNotFound: true);
+            _cameraMap.Enable();
         }
 
         private void OnDisable()
         {
-            // Disable
             _cameraMap?.Disable();
-            // �Ǵ� ���� �׼ǵ� rotateAction?.Disable(); ��
         }
 
-        private void Update()
+        private void LateUpdate() // 카메라 움직임은 LateUpdate에서 처리하는 것이 좋습니다.
         {
-            //if (!CanMoveCamera) return;
-            if (!enableCameraMovement) return; // Only when no panel is open
+            if (!enableCameraMovement) return;
 
-            // Action의 현재 값 읽기
-            var rotatePressed = _rotateAction.ReadValue<float>() > 0.5f;   // 마우스 우클릭 버튼
-            var panPressed = _panAction.ReadValue<float>() > 0.5f;         // 마우스 휠클릭 버튼
-            var lookDelta = _lookDeltaAction.ReadValue<Vector2>();     // 마우스 이동
-            var zoomValue = _zoomAction.ReadValue<float>();              // 마우스 휠
+            var rotatePressed = _rotateAction.IsPressed();
+            var panPressed = _panAction.IsPressed();
+            var lookDelta = _lookDeltaAction.ReadValue<Vector2>();
+            var zoomValue = _zoomAction.ReadValue<float>();
 
-            // --- 1) 회전 ---
-            if (rotatePressed && lookDelta.sqrMagnitude > 0.0001f)
+            if (rotatePressed && lookDelta.sqrMagnitude > 0.01f)
             {
-                RotateAroundPivot(lookDelta);
+                RotateCamera(lookDelta);
             }
-
-            // --- 2) 팬 ---
-            if (panPressed && lookDelta.sqrMagnitude > 0.0001f)
+            else if (panPressed && lookDelta.sqrMagnitude > 0.01f)
             {
                 PanCamera(lookDelta);
             }
 
-            // --- 3) 줌 ---
-            if (Mathf.Abs(zoomValue) > 0.0001f)
+            if (Mathf.Abs(zoomValue) > 0.01f)
             {
                 ZoomCamera(zoomValue);
             }
         }
 
-        private void RotateAroundPivot(Vector2 delta)
+        private void RotateCamera(Vector2 delta)
         {
-            // dt(Time.deltaTime)를 제거했으므로 speed는 이제 '감도' 역할을 합니다.
-            var speed = rotateSpeed * rotationSpeedRange + minRotationSpeed;
-            var yaw = delta.x * speed * 0.01f; // dt 대신 감도 조절을 위한 작은 상수를 곱합니다.
-            var pitch = -delta.y * speed * 0.01f; // 상하 이동은 반대(-)
+            // 개선: 오일러 각도를 직접 제어하여 안정성 확보
+            float yawDelta = delta.x * rotateSensitivity * 0.1f;
+            float pitchDelta = delta.y * rotateSensitivity * 0.1f;
 
-            // 1) yaw : pivot 기준 수직 Up
-            transform.RotateAround(pivot.position, Vector3.up, yaw);
+            _yaw += yawDelta;
+            _pitch -= pitchDelta; // 마우스 상하 이동은 반대 방향
 
-            // 2) pitch : 카메라 기준 Right
-            transform.RotateAround(pivot.position, transform.right, pitch);
+            // 개선: Pitch 각도를 제한하여 카메라가 뒤집히는 것을 방지
+            _pitch = Mathf.Clamp(_pitch, pitchClamp.x, pitchClamp.y);
 
-            // 3) 거리 유지 & pivot 바라보기
-            var direction = (transform.position - pivot.position).normalized;
-            transform.position = pivot.position + direction * _currentDistance;
-            transform.LookAt(pivot);
+            UpdateCameraTransform();
         }
 
         private void PanCamera(Vector2 delta)
         {
-            // dt(Time.deltaTime)를 제거했으므로 speed는 이제 '감도' 역할을 합니다.
-            var speed = panSpeed * panSpeedRange + minPanSpeed;
-            var rightMovement = transform.right * (delta.x * speed * 0.01f); // dt 대신 감도 조절을 위한 작은 상수를 곱합니다.
-            var upMovement = transform.up * (delta.y * speed * 0.01f);
-            var panMovement = rightMovement + upMovement;
+            // 개선: 감도 계산 단순화 및 거리 비례 이동
+            // 카메라가 멀리 있을수록 더 빨리 움직여 자연스러운 느낌을 줍니다.
+            float panFactor = _currentDistance * 0.001f;
+            Vector3 right = transform.right * -delta.x * panSensitivity * panFactor;
+            Vector3 up = transform.up * -delta.y * panSensitivity * panFactor;
 
-            transform.position += panMovement;
-            pivot.position += panMovement;
+            Vector3 movement = right + up;
+            transform.position += movement;
+            pivot.position += movement;
         }
 
         private void ZoomCamera(float zoomValue)
         {
-            // dt(Time.deltaTime)를 제거했으므로 speed는 이제 '감도' 역할을 합니다.
-            var speed = zoomSpeed * zoomSpeedRange + minZoomSpeed;
-            _currentDistance -= zoomValue * speed * 0.1f; // dt 대신 감도 조절을 위한 작은 상수를 곱합니다.
-            _currentDistance = Mathf.Clamp(_currentDistance, minDistance, maxDistance);
+            // 개선: 감도 계산 단순화
+            _currentDistance -= zoomValue * zoomSensitivity * 0.1f;
+            _currentDistance = Mathf.Clamp(_currentDistance, distanceClamp.x, distanceClamp.y);
 
-            var direction = (transform.position - pivot.position).normalized;
-            transform.position = pivot.position + direction * _currentDistance;
+            UpdateCameraTransform();
         }
-        
+
+        /// <summary>
+        /// 현재 _yaw, _pitch, _currentDistance 값을 기반으로 카메라의 위치와 회전을 업데이트합니다.
+        /// </summary>
+        private void UpdateCameraTransform()
+        {
+            Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0);
+            Vector3 position = pivot.position - (rotation * Vector3.forward * _currentDistance);
+
+            transform.SetPositionAndRotation(position, rotation);
+        }
+
         public void ResetCamera()
         {
-            pivot.position = _pivotInitPos;
-            _currentDistance = _initDistance;
+            pivot.position = _initialPivotPosition;
+            _currentDistance = _initialDistance;
+            _yaw = _initialYaw;
+            _pitch = _initialPitch;
 
-            transform.position = _pivotInitPos + new Vector3(0, 0, -_currentDistance);
-            transform.LookAt(_pivotInitPos);
+            UpdateCameraTransform();
         }
     }
 }

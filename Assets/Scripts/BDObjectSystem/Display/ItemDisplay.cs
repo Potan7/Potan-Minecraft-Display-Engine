@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace BDObjectSystem.Display
 {
-    public class ItemDisplay : ModelDisPlayObject
+    public class ItemDisplay : ModelDisplayObject
     {
         public ItemModelGenerator itemModel;
         private JObject _currentItemState;

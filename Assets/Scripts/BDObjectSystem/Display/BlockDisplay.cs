@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 
 namespace BDObjectSystem.Display
 {
-    public class BlockDisplay : ModelDisPlayObject
+    public class BlockDisplay : ModelDisplayObject
     {
         public BlockModelGenerator modelElementParent;
 
