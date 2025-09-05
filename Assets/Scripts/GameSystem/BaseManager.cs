@@ -4,9 +4,15 @@ namespace GameSystem
 {
     public abstract class BaseManager : MonoBehaviour
     {
-        protected virtual void Awake()
+        protected void Awake()
         {
             GameManager.RegisterManager(this);
+            AwakeAfter();
+        }
+
+        protected virtual void AwakeAfter()
+        {
+            // Override in derived classes if needed
         }
     }
 }
