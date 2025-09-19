@@ -142,21 +142,21 @@ namespace BDObjectSystem.Display
             switch (headType)
             {
                 case HeadType.Player:
-                    SetModel("item/player_head");
+                    SetModel("item/player_head", Quaternion.identity);
                     break;
                 case HeadType.Zombie:
-                    SetModel("item/zombie_head");
+                    SetModel("item/zombie_head", Quaternion.identity);
                     break;
                 case HeadType.Witherskull:
                 case HeadType.Skull:
                 case HeadType.Creeper:
-                    SetModel("item/creeper_head");
+                    SetModel("item/creeper_head", Quaternion.identity);
                     break;
                 case HeadType.Piglin:
-                    SetModel("item/piglin_head");
+                    SetModel("item/piglin_head", Quaternion.identity);
                     break;
                 case HeadType.Dragon:
-                    SetModel("item/dragon_head");
+                    SetModel("item/dragon_head", Quaternion.identity);
                     break;
                 case HeadType.None:
                 default:

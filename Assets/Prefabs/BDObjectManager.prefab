@@ -44,6 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea6d4d94e2c40da45ae5b408f1e8ad88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bdobjBlockMaterial: {fileID: 2100000, guid: 86e5b2946952bf741a346c36ef381964, type: 2}
   bdObjTransportMaterial: {fileID: 2100000, guid: 376723b8be6a77d4dafb0437ee29173d, type: 2}
   bdObjHeadMaterial: {fileID: 2100000, guid: fbccec779437b8642bc9151962a35f84, type: 2}
   bdObjectParent: {fileID: 0}

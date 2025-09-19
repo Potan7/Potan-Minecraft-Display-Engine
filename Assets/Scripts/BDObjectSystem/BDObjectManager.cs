@@ -14,6 +14,7 @@ namespace BDObjectSystem
         #region Variables
         // BDObjects Property
         [Header("BDObject Materials")]
+        public Material bdobjBlockMaterial;
         public Material bdObjTransportMaterial;
         public Material bdObjHeadMaterial;
 

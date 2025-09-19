@@ -107,7 +107,7 @@ namespace BDObjectSystem.Utility
 
                 if (obj.IsDisplay)
                 {
-                    resultList.Add(obj.ID, obj);
+                    resultList[obj.ID] = obj;
                 }
 
                 // BFS

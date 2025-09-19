@@ -94,7 +94,7 @@ namespace FileSystem
                 }
                 catch (Exception e)
                 {
-                    CustomLog.LogError($"파일 임포트 중 오류 발생: {e.Message}");
+                    CustomLog.LogError($"파일 임포트 중 오류 발생: {e}");
                 }
                 finally
                 {
@@ -152,12 +152,11 @@ namespace FileSystem
             bool isCorrectTag = BdObjectHelper.HasVaildID(mainBdObject);
             if (!isCorrectTag)
             {
-                mainBdObject = await AskAndApplyTagUUIDAdder(filePaths[0]);
+                var tagObject = await AskAndApplyTagUUIDAdder(filePaths[0]);
 
-                if (mainBdObject == null)
+                if (tagObject != null)
                 {
-                    CustomLog.Log("태그 추가 취소됨, 임포트 중단");
-                    return;
+                    mainBdObject = tagObject;
                 }
 
             }

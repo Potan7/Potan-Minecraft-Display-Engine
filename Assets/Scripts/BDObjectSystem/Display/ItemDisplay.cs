@@ -82,7 +82,7 @@ namespace BDObjectSystem.Display
             var bd = Instantiate(GameManager.GetManager<BdObjectManager>().blockPrefab, transform);
             bd.modelName = model;
             bd.color = co;
-            bd.SetModel(model);
+            bd.SetModel(model, Quaternion.identity);
         }
 
         private void GenerateUsingBlockModel(string model)

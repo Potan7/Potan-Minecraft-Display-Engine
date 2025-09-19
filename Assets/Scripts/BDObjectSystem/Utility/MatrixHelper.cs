@@ -39,67 +39,88 @@ namespace BDObjectSystem.Utility
             array[12] = m[3, 0]; array[13] = m[3, 1]; array[14] = m[3, 2]; array[15] = m[3, 3];
             return array;
         }
-        
-        public static void ApplyMatrixToTransform(Transform target, in Matrix4x4 matrix)
+
+        public static void ApplyMatrixToTransform(Transform t, Matrix4x4 m)
         {
-            // 1) Translation 추출 (4번째 컬럼)
-            Vector3 translation = matrix.GetColumn(3);
+            // Unity는 x' = m00*x + m01*y + m02*z + m03 (translation = m03,m13,m23)
+            Vector3 pos = new Vector3(m.m03, m.m13, m.m23);
 
-            // 2) 3x3 부분 추출 (스케일, shear, 회전 포함)
-            Vector3 col0 = matrix.GetColumn(0);
-            Vector3 col1 = matrix.GetColumn(1);
-            Vector3 col2 = matrix.GetColumn(2);
+            // 열벡터(축) 추출
+            Vector3 right = new Vector3(m.m00, m.m10, m.m20);
+            Vector3 up = new Vector3(m.m01, m.m11, m.m21);
+            Vector3 forward = new Vector3(m.m02, m.m12, m.m22);
 
-            // a) X축 스케일과 정규화 벡터 'a' 계산
-            float scaleX = col0.magnitude;
-            Vector3 a = (scaleX != 0) ? col0 / scaleX : Vector3.zero;
+            // 스케일 = 각 축 길이
+            float sx = right.magnitude;
+            float sy = up.magnitude;
+            float sz = forward.magnitude;
+            if (sx < 1e-8f) sx = 0f;
+            if (sy < 1e-8f) sy = 0f;
+            if (sz < 1e-8f) sz = 0f;
 
-            // b) X-Y shear: a와 col1의 내적
-            float shearXY = Vector3.Dot(a, col1);
-            // col1에서 a 방향 성분 제거
-            Vector3 col1NoShear = col1 - a * shearXY;
-            float scaleY = col1NoShear.magnitude;
-            Vector3 b = (scaleY != 0) ? col1NoShear / scaleY : Vector3.zero;
+            // 회전 = 정규화된 축으로부터
+            Quaternion rot = Quaternion.LookRotation(
+                sz > 0 ? forward / sz : Vector3.forward,
+                sy > 0 ? up / sy : Vector3.up);
 
-            // c) X-Z, Y-Z shear 계산: a와 col2, b와 col2의 내적
-            float shearXZ = Vector3.Dot(a, col2);
-            float shearYZ = Vector3.Dot(b, col2);
-            // col2에서 a, b 방향 성분 제거
-            Vector3 col2NoShear = col2 - a * shearXZ - b * shearYZ;
-            float scaleZ = col2NoShear.magnitude;
-            Vector3 c = (scaleZ != 0) ? col2NoShear / scaleZ : Vector3.zero;
-
-            // 이제 a, b, c는 순수 회전을 나타내는 정규화된 축 벡터입니다.
-            // 순수 회전 행렬 생성
-            Matrix4x4 rotationMatrix = new Matrix4x4();
-            rotationMatrix.SetColumn(0, new Vector4(a.x, a.y, a.z, 0));
-            rotationMatrix.SetColumn(1, new Vector4(b.x, b.y, b.z, 0));
-            rotationMatrix.SetColumn(2, new Vector4(c.x, c.y, c.z, 0));
-            rotationMatrix.SetColumn(3, new Vector4(0, 0, 0, 1));
-
-            // Quaternion 추출 (이미 정규화된 회전 행렬에서)
-            Quaternion rotation = QuaternionFromMatrix(rotationMatrix);
-
-            // 최종 스케일 (shear는 따로 Transform에 적용할 수 없으므로 보통 무시)
-            Vector3 scale = new Vector3(scaleX, scaleY, scaleZ);
-
-            // 4) 결과를 Transform에 적용 (로컬 기준)
-            target.localPosition = translation;
-            target.localRotation = rotation;
-            target.localScale = scale;
-
-            // 참고: 추출된 shear 값은
-            // shearXY, shearXZ, shearYZ 에 저장되어 있습니다.
-            // 필요시 별도로 로깅하거나 디버깅할 수 있습니다.
-
-            // shear 값이 존재하면 출력
-            if (Mathf.Abs(shearXY) > 0.01f || Mathf.Abs(shearXZ) > 0.01f || Mathf.Abs(shearYZ) > 0.01f)
-            {
-#if UNITY_EDITOR
-                //Debug.Log($"Shear values: XY={shearXY}, XZ={shearXZ}, YZ={shearYZ}");
-#endif
-            }
+            t.SetLocalPositionAndRotation(pos, rot);
+            t.localScale = new Vector3(sx, sy, sz);
         }
+
+
+        // public static void ApplyMatrixToTransform(Transform target, in Matrix4x4 matrix)
+        // {
+        //     // 1) Translation 추출 (4번째 컬럼)
+        //     Vector3 translation = matrix.GetColumn(3);
+
+        //     // 2) 3x3 부분 추출 (스케일, shear, 회전 포함)
+        //     Vector3 col0 = matrix.GetColumn(0);
+        //     Vector3 col1 = matrix.GetColumn(1);
+        //     Vector3 col2 = matrix.GetColumn(2);
+
+        //     // a) X축 스케일과 정규화 벡터 'a' 계산
+        //     float scaleX = col0.magnitude;
+        //     Vector3 a = (scaleX != 0) ? col0 / scaleX : Vector3.zero;
+
+        //     // b) X-Y shear: a와 col1의 내적
+        //     float shearXY = Vector3.Dot(a, col1);
+        //     // col1에서 a 방향 성분 제거
+        //     Vector3 col1NoShear = col1 - a * shearXY;
+        //     float scaleY = col1NoShear.magnitude;
+        //     Vector3 b = (scaleY != 0) ? col1NoShear / scaleY : Vector3.zero;
+
+        //     // c) X-Z, Y-Z shear 계산: a와 col2, b와 col2의 내적
+        //     float shearXZ = Vector3.Dot(a, col2);
+        //     float shearYZ = Vector3.Dot(b, col2);
+        //     // col2에서 a, b 방향 성분 제거
+        //     Vector3 col2NoShear = col2 - a * shearXZ - b * shearYZ;
+        //     float scaleZ = col2NoShear.magnitude;
+        //     Vector3 c = (scaleZ != 0) ? col2NoShear / scaleZ : Vector3.zero;
+
+        //     // 이제 a, b, c는 순수 회전을 나타내는 정규화된 축 벡터입니다.
+        //     // 순수 회전 행렬 생성
+        //     Matrix4x4 rotationMatrix = new();
+        //     rotationMatrix.SetColumn(0, new Vector4(a.x, a.y, a.z, 0));
+        //     rotationMatrix.SetColumn(1, new Vector4(b.x, b.y, b.z, 0));
+        //     rotationMatrix.SetColumn(2, new Vector4(c.x, c.y, c.z, 0));
+        //     rotationMatrix.SetColumn(3, new Vector4(0, 0, 0, 1));
+
+        //     // Quaternion 추출 (이미 정규화된 회전 행렬에서)
+        //     Quaternion rotation = QuaternionFromMatrix(rotationMatrix);
+
+        //     // 최종 스케일 (shear는 따로 Transform에 적용할 수 없으므로 보통 무시)
+        //     Vector3 scale = new Vector3(scaleX, scaleY, scaleZ);
+
+        //     // 4) 결과를 Transform에 적용 (로컬 기준)
+        //     target.localPosition = translation;
+        //     target.localRotation = rotation;
+        //     target.localScale = scale;
+
+        //     // 참고: 추출된 shear 값은
+        //     // shearXY, shearXZ, shearYZ 에 저장되어 있습니다.
+        //     // 필요시 별도로 로깅하거나 디버깅할 수 있습니다.
+
+        // }
 
         /// <summary>
         /// 주어진 회전 행렬(Matrix4x4)의 3x3 부분으로부터 Quaternion을 추출한다.

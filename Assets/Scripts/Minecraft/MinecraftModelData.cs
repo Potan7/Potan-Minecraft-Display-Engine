@@ -58,13 +58,13 @@ namespace Minecraft
 
             target ??= new JObject();
 
+            // source(부모)의 프로퍼티를 순회하며 target(자식)에 없는 것만 추가합니다.
             foreach (var property in source.Properties())
             {
-
-                // �ڽİ� �θ� ��ġ�� �ڽ��� �켱����
-                if (target.ContainsKey(property.Name) == false)
+                // 자식에 이미 동일한 키가 있으면 부모의 값으로 덮어쓰지 않고, 자식의 값을 유지합니다.
+                if (!target.ContainsKey(property.Name))
                 {
-                    target[property.Name] = property.Value;
+                    target.Add(property.Name, property.Value);
                 }
             }
         }
@@ -73,9 +73,13 @@ namespace Minecraft
         {
             if (source == null) return;
 
-            target ??= new List<JObject>();
-
-            target.AddRange(source);
+            // 자식에 Element가 없음 -> 부모의 Element를 통째로 복사
+            // 자식에 Element가 있으면 부모의 Element는 무시
+            if (target == null)
+            {
+                target = new List<JObject>(source);
+                return;
+            }
         }
     }
 }
