@@ -80,9 +80,10 @@ namespace BDObjectSystem.Display
         private void GenerateUsingBlockModel(string model, Color co)
         {
             var bd = Instantiate(GameManager.GetManager<BdObjectManager>().blockPrefab, transform);
-            bd.modelName = model;
+            var modelPath = MinecraftFileManager.RemoveNamespace(model);
+            bd.modelName = modelPath;
             bd.color = co;
-            bd.SetModel(model, Quaternion.identity);
+            bd.BuildFromBlockState(modelPath, "");
         }
 
         private void GenerateUsingBlockModel(string model)

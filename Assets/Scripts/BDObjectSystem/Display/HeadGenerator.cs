@@ -9,6 +9,7 @@ using UnityEngine.Networking;
 using BDObjectSystem;
 using FileSystem;
 using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace BDObjectSystem.Display
 {
@@ -139,29 +140,24 @@ namespace BDObjectSystem.Display
 
         private void FinishModelGeneration()
         {
-            switch (headType)
+            string modelPath = headType switch
             {
-                case HeadType.Player:
-                    SetModel("item/player_head", Quaternion.identity);
-                    break;
-                case HeadType.Zombie:
-                    SetModel("item/zombie_head", Quaternion.identity);
-                    break;
-                case HeadType.Witherskull:
-                case HeadType.Skull:
-                case HeadType.Creeper:
-                    SetModel("item/creeper_head", Quaternion.identity);
-                    break;
-                case HeadType.Piglin:
-                    SetModel("item/piglin_head", Quaternion.identity);
-                    break;
-                case HeadType.Dragon:
-                    SetModel("item/dragon_head", Quaternion.identity);
-                    break;
-                case HeadType.None:
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+                HeadType.Player => "item/player_head",
+                HeadType.Zombie => "item/zombie_head",
+                HeadType.Witherskull or HeadType.Skull or HeadType.Creeper => "item/creeper_head",
+                HeadType.Piglin => "item/piglin_head",
+                HeadType.Dragon => "item/dragon_head",
+                HeadType.None => "",
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            if (string.IsNullOrEmpty(modelPath)) return;
+
+            var applies = new List<ApplySpec>
+            {
+                new() { Model = modelPath, X = 0, Y = 0, UvLock = false }
+            };
+            GenerateMeshFromApplies(applies);
         }
 
         protected override Texture2D CreateTexture(string path)

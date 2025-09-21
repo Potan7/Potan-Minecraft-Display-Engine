@@ -48,6 +48,7 @@ namespace BDObjectSystem
 #endif
             // bdObjectID = bdObject.ID;
 
+            SetTransformation(BdObject.Transforms);
             CreateDisplayObject(bdObject, manager);
         }
 
@@ -55,7 +56,6 @@ namespace BDObjectSystem
         public void PostProcess(BdObjectContainer[] childArray)
         {
             // 좌표 설정
-            SetTransformation(BdObject.Transforms);
             children = childArray;
 
             //if (displayObj == null)
@@ -107,7 +107,7 @@ namespace BDObjectSystem
                     blockObj.LoadDisplayModel(bdObject.ParsedName, bdObject.ParsedState);
                     displayObj = blockObj;
                     // blockDisplay의 위치를 바닥 하단에 맞춤
-                    blockObj.transform.localPosition = -blockObj.AABBBound.min / 2;
+                    // blockObj.transform.localPosition = -blockObj.AABBBound.min / 2;
                     break;
                 case DisplayType.Item:
                     var itemObj = Instantiate(manager.itemDisplay, transform);
