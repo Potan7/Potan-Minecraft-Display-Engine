@@ -29,7 +29,7 @@ namespace Minecraft
         //Dictionary<string, byte[]> textureFiles = new Dictionary<string, byte[]>();
         private readonly ConcurrentDictionary<string, byte[]> _textureFiles = new();
         //HashSet<string> isTextureAnimated = new HashSet<string>();
-        private readonly ConcurrentBag<string> _isTextureAnimated = new();
+        // private readonly ConcurrentBag<string> _isTextureAnimated = new();
 
         //public Dictionary<string, string> jsonFiles = new Dictionary<string, string>();
         private readonly ConcurrentDictionary<string, string> _jsonFiles = new();
@@ -167,12 +167,6 @@ namespace Minecraft
             return null;
         }
 
-        public static bool IsTextureAnimated(string path)
-        {
-            //CustomLog.Log(path);
-            return Instance._isTextureAnimated.Contains(path + ".mcmeta");
-        }
-
         public static string RemoveNamespace(string path) => path.Replace("minecraft:", "");
         #endregion
 
@@ -215,7 +209,7 @@ namespace Minecraft
 
                     if (folderName == "textures" && IsReadFolder(entry.FullName, readTexturesFolders))
                     {
-                        if (entry.FullName.EndsWith(".png") || entry.FullName.EndsWith(".mcmeta"))
+                        if (entry.FullName.EndsWith(".png"))
                             isTextureFolder = true;
                     }
                     else if (readFolder.Contains(folderName))
@@ -244,18 +238,7 @@ namespace Minecraft
                     {
                         if (isTextureFolder)
                         {
-                            if (entry.FullName.EndsWith(".png"))
-                            {
-                                SavePNGData(entry.FullName, fileData);
-                            }
-                            else if (entry.FullName.EndsWith(".mcmeta"))
-                            {
-                                _isTextureAnimated.Add(entry.FullName.Replace("assets/minecraft/textures/", ""));
-                                //lock (isTextureAnimated)
-                                //{
-                                //    isTextureAnimated.Add(entry.FullName.Replace("assets/minecraft/", ""));
-                                //}
-                            }
+                            SavePNGData(entry.FullName, fileData);
                         }
                         else if (isJsonFolder)
                         {
@@ -273,8 +256,8 @@ namespace Minecraft
 
         private void CachingImportantModels()
         {
-            string[] cachedFiles =
-                { "block", "cube", "cube_all", "cube_all_inner_faces", "cube_column" }; 
+            ReadOnlySpan<string> cachedFiles =
+                new[] { "block", "cube", "cube_all", "cube_all_inner_faces", "cube_column" }; 
 
             foreach (var read in cachedFiles)
             {
@@ -286,7 +269,7 @@ namespace Minecraft
             }
         }
 
-        // �ֻ��� ���� �̸� ����
+        // targetFolder의 최상위 폴더 이름을 반환
         private string GetTopLevelFolder(string fullPath, string targetFolder)
         {
             var relativePath = fullPath[(targetFolder.Length + 1)..]; // targetFolder ���� ���
@@ -294,7 +277,7 @@ namespace Minecraft
             return firstSlashIndex > -1 ? relativePath[..firstSlashIndex] : relativePath;
         }
 
-        // �־��� ���� ��ΰ� ���� ���ϴ� textures ��� �� �ϳ����� Ȯ��
+        // 해당하는 폴더가 읽어야하는 폴더인지 확인
         private bool IsReadFolder(string fullPath, string[] readTexturesFolders)
         {
             foreach (var texture in readTexturesFolders)

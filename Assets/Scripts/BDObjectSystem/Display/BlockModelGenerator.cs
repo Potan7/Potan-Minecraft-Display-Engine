@@ -404,6 +404,13 @@ namespace BDObjectSystem.Display
             }
 
             int rot = faceData.TryGetValue("rotation", out var rTok) ? rTok.Value<int>() : 0;
+
+            // south와 east 면에 대해 반시계 90도 회전 추가
+            if (faceName is "south" or "east")
+            {
+                rot -= 90;
+            }
+
             Span<Vector2> quad = stackalloc Vector2[] { new(u1, v2), new(u2, v2), new(u2, v1), new(u1, v1) };
             int steps = (rot / 90 % 4 + 4) % 4;
             uvs.Add(quad[(0 + steps) % 4]); uvs.Add(quad[(1 + steps) % 4]);
@@ -423,10 +430,48 @@ namespace BDObjectSystem.Display
             {
                 foreach (var mat in _meshRenderer.materials) mat.color = color;
             }
+            else if (modelName.Contains("grass_block"))
+            {
+                // 상단 Material만 0x7cbd6b으로 변경
+                _meshRenderer.materials[1].color = new Color(124f / 255f, 189f / 255f, 107f / 255f);
+            }
+            else if (modelName.Contains("grass"))
+            {
+                foreach (var mat in _meshRenderer.materials) mat.color = new Color(124f / 255f, 189f / 255f, 107f / 255f);
+            }
         }
 
         // HeadGenerator에서 오버라이드해서 사용
-        protected virtual Texture2D CreateTexture(string path) => MinecraftFileManager.GetTextureFile(path);
+        protected virtual Texture2D CreateTexture(string path)
+        {
+            var originalTexture = MinecraftFileManager.GetTextureFile(path);
+            if (originalTexture == null) return null;
+
+            // 텍스처가 직사각형인 경우 (애니메이션 텍스처 등)
+            if (originalTexture.width != originalTexture.height)
+            {
+                // 너비를 기준으로 정사각형으로 자릅니다.
+                int size = originalTexture.width;
+                if (originalTexture.height > size)
+                {
+                    // 원본 텍스처의 윗부분(첫 프레임)을 복사합니다.
+                    // GetPixels는 (0,0)을 좌측 하단으로 계산하므로 y좌표 조정이 필요합니다.
+                    var pixels = originalTexture.GetPixels(0, originalTexture.height - size, size, size);
+                    
+                    var croppedTexture = new Texture2D(size, size, originalTexture.format, false)
+                    {
+                        filterMode = FilterMode.Point,
+                        wrapMode = TextureWrapMode.Clamp
+                    };
+                    croppedTexture.SetPixels(pixels);
+                    croppedTexture.Apply();
+
+                    return croppedTexture;
+                }
+            }
+
+            return originalTexture;
+        }
 
         private static int PickIndexByWeights(JArray arr, Vector3Int seed)
         {
