@@ -80,7 +80,7 @@ namespace BDObjectSystem.Display
         private void GenerateUsingBlockModel(string model, Color co)
         {
             var bd = Instantiate(GameManager.GetManager<BdObjectManager>().blockPrefab, transform);
-            var modelPath = MinecraftFileManager.RemoveNamespace(model);
+            var modelPath = MinecraftFileManager.RemoveNamespace(model, "minecraft:block/");
             bd.modelName = modelPath;
             bd.color = co;
             bd.BuildFromBlockState(modelPath, "");
@@ -164,6 +164,9 @@ namespace BDObjectSystem.Display
                 case "minecraft:player_head":
                     var playerHead = Instantiate(GameManager.GetManager<BdObjectManager>().headPrefab, transform);
                     playerHead.GenerateHead("player");
+                    break;
+                case "minecraft:trident":
+                    SetItemModel(baseModel);
                     break;
 
             }

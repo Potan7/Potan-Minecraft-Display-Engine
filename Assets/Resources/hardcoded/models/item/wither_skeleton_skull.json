@@ -1,8 +1,8 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "entity/zombie/zombie",
-		"particle": "entity/zombie/zombie"
+		"0": "entity/skeleton/wither_skeleton",
+		"particle": "entity/skeleton/wither_skeleton"
 	},
 	"elements": [
 		{

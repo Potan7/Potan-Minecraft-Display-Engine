@@ -1,7 +1,8 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"entity": "creeper"
+		"entity": "entity/creeper/creeper",
+		"particle": "entity/creeper/creeper"
 	},
 	"elements": [
 		{

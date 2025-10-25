@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using GameSystem;
 using Minecraft;
 using Newtonsoft.Json.Linq;
@@ -32,6 +33,42 @@ namespace BDObjectSystem.Display
             public Material BaseMaterial;
             public bool InvertWinding;
         }
+
+        /// <summary>
+        /// 공통 메시 캐시 키
+        /// </summary>
+        private struct MeshCacheKey : IEquatable<MeshCacheKey>
+        {
+            public string ModelPath;
+            public int RotationX;
+            public int RotationY;
+
+            public bool Equals(MeshCacheKey other) =>
+                ModelPath == other.ModelPath && RotationX == other.RotationX && RotationY == other.RotationY;
+
+            public override bool Equals(object obj) => obj is MeshCacheKey other && Equals(other);
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    int hash = 17;
+                    hash = hash * 31 + (ModelPath?.GetHashCode() ?? 0);
+                    hash = hash * 31 + RotationX;
+                    hash = hash * 31 + RotationY;
+                    return hash;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 메시 캐시 정보 (메시 + 사용된 텍스처 경로 목록)
+        /// </summary>
+        private class CachedMeshData
+        {
+            public Mesh Mesh;
+            public List<string> TexturePaths; // submesh 순서대로 저장된 텍스처 경로
+        }
         #endregion
 
         public MinecraftModelData ModelData { get; private set; }
@@ -41,7 +78,14 @@ namespace BDObjectSystem.Display
         private MeshFilter _meshFilter;
         private MeshRenderer _meshRenderer;
 
+        // 재질 캐시
         private static readonly Dictionary<string, Material> s_matCache = new();
+
+        // 메시 캐시 (개선: 텍스처 정보 포함)
+        private static readonly Dictionary<MeshCacheKey, CachedMeshData> s_meshCache = new();
+        private static readonly Dictionary<string, bool> s_isSimpleCube = new();
+
+        public bool disableTextureCropping = false; // 텍스처 자르기 비활성화 옵션
 
         private void Awake()
         {
@@ -58,7 +102,6 @@ namespace BDObjectSystem.Display
             GenerateMeshFromApplies(applies);
         }
         #endregion
-        
 
         #region BlockState Parsing
         private List<ApplySpec> CollectApplies(JObject blockState, string state, Vector3Int seed)
@@ -174,9 +217,17 @@ namespace BDObjectSystem.Display
 
             if (applies.Count == 0)
             {
-                Debug.LogWarning($"No applies found for {modelName}. Creating empty mesh.");
+                CustomLog.LogWarning($"No applies found for {modelName}. Creating empty mesh.");
+                return;
             }
 
+            // 단일 apply이고 캐시 가능한 경우 메시 재사용 시도
+            if (applies.Count == 1 && TryUseCachedMesh(applies[0], meshData))
+            {
+                return;
+            }
+
+            // 캐시 불가능한 경우 기존 방식으로 생성
             foreach (var apply in applies)
             {
                 if (string.IsNullOrEmpty(apply.Model)) continue;
@@ -185,26 +236,147 @@ namespace BDObjectSystem.Display
                 var modelRot = Quaternion.Euler(-apply.X, -apply.Y, 0);
 
                 BakeOneModel(data, modelRot, meshData);
-                ModelData = data; // Store the last model data as representative
+                ModelData = data;
             }
 
             CreateAndAssignMesh(meshData);
         }
 
-        private void BakeOneModel(MinecraftModelData modelData, Quaternion modelRotation, MeshGenerationData meshData)
+        /// <summary>
+        /// 캐시된 메시를 사용할 수 있는지 확인하고 사용합니다.
+        /// </summary>
+        private bool TryUseCachedMesh(ApplySpec apply, MeshGenerationData meshData)
         {
-            if (modelData.Elements == null) return;
-            foreach (var element in modelData.Elements)
-            {
-                ProcessElementForMesh(element, modelData, modelRotation, meshData);
-            }
-        }
+            var loc = MinecraftFileManager.RemoveNamespace(apply.Model);
+            var fullPath = "models/" + loc + ".json";
 
-        private void CreateAndAssignMesh(MeshGenerationData meshData)
-        {
+            // 이 모델이 단순 큐브인지 확인 (캐시)
+            if (!s_isSimpleCube.TryGetValue(fullPath, out bool isSimple))
+            {
+                var data = MinecraftFileManager.GetModelData(fullPath);
+                if (data == null)
+                    return false;
+
+                data = data.UnpackParent();
+                isSimple = IsSimpleCubeModel(data);
+                s_isSimpleCube[fullPath] = isSimple;
+            }
+
+            if (!isSimple)
+                return false;
+
+            // 메시 캐시 키 생성
+            var cacheKey = new MeshCacheKey
+            {
+                ModelPath = fullPath,
+                RotationX = apply.X,
+                RotationY = apply.Y
+            };
+
+            var modelData = MinecraftFileManager.GetModelData(fullPath);
+            if (modelData == null)
+                return false;
+
+            modelData = modelData.UnpackParent();
+            ModelData = modelData;
+
+            // 컴포넌트 확인
             if (_meshFilter == null) _meshFilter = GetComponent<MeshFilter>();
             if (_meshRenderer == null) _meshRenderer = GetComponent<MeshRenderer>();
 
+            if (_meshFilter == null || _meshRenderer == null)
+            {
+                CustomLog.LogError("MeshFilter or MeshRenderer is null");
+                return false;
+            }
+
+            // 캐시된 메시가 있으면 재사용
+            if (s_meshCache.TryGetValue(cacheKey, out var cachedData))
+            {
+                // 메시는 재사용하지만 재질은 새로 생성
+                _meshFilter.sharedMesh = cachedData.Mesh;
+
+                if (!AssignMaterialsFromCache(cachedData.TexturePaths, meshData))
+                {
+                    // 재질 생성 실패 시 캐시 사용 포기
+                    return false;
+                }
+
+                HandleSpecialBlockColors();
+                return true;
+            }
+
+            // 캐시에 없으면 생성하고 캐시에 저장
+            var modelRot = Quaternion.Euler(-apply.X, -apply.Y, 0);
+
+            BakeOneModel(modelData, modelRot, meshData);
+
+            if (meshData.Materials.Count == 0)
+            {
+                CustomLog.LogWarning($"No materials generated for {fullPath}");
+                return false;
+            }
+
+            var mesh = CreateMesh(meshData);
+
+            // 사용된 텍스처 경로 저장 (submesh 순서대로)
+            var texturePaths = new List<string>(meshData.MaterialDict.Count);
+            var sortedMaterials = meshData.MaterialDict.OrderBy(kv => kv.Value).ToList();
+            foreach (var kv in sortedMaterials)
+            {
+                texturePaths.Add(kv.Key);
+            }
+
+            s_meshCache[cacheKey] = new CachedMeshData
+            {
+                Mesh = mesh,
+                TexturePaths = texturePaths
+            };
+
+            _meshFilter.sharedMesh = mesh;
+            _meshRenderer.sharedMaterials = meshData.Materials.ToArray();
+            HandleSpecialBlockColors();
+
+            return true;
+        }
+
+        /// <summary>
+        /// 모델이 단순 큐브(cube_all 기반)인지 확인합니다.
+        /// </summary>
+        private bool IsSimpleCubeModel(MinecraftModelData data)
+        {
+            if (data == null)
+                return false;
+
+            // parent가 cube, cube_all 등인 경우
+            if (!string.IsNullOrEmpty(data.Parent))
+            {
+                var parentName = MinecraftFileManager.RemoveNamespace(data.Parent);
+                if (parentName is "block/cube" or "block/cube_all" or "block/cube_column")
+                    return true;
+            }
+
+            // elements가 정확히 1개이고 16x16x16 큐브인 경우
+            if (data.Elements == null || data.Elements.Count != 1)
+                return false;
+
+            var element = data.Elements[0];
+            if (!element.TryGetValue("from", out var fromTok) || fromTok is not JArray fromArr ||
+                !element.TryGetValue("to", out var toTok) || toTok is not JArray toArr)
+                return false;
+
+            var from = new Vector3(fromArr[0].Value<float>(), fromArr[1].Value<float>(), fromArr[2].Value<float>());
+            var to = new Vector3(toArr[0].Value<float>(), toArr[1].Value<float>(), toArr[2].Value<float>());
+
+            // 16x16x16 큐브인지 확인
+            return from == Vector3.zero && to == new Vector3(16, 16, 16);
+        }
+
+        /// <summary>
+        /// 메시 데이터로부터 Mesh 객체를 생성합니다.
+        /// </summary>
+        private Mesh CreateMesh(MeshGenerationData meshData)
+        {
             // Pivot to bottom-left-front corner
             if (meshData.Vertices.Count > 0)
             {
@@ -233,7 +405,63 @@ namespace BDObjectSystem.Display
             }
 
             combined.RecalculateBounds();
-            _meshFilter.sharedMesh = combined;
+            return combined;
+        }
+
+        /// <summary>
+        /// 캐시된 텍스처 경로 목록을 사용하여 재질을 할당합니다.
+        /// 성공 여부를 반환합니다.
+        /// </summary>
+        private bool AssignMaterialsFromCache(List<string> texturePaths, MeshGenerationData meshData)
+        {
+            if (texturePaths == null || texturePaths.Count == 0)
+            {
+                CustomLog.LogWarning($"No texture paths in cached data for {modelName}");
+                return false;
+            }
+
+            var materials = new Material[texturePaths.Count];
+
+            for (int i = 0; i < texturePaths.Count; i++)
+            {
+                var texturePath = texturePaths[i];
+
+                if (!s_matCache.TryGetValue(texturePath, out var sharedMat))
+                {
+                    var texture = CreateTexture(texturePath);
+                    if (texture == null)
+                    {
+                        CustomLog.LogWarning($"Failed to create texture: {texturePath}");
+                        return false;
+                    }
+
+                    sharedMat = new Material(meshData.BaseMaterial);
+                    sharedMat.mainTexture = texture;
+                    s_matCache[texturePath] = sharedMat;
+                }
+                materials[i] = sharedMat;
+            }
+
+            _meshRenderer.sharedMaterials = materials;
+            return true;
+        }
+
+        private void BakeOneModel(MinecraftModelData modelData, Quaternion modelRotation, MeshGenerationData meshData)
+        {
+            if (modelData.Elements == null) return;
+            foreach (var element in modelData.Elements)
+            {
+                ProcessElementForMesh(element, modelData, modelRotation, meshData);
+            }
+        }
+
+        private void CreateAndAssignMesh(MeshGenerationData meshData)
+        {
+            if (_meshFilter == null) _meshFilter = GetComponent<MeshFilter>();
+            if (_meshRenderer == null) _meshRenderer = GetComponent<MeshRenderer>();
+
+            var mesh = CreateMesh(meshData);
+            _meshFilter.sharedMesh = mesh;
             _meshRenderer.sharedMaterials = meshData.Materials.ToArray();
 
             HandleSpecialBlockColors();
@@ -441,11 +669,16 @@ namespace BDObjectSystem.Display
             }
         }
 
-        // HeadGenerator에서 오버라이드해서 사용
-        protected virtual Texture2D CreateTexture(string path)
+        protected Texture2D CreateTexture(string path)
         {
             var originalTexture = MinecraftFileManager.GetTextureFile(path);
             if (originalTexture == null) return null;
+
+            // 텍스처 자르기가 비활성화되어 있으면 원본 반환
+            if (disableTextureCropping)
+            {
+                return originalTexture;
+            }
 
             // 텍스처가 직사각형인 경우 (애니메이션 텍스처 등)
             if (originalTexture.width != originalTexture.height)
@@ -455,9 +688,8 @@ namespace BDObjectSystem.Display
                 if (originalTexture.height > size)
                 {
                     // 원본 텍스처의 윗부분(첫 프레임)을 복사합니다.
-                    // GetPixels는 (0,0)을 좌측 하단으로 계산하므로 y좌표 조정이 필요합니다.
                     var pixels = originalTexture.GetPixels(0, originalTexture.height - size, size, size);
-                    
+
                     var croppedTexture = new Texture2D(size, size, originalTexture.format, false)
                     {
                         filterMode = FilterMode.Point,
@@ -497,6 +729,19 @@ namespace BDObjectSystem.Display
         }
 
         private static bool IsMirrored(Transform t) => t.localToWorldMatrix.determinant < 0f;
+
+        /// <summary>
+        /// 메시 캐시를 초기화합니다 (메모리 정리용).
+        /// </summary>
+        public static void ClearMeshCache()
+        {
+            foreach (var cachedData in s_meshCache.Values)
+            {
+                if (cachedData?.Mesh != null) Destroy(cachedData.Mesh);
+            }
+            s_meshCache.Clear();
+            s_isSimpleCube.Clear();
+        }
         #endregion
     }
 }
