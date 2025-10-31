@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8305422446642277749}
   - component: {fileID: -3094721387412214185}
   - component: {fileID: -895894013042511148}
+  - component: {fileID: -9204117681416210124}
   m_Layer: 0
   m_Name: Head
   m_TagString: Untagged
@@ -46,7 +47,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09249e0ccf093c94fab5b963f09b8d5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerHeadMesh: {fileID: -5495902117074765545, guid: 39ce9e8de42ef894ea9a3f93930886b6, type: 3}
   headType: 0
   downloadUrl: 
 --- !u!33 &-3094721387412214185
@@ -102,3 +102,18 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &-9204117681416210124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9011376337717371226}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e98fb738d9742149a704cdca7304125, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  modelName: 
+  color: {r: 1, g: 1, b: 1, a: 1}
+  disableTextureCropping: 0

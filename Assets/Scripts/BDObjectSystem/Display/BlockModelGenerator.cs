@@ -32,6 +32,8 @@ namespace BDObjectSystem.Display
             public readonly Dictionary<string, int> MaterialDict = new(64);
             public Material BaseMaterial;
             public bool InvertWinding;
+            // 새 플래그: 메시 생성 시 실제 텍스처/공유 매터리얼을 적용할지 여부
+            public bool AssignMaterials = true;
         }
 
         /// <summary>
@@ -42,9 +44,15 @@ namespace BDObjectSystem.Display
             public string ModelPath;
             public int RotationX;
             public int RotationY;
+            public bool CenterPivot;
+            public bool TopPivot; // 추가
 
             public bool Equals(MeshCacheKey other) =>
-                ModelPath == other.ModelPath && RotationX == other.RotationX && RotationY == other.RotationY;
+                ModelPath == other.ModelPath && 
+                RotationX == other.RotationX && 
+                RotationY == other.RotationY &&
+                CenterPivot == other.CenterPivot &&
+                TopPivot == other.TopPivot;
 
             public override bool Equals(object obj) => obj is MeshCacheKey other && Equals(other);
 
@@ -56,6 +64,8 @@ namespace BDObjectSystem.Display
                     hash = hash * 31 + (ModelPath?.GetHashCode() ?? 0);
                     hash = hash * 31 + RotationX;
                     hash = hash * 31 + RotationY;
+                    hash = hash * 31 + CenterPivot.GetHashCode();
+                    hash = hash * 31 + TopPivot.GetHashCode();
                     return hash;
                 }
             }
@@ -81,11 +91,13 @@ namespace BDObjectSystem.Display
         // 재질 캐시
         private static readonly Dictionary<string, Material> s_matCache = new();
 
-        // 메시 캐시 (개선: 텍스처 정보 포함)
+        // 메시 캐시
         private static readonly Dictionary<MeshCacheKey, CachedMeshData> s_meshCache = new();
         private static readonly Dictionary<string, bool> s_isSimpleCube = new();
 
-        public bool disableTextureCropping = false; // 텍스처 자르기 비활성화 옵션
+        public bool disableTextureCropping = false;
+        public bool centerPivot = false; // true면 중심 또는 중심 상단 피봇
+        public bool topPivot = false; // centerPivot이 true일 때, Y축을 상단으로 할지 여부
 
         private void Awake()
         {
@@ -98,122 +110,24 @@ namespace BDObjectSystem.Display
         {
             modelName = mName;
             var blockState = MinecraftFileManager.GetJsonData("blockstates/" + mName + ".json");
-            var applies = CollectApplies(blockState, state, pickSeed ?? Vector3Int.zero);
+            var applies = ModelGeneratorHelper.CollectApplies(blockState, state, pickSeed ?? Vector3Int.zero);
             GenerateMeshFromApplies(applies);
         }
         #endregion
 
-        #region BlockState Parsing
-        private List<ApplySpec> CollectApplies(JObject blockState, string state, Vector3Int seed)
-        {
-            var list = new List<ApplySpec>(8);
-            if (blockState == null) return list;
-
-            if (blockState.TryGetValue("variants", out var variantTok) && variantTok is JObject variants)
-            {
-                if (variants.TryGetValue(state, out var sel))
-                {
-                    NormalizeApply(sel, seed, list);
-                }
-            }
-            else if (blockState.TryGetValue("multipart", out var multiTok) && multiTok is JArray multipart)
-            {
-                foreach (var item in multipart)
-                {
-                    if (item is not JObject part) continue;
-                    bool ok = !part.TryGetValue("when", out var whenTok) ||
-                              (whenTok is JObject whenObj && CheckState(whenObj, state));
-
-                    if (ok && part.TryGetValue("apply", out var applyTok))
-                    {
-                        NormalizeApply(applyTok, seed, list);
-                    }
-                }
-            }
-            return list;
-        }
-
-        private void NormalizeApply(JToken tok, Vector3Int seed, List<ApplySpec> dst)
-        {
-            if (tok is JObject single)
-            {
-                dst.Add(ToApplySpec(single));
-            }
-            else if (tok is JArray arr && arr.Count > 0)
-            {
-                int idx = PickIndexByWeights(arr, seed);
-                dst.Add(ToApplySpec((JObject)arr[idx]));
-            }
-        }
-
-        private ApplySpec ToApplySpec(JObject obj)
-        {
-            return new ApplySpec
-            {
-                Model = obj["model"]?.ToString() ?? "",
-                X = obj.TryGetValue("x", out var xTok) ? xTok.Value<int>() : 0,
-                Y = obj.TryGetValue("y", out var yTok) ? yTok.Value<int>() : 0,
-                UvLock = obj.TryGetValue("uvlock", out var uTok) && uTok.Value<bool>()
-            };
-        }
-
-        private static bool CheckState(JObject when, string state)
-        {
-            if (when.TryGetValue("OR", out var orTok) && orTok is JArray orArr)
-            {
-                foreach (var item in orArr)
-                    if (item is JObject jObj && CheckStateName(jObj, state)) return true;
-                return false;
-            }
-            if (when.TryGetValue("AND", out var andTok) && andTok is JArray andArr)
-            {
-                foreach (var item in andArr)
-                    if (item is not JObject jObj || !CheckStateName(jObj, state)) return false;
-                return true;
-            }
-            return CheckStateName(when, state);
-        }
-
-        private static bool CheckStateName(JObject checks, string state)
-        {
-            if (string.IsNullOrEmpty(state)) return checks.Count == 0;
-
-            var pairs = state.Split(',');
-            foreach (var kv in checks)
-            {
-                bool matched = false;
-                foreach (var pair in pairs)
-                {
-                    var sp = pair.Split('=');
-                    if (sp.Length != 2 || sp[0] != kv.Key) continue;
-
-                    var values = kv.Value.ToString().Split('|');
-                    foreach (var value in values)
-                    {
-                        if (value == sp[1])
-                        {
-                            matched = true;
-                            break;
-                        }
-                    }
-                    break;
-                }
-                if (!matched) return false;
-            }
-            return true;
-        }
-        #endregion
-
         #region Mesh Generation
-        internal void GenerateMeshFromApplies(List<ApplySpec> applies)
+        internal void GenerateMeshFromApplies(List<ApplySpec> applies, bool assignMaterials = true)
         {
             var bdManager = GameManager.GetManager<BdObjectManager>();
-            var meshData = new MeshGenerationData();
+            var meshData = new MeshGenerationData
+            {
+                AssignMaterials = assignMaterials
+            };
 
             bool isTransparent = !string.IsNullOrEmpty(modelName) &&
                                  (modelName.Contains("glass") || modelName.Contains("honey_block") || modelName.Contains("slime_block"));
             meshData.BaseMaterial = isTransparent ? bdManager.bdObjTransportMaterial : bdManager.bdobjBlockMaterial;
-            meshData.InvertWinding = IsMirrored(transform);
+            meshData.InvertWinding = ModelGeneratorHelper.IsMirrored(transform);
 
             if (applies.Count == 0)
             {
@@ -222,7 +136,7 @@ namespace BDObjectSystem.Display
             }
 
             // 단일 apply이고 캐시 가능한 경우 메시 재사용 시도
-            if (applies.Count == 1 && TryUseCachedMesh(applies[0], meshData))
+            if (applies.Count == 1 && TryUseCachedMesh(applies[0], meshData, assignMaterials))
             {
                 return;
             }
@@ -245,7 +159,7 @@ namespace BDObjectSystem.Display
         /// <summary>
         /// 캐시된 메시를 사용할 수 있는지 확인하고 사용합니다.
         /// </summary>
-        private bool TryUseCachedMesh(ApplySpec apply, MeshGenerationData meshData)
+        private bool TryUseCachedMesh(ApplySpec apply, MeshGenerationData meshData, bool assignMaterials)
         {
             var loc = MinecraftFileManager.RemoveNamespace(apply.Model);
             var fullPath = "models/" + loc + ".json";
@@ -258,19 +172,21 @@ namespace BDObjectSystem.Display
                     return false;
 
                 data = data.UnpackParent();
-                isSimple = IsSimpleCubeModel(data);
+                isSimple = ModelGeneratorHelper.IsSimpleCubeModel(data);
                 s_isSimpleCube[fullPath] = isSimple;
             }
 
             if (!isSimple)
                 return false;
 
-            // 메시 캐시 키 생성
+            // 메시 캐시 키 생성 (centerPivot, topPivot 포함)
             var cacheKey = new MeshCacheKey
             {
                 ModelPath = fullPath,
                 RotationX = apply.X,
-                RotationY = apply.Y
+                RotationY = apply.Y,
+                CenterPivot = centerPivot,
+                TopPivot = topPivot
             };
 
             var modelData = MinecraftFileManager.GetModelData(fullPath);
@@ -293,13 +209,25 @@ namespace BDObjectSystem.Display
             // 캐시된 메시가 있으면 재사용
             if (s_meshCache.TryGetValue(cacheKey, out var cachedData))
             {
-                // 메시는 재사용하지만 재질은 새로 생성
                 _meshFilter.sharedMesh = cachedData.Mesh;
 
-                if (!AssignMaterialsFromCache(cachedData.TexturePaths, meshData))
+                if (assignMaterials)
                 {
-                    // 재질 생성 실패 시 캐시 사용 포기
-                    return false;
+                    if (!AssignMaterialsFromCache(cachedData.TexturePaths, meshData))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    // assignMaterials == false면 플레이스홀더 재질 생성하여 적용
+                    var placeholder = new Material[cachedData.TexturePaths.Count];
+                    for (int i = 0; i < placeholder.Length; i++)
+                    {
+                        placeholder[i] = new Material(meshData.BaseMaterial);
+                        // mainTexture는 설정하지 않음 (나중에 HeadGenerator에서 적용)
+                    }
+                    _meshRenderer.sharedMaterials = placeholder;
                 }
 
                 HandleSpecialBlockColors();
@@ -341,55 +269,58 @@ namespace BDObjectSystem.Display
         }
 
         /// <summary>
-        /// 모델이 단순 큐브(cube_all 기반)인지 확인합니다.
-        /// </summary>
-        private bool IsSimpleCubeModel(MinecraftModelData data)
-        {
-            if (data == null)
-                return false;
-
-            // parent가 cube, cube_all 등인 경우
-            if (!string.IsNullOrEmpty(data.Parent))
-            {
-                var parentName = MinecraftFileManager.RemoveNamespace(data.Parent);
-                if (parentName is "block/cube" or "block/cube_all" or "block/cube_column")
-                    return true;
-            }
-
-            // elements가 정확히 1개이고 16x16x16 큐브인 경우
-            if (data.Elements == null || data.Elements.Count != 1)
-                return false;
-
-            var element = data.Elements[0];
-            if (!element.TryGetValue("from", out var fromTok) || fromTok is not JArray fromArr ||
-                !element.TryGetValue("to", out var toTok) || toTok is not JArray toArr)
-                return false;
-
-            var from = new Vector3(fromArr[0].Value<float>(), fromArr[1].Value<float>(), fromArr[2].Value<float>());
-            var to = new Vector3(toArr[0].Value<float>(), toArr[1].Value<float>(), toArr[2].Value<float>());
-
-            // 16x16x16 큐브인지 확인
-            return from == Vector3.zero && to == new Vector3(16, 16, 16);
-        }
-
-        /// <summary>
         /// 메시 데이터로부터 Mesh 객체를 생성합니다.
         /// </summary>
         private Mesh CreateMesh(MeshGenerationData meshData)
         {
-            // Pivot to bottom-left-front corner
             if (meshData.Vertices.Count > 0)
             {
-                var min = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
-                foreach (var v in meshData.Vertices)
+                if (centerPivot)
                 {
-                    min.x = Mathf.Min(min.x, v.x);
-                    min.y = Mathf.Min(min.y, v.y);
-                    min.z = Mathf.Min(min.z, v.z);
+                    var min = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+                    var max = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+                    
+                    foreach (var v in meshData.Vertices)
+                    {
+                        min.x = Mathf.Min(min.x, v.x);
+                        min.y = Mathf.Min(min.y, v.y);
+                        min.z = Mathf.Min(min.z, v.z);
+                        max.x = Mathf.Max(max.x, v.x);
+                        max.y = Mathf.Max(max.y, v.y);
+                        max.z = Mathf.Max(max.z, v.z);
+                    }
+                    
+                    Vector3 pivot;
+                    if (topPivot)
+                    {
+                        // 머리: X, Z는 중심, Y는 상단
+                        pivot = new Vector3((min.x + max.x) * 0.5f, max.y, (min.z + max.z) * 0.5f);
+                    }
+                    else
+                    {
+                        // 아이템: 완전한 중심
+                        pivot = (min + max) * 0.5f;
+                    }
+                    
+                    for (int i = 0; i < meshData.Vertices.Count; i++)
+                    {
+                        meshData.Vertices[i] -= pivot;
+                    }
                 }
-                for (int i = 0; i < meshData.Vertices.Count; i++)
+                else
                 {
-                    meshData.Vertices[i] -= min;
+                    // 블록: 하단 피봇 (최솟값)
+                    var min = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+                    foreach (var v in meshData.Vertices)
+                    {
+                        min.x = Mathf.Min(min.x, v.x);
+                        min.y = Mathf.Min(min.y, v.y);
+                        min.z = Mathf.Min(min.z, v.z);
+                    }
+                    for (int i = 0; i < meshData.Vertices.Count; i++)
+                    {
+                        meshData.Vertices[i] -= min;
+                    }
                 }
             }
 
@@ -410,7 +341,6 @@ namespace BDObjectSystem.Display
 
         /// <summary>
         /// 캐시된 텍스처 경로 목록을 사용하여 재질을 할당합니다.
-        /// 성공 여부를 반환합니다.
         /// </summary>
         private bool AssignMaterialsFromCache(List<string> texturePaths, MeshGenerationData meshData)
         {
@@ -434,6 +364,9 @@ namespace BDObjectSystem.Display
                         CustomLog.LogWarning($"Failed to create texture: {texturePath}");
                         return false;
                     }
+
+                    texture.filterMode = FilterMode.Point;
+                    texture.wrapMode = TextureWrapMode.Clamp;
 
                     sharedMat = new Material(meshData.BaseMaterial);
                     sharedMat.mainTexture = texture;
@@ -481,69 +414,16 @@ namespace BDObjectSystem.Display
             var from = new Vector3(fromArr[0].Value<float>(), fromArr[1].Value<float>(), fromArr[2].Value<float>()) / 16f - Vector3.one * 0.5f;
             var to = new Vector3(toArr[0].Value<float>(), toArr[1].Value<float>(), toArr[2].Value<float>()) / 16f - Vector3.one * 0.5f;
 
-            var (elementRotation, origin, rescaleFactor, axisChar) = ParseElementRotation(element);
+            var (elementRotation, origin, rescaleFactor, axisChar) = ModelGeneratorHelper.ParseElementRotation(element);
             var finalRotation = modelRotation * elementRotation;
 
             Span<Vector3> cubeVerts = stackalloc Vector3[8];
-            CalculateTransformedVertices(cubeVerts, from, to, origin, elementRotation, modelRotation, rescaleFactor, axisChar);
+            ModelGeneratorHelper.CalculateTransformedVertices(cubeVerts, from, to, origin, elementRotation, modelRotation, rescaleFactor, axisChar);
 
             foreach (var face in faces)
             {
                 if (face.Value is not JObject faceData) continue;
                 ProcessFace(face.Key, faceData, model, finalRotation, cubeVerts, from, to, meshData);
-            }
-        }
-
-        private (Quaternion rot, Vector3 origin, float rescale, char axis) ParseElementRotation(JObject element)
-        {
-            if (element["rotation"] is not JObject rotData)
-                return (Quaternion.identity, Vector3.zero, 1f, 'y');
-
-            var origin = Vector3.zero;
-            if (rotData["origin"] is JArray originArr)
-                origin = new Vector3(originArr[0].Value<float>(), originArr[1].Value<float>(), originArr[2].Value<float>()) / 16f - Vector3.one * 0.5f;
-
-            var axisStr = rotData["axis"]?.Value<string>() ?? "y";
-            var axisChar = axisStr.Length > 0 ? axisStr[0] : 'y';
-            var angle = rotData["angle"]?.Value<float>() ?? 0f;
-            var doRescale = rotData.TryGetValue("rescale", out var resTok) && resTok.Value<bool>();
-
-            var axisVec = axisChar == 'x' ? Vector3.right : axisChar == 'y' ? Vector3.up : Vector3.forward;
-            var rot = Quaternion.AngleAxis(angle, axisVec);
-
-            float rescale = 1f;
-            if (doRescale && Mathf.Abs(angle) > 1e-4f)
-            {
-                float cos = Mathf.Abs(Mathf.Cos(angle * Mathf.Deg2Rad));
-                rescale = 1f / Mathf.Max(cos, 1e-4f);
-            }
-            return (rot, origin, rescale, axisChar);
-        }
-
-        private void CalculateTransformedVertices(Span<Vector3> cubeVerts, Vector3 from, Vector3 to, Vector3 origin, Quaternion elementRotation, Quaternion modelRotation, float rescaleFactor, char axisChar)
-        {
-            cubeVerts[0] = new Vector3(from.x, from.y, from.z);
-            cubeVerts[1] = new Vector3(to.x, from.y, from.z);
-            cubeVerts[2] = new Vector3(to.x, to.y, from.z);
-            cubeVerts[3] = new Vector3(from.x, to.y, from.z);
-            cubeVerts[4] = new Vector3(from.x, from.y, to.z);
-            cubeVerts[5] = new Vector3(to.x, from.y, to.z);
-            cubeVerts[6] = new Vector3(to.x, to.y, to.z);
-            cubeVerts[7] = new Vector3(from.x, to.y, to.z);
-
-            for (int i = 0; i < 8; i++)
-            {
-                Vector3 rel = cubeVerts[i] - origin;
-                if (rescaleFactor != 1f)
-                {
-                    switch (axisChar)
-                    {
-                        case 'x': rel.y *= rescaleFactor; rel.z *= rescaleFactor; break;
-                        case 'y': rel.x *= rescaleFactor; rel.z *= rescaleFactor; break;
-                        case 'z': rel.x *= rescaleFactor; rel.y *= rescaleFactor; break;
-                    }
-                }
-                cubeVerts[i] = modelRotation * (elementRotation * rel + origin);
             }
         }
 
@@ -556,16 +436,30 @@ namespace BDObjectSystem.Display
                 meshData.MaterialDict[textureName] = submeshIndex;
                 if (!s_matCache.TryGetValue(textureName, out var sharedMat))
                 {
-                    sharedMat = new Material(meshData.BaseMaterial);
-                    sharedMat.mainTexture = CreateTexture(textureName);
-                    s_matCache[textureName] = sharedMat;
+                    if (meshData.AssignMaterials)
+                    {
+                        var texture = CreateTexture(textureName);
+                        if (texture != null)
+                        {
+                            texture.filterMode = FilterMode.Point;  // 픽셀 아트 스타일 유지
+                            texture.wrapMode = TextureWrapMode.Clamp;
+                        }
+                        sharedMat = new Material(meshData.BaseMaterial);
+                        sharedMat.mainTexture = texture;
+                        s_matCache[textureName] = sharedMat;
+                    }
+                    else
+                    {
+                        // 할당을 하지 않는 경우 플레이스홀더 재질을 사용 (나중에 외부에서 텍스처 적용)
+                        sharedMat = new Material(meshData.BaseMaterial);
+                    }
                 }
                 meshData.Materials.Add(sharedMat);
                 meshData.SubmeshTriangles.Add(new List<int>(64));
             }
 
-            var (v0, v1, v2, v3) = GetFaceVertices(faceName, cubeVerts);
-            var baseNormal = GetFaceBaseNormal(faceName);
+            var (v0, v1, v2, v3) = ModelGeneratorHelper.GetFaceVertices(faceName, cubeVerts);
+            var baseNormal = ModelGeneratorHelper.GetFaceBaseNormal(faceName);
             var expectedNormal = finalRotation * baseNormal;
             if (meshData.InvertWinding) expectedNormal = -expectedNormal;
 
@@ -586,63 +480,9 @@ namespace BDObjectSystem.Display
                 tris.Add(vi); tris.Add(vi + 2); tris.Add(vi + 3);
             }
 
-            AddFaceUVs(faceName, from, to, faceData, meshData.Uvs);
+            ModelGeneratorHelper.AddFaceUVs(faceName, from, to, faceData, meshData.Uvs);
             var finalNormal = needsFlip ? -expectedNormal : expectedNormal;
             meshData.Normals.Add(finalNormal); meshData.Normals.Add(finalNormal); meshData.Normals.Add(finalNormal); meshData.Normals.Add(finalNormal);
-        }
-
-        private static (Vector3, Vector3, Vector3, Vector3) GetFaceVertices(string faceName, Span<Vector3> verts) => faceName switch
-        {
-            "down" => (verts[0], verts[1], verts[5], verts[4]),
-            "up" => (verts[2], verts[3], verts[7], verts[6]),
-            "north" => (verts[3], verts[2], verts[1], verts[0]),
-            "south" => (verts[5], verts[6], verts[7], verts[4]),
-            "west" => (verts[7], verts[3], verts[0], verts[4]),
-            "east" => (verts[1], verts[2], verts[6], verts[5]),
-            _ => (Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero)
-        };
-
-        private static Vector3 GetFaceBaseNormal(string faceName) => faceName switch
-        {
-            "down" => Vector3.down, "up" => Vector3.up, "north" => Vector3.back,
-            "south" => Vector3.forward, "west" => Vector3.left, "east" => Vector3.right,
-            _ => Vector3.zero
-        };
-
-        private static void AddFaceUVs(string faceName, Vector3 from, Vector3 to, JObject faceData, List<Vector2> uvs)
-        {
-            float u1, v1, u2, v2;
-            if (faceData.TryGetValue("uv", out var uvTok) && uvTok is JArray a && a.Count == 4)
-            {
-                u1 = a[0].Value<float>() / 16f; v1 = 1f - a[1].Value<float>() / 16f;
-                u2 = a[2].Value<float>() / 16f; v2 = 1f - a[3].Value<float>() / 16f;
-            }
-            else
-            {
-                (u1, v1, u2, v2) = faceName switch
-                {
-                    "up" => (from.x + 0.5f, 1f - (to.z + 0.5f), to.x + 0.5f, 1f - (from.z + 0.5f)),
-                    "down" => (from.x + 0.5f, 1f - (from.z + 0.5f), to.x + 0.5f, 1f - (to.z + 0.5f)),
-                    "north" => (1f - (to.x + 0.5f), 1f - (to.y + 0.5f), 1f - (from.x + 0.5f), 1f - (from.y + 0.5f)),
-                    "south" => (from.x + 0.5f, 1f - (to.y + 0.5f), to.x + 0.5f, 1f - (from.y + 0.5f)),
-                    "west" => (from.z + 0.5f, 1f - (to.y + 0.5f), to.z + 0.5f, 1f - (from.y + 0.5f)),
-                    "east" => (1f - (to.z + 0.5f), 1f - (to.y + 0.5f), 1f - (from.z + 0.5f), 1f - (from.y + 0.5f)),
-                    _ => (0, 0, 1, 1)
-                };
-            }
-
-            int rot = faceData.TryGetValue("rotation", out var rTok) ? rTok.Value<int>() : 0;
-
-            // south와 east 면에 대해 반시계 90도 회전 추가
-            if (faceName is "south" or "east")
-            {
-                rot -= 90;
-            }
-
-            Span<Vector2> quad = stackalloc Vector2[] { new(u1, v2), new(u2, v2), new(u2, v1), new(u1, v1) };
-            int steps = (rot / 90 % 4 + 4) % 4;
-            uvs.Add(quad[(0 + steps) % 4]); uvs.Add(quad[(1 + steps) % 4]);
-            uvs.Add(quad[(2 + steps) % 4]); uvs.Add(quad[(3 + steps) % 4]);
         }
         #endregion
 
@@ -674,10 +514,35 @@ namespace BDObjectSystem.Display
             var originalTexture = MinecraftFileManager.GetTextureFile(path);
             if (originalTexture == null) return null;
 
-            // 텍스처 자르기가 비활성화되어 있으면 원본 반환
+            // 텍스처 자르기가 비활성화되어 있으면 원본을 복사하여 반환
             if (disableTextureCropping)
             {
-                return originalTexture;
+                // 읽기 가능한 복사본 생성
+                var readableTexture = new Texture2D(originalTexture.width, originalTexture.height, originalTexture.format, false)
+                {
+                    filterMode = FilterMode.Point,
+                    wrapMode = TextureWrapMode.Clamp
+                };
+
+                // RenderTexture를 통한 복사 (읽기 불가능한 텍스처도 처리 가능)
+                RenderTexture tmp = RenderTexture.GetTemporary(
+                    originalTexture.width,
+                    originalTexture.height,
+                    0,
+                    RenderTextureFormat.Default,
+                    RenderTextureReadWrite.Linear);
+
+                Graphics.Blit(originalTexture, tmp);
+                RenderTexture previous = RenderTexture.active;
+                RenderTexture.active = tmp;
+
+                readableTexture.ReadPixels(new Rect(0, 0, tmp.width, tmp.height), 0, 0);
+                readableTexture.Apply();
+
+                RenderTexture.active = previous;
+                RenderTexture.ReleaseTemporary(tmp);
+
+                return readableTexture;
             }
 
             // 텍스처가 직사각형인 경우 (애니메이션 텍스처 등)
@@ -687,48 +552,61 @@ namespace BDObjectSystem.Display
                 int size = originalTexture.width;
                 if (originalTexture.height > size)
                 {
-                    // 원본 텍스처의 윗부분(첫 프레임)을 복사합니다.
-                    var pixels = originalTexture.GetPixels(0, originalTexture.height - size, size, size);
-
                     var croppedTexture = new Texture2D(size, size, originalTexture.format, false)
                     {
                         filterMode = FilterMode.Point,
                         wrapMode = TextureWrapMode.Clamp
                     };
-                    croppedTexture.SetPixels(pixels);
+
+                    // RenderTexture를 통한 복사로 변경
+                    RenderTexture tmp = RenderTexture.GetTemporary(
+                        originalTexture.width,
+                        originalTexture.height,
+                        0,
+                        RenderTextureFormat.Default,
+                        RenderTextureReadWrite.Linear);
+
+                    Graphics.Blit(originalTexture, tmp);
+                    RenderTexture previous = RenderTexture.active;
+                    RenderTexture.active = tmp;
+
+                    // 원본 텍스처의 윗부분(첫 프레임)을 복사합니다.
+                    croppedTexture.ReadPixels(new Rect(0, originalTexture.height - size, size, size), 0, 0);
                     croppedTexture.Apply();
+
+                    RenderTexture.active = previous;
+                    RenderTexture.ReleaseTemporary(tmp);
 
                     return croppedTexture;
                 }
             }
 
-            return originalTexture;
-        }
-
-        private static int PickIndexByWeights(JArray arr, Vector3Int seed)
-        {
-            int total = 0;
-            var cum = new int[arr.Count];
-            for (int i = 0; i < arr.Count; i++)
+            // 정사각형 텍스처는 복사본 생성
+            var finalTexture = new Texture2D(originalTexture.width, originalTexture.height, originalTexture.format, false)
             {
-                var o = (JObject)arr[i];
-                int w = o.TryGetValue("weight", out var wTok) ? Mathf.Max(1, wTok.Value<int>()) : 1;
-                total += w;
-                cum[i] = total;
-            }
-            if (total <= 0) return 0;
-            int r = Mathf.Abs(Hash(seed)) % total;
-            for (int i = 0; i < cum.Length; i++)
-                if (r < cum[i]) return i;
-            return 0;
-        }
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
 
-        private static int Hash(Vector3Int v)
-        {
-            unchecked { return (17 * 31 + v.x) * 31 + v.y * 31 + v.z; }
-        }
+            RenderTexture tmpFinal = RenderTexture.GetTemporary(
+                originalTexture.width,
+                originalTexture.height,
+                0,
+                RenderTextureFormat.Default,
+                RenderTextureReadWrite.Linear);
 
-        private static bool IsMirrored(Transform t) => t.localToWorldMatrix.determinant < 0f;
+            Graphics.Blit(originalTexture, tmpFinal);
+            RenderTexture prevFinal = RenderTexture.active;
+            RenderTexture.active = tmpFinal;
+
+            finalTexture.ReadPixels(new Rect(0, 0, tmpFinal.width, tmpFinal.height), 0, 0);
+            finalTexture.Apply();
+
+            RenderTexture.active = prevFinal;
+            RenderTexture.ReleaseTemporary(tmpFinal);
+
+            return finalTexture;
+        }
 
         /// <summary>
         /// 메시 캐시를 초기화합니다 (메모리 정리용).

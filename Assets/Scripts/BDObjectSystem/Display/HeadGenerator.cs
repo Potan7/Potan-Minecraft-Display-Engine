@@ -9,8 +9,8 @@ namespace BDObjectSystem.Display
 {
     /// <summary>
     /// 머리 블록 생성기
-    /// - 커스텀 플레이어 머리: 블렌더 메시 + 다운로드된 스킨 텍스처
-    /// - 나머지 머리: BlockModelGenerator 활용 (model.json 파일 기반)
+    /// - 모든 머리: BlockModelGenerator 활용 (model.json 파일 기반)
+    /// - 커스텀 플레이어 머리: 텍스처만 다운로드하여 적용
     /// </summary>
     public class HeadGenerator : MonoBehaviour
     {
@@ -28,16 +28,20 @@ namespace BDObjectSystem.Display
 
         private const string DefaultTexturePath = "entity/";
 
-        [Header("Player Head Mesh (Blender)")]
-        public Mesh playerHeadMesh; // 플레이어 머리용 블렌더 메시
-
         public HeadType headType;
         public string downloadUrl;
 
         private Action<Texture2D> _textureReadyCallback;
         private BlockModelGenerator _blockModelGenerator;
-        private MeshFilter _meshFilter;
-        private MeshRenderer _meshRenderer;
+
+        void Awake()
+        {
+            _blockModelGenerator = GetComponent<BlockModelGenerator>();
+            if (_blockModelGenerator == null)
+            {
+                CustomLog.LogError("BlockModelGenerator component is missing! Please add it to the prefab.");
+            }
+        }
 
         void OnDestroy()
         {
@@ -67,6 +71,12 @@ namespace BDObjectSystem.Display
                 _ => HeadType.None
             };
 
+            // Awake보다 빨리 호출될 수 있으므로 여기서도 컴포넌트 가져오기
+            if (_blockModelGenerator == null)
+            {
+                _blockModelGenerator = GetComponent<BlockModelGenerator>();
+            }
+
             if (headType == HeadType.None)
             {
                 CustomLog.LogError("Head Type Error.");
@@ -86,41 +96,52 @@ namespace BDObjectSystem.Display
         #region Player Head (Custom Skin)
         private void GeneratePlayerHead()
         {
-            // 블렌더 메시 설정
-            if (playerHeadMesh == null)
-            {
-                CustomLog.LogError("Player head mesh is not assigned!");
-                return;
-            }
-
-            _meshFilter = GetComponent<MeshFilter>();
-            _meshRenderer = GetComponent<MeshRenderer>();
-
-            _meshFilter.sharedMesh = playerHeadMesh;
-            
-            // 스킨 텍스처 다운로드
             GameManager.GetManager<FileLoadManager>().WorkingGenerators.Add(this);
-            
-            var data = transform.parent?.parent?.GetComponent<BdObjectContainer>()?.BdObject;
-            if (data == null)
+
+            try
             {
-                CustomLog.LogError("BdObjectContainer not found!");
-                ApplyDefaultPlayerTexture();
-                return;
+                // 메시 자체는 먼저 생성하되 텍스쳐 할당은 나중에 하도록 설정
+                _blockModelGenerator.disableTextureCropping = true;
+                _blockModelGenerator.centerPivot = true; // 중심 피봇 사용
+                _blockModelGenerator.topPivot = true; // Y축은 상단
+
+                string modelPath = "item/player_head";
+                var applies = new List<BlockModelGenerator.ApplySpec>
+                {
+                    new() { Model = modelPath, X = 0, Y = 0, UvLock = false }
+                };
+
+                // Debug.Log($"Generating player head mesh using model {modelPath} (no material assignment).");
+                // assignMaterials = false -> 메시만 생성하고 텍스처는 적용하지 않음
+                _blockModelGenerator.GenerateMeshFromApplies(applies, assignMaterials: false);
+
+                // 스킨 텍스처 다운로드
+                var data = transform.parent?.parent?.GetComponent<BdObjectContainer>()?.BdObject;
+                if (data == null)
+                {
+                    CustomLog.LogError("BdObjectContainer not found!");
+                    ApplyDefaultPlayerTexture();
+                    return;
+                }
+
+                string base64Texture = data.GetHeadTexture();
+                downloadUrl = PlayerHeadTextureCache.GetUrlFromBase64(base64Texture);
+
+                _textureReadyCallback = OnPlayerHeadTextureReady;
+                PlayerHeadTextureCache.GetPlayerTexture(base64Texture, _textureReadyCallback);
             }
-
-            string base64Texture = data.GetHeadTexture();
-            downloadUrl = PlayerHeadTextureCache.GetUrlFromBase64(base64Texture);
-
-            _textureReadyCallback = OnPlayerHeadTextureReady;
-            PlayerHeadTextureCache.GetPlayerTexture(base64Texture, _textureReadyCallback);
+            catch (Exception e)
+            {
+                CustomLog.UnityLog(e);
+                GameManager.GetManager<FileLoadManager>().WorkingGenerators.Remove(this);
+            }
         }
 
         private void OnPlayerHeadTextureReady(Texture2D texture)
         {
             if (this == null) return;
 
-            Debug.Log("Player head texture downloaded: " + downloadUrl);
+            // Debug.Log("Player head texture downloaded: " + downloadUrl);
 
             _textureReadyCallback = null;
 
@@ -148,13 +169,29 @@ namespace BDObjectSystem.Display
                 return;
             }
 
-            var bdManager = GameManager.GetManager<BdObjectManager>();
-            var material = new Material(bdManager.bdobjBlockMaterial)
+            var meshRenderer = GetComponent<MeshRenderer>();
+            if (meshRenderer == null || meshRenderer.sharedMaterial == null)
             {
-                mainTexture = texture
-            };
+                CustomLog.LogError("MeshRenderer or material not found!");
+                return;
+            }
 
-            _meshRenderer.sharedMaterial = material;
+            var bdManager = GameManager.GetManager<BdObjectManager>();
+
+            // 서브머티리얼 개수에 맞춰 새 재질 생성 후 텍스처 적용
+            var existingMats = meshRenderer.sharedMaterials;
+            int matCount = existingMats != null && existingMats.Length > 0 ? existingMats.Length : 1;
+            var newMats = new Material[matCount];
+            for (int i = 0; i < matCount; i++)
+            {
+                var mat = new Material(bdManager.bdobjBlockMaterial)
+                {
+                    mainTexture = texture
+                };
+                newMats[i] = mat;
+            }
+
+            meshRenderer.sharedMaterials = newMats;
         }
 
         private void ApplyDefaultPlayerTexture()
@@ -171,13 +208,10 @@ namespace BDObjectSystem.Display
 
             try
             {
-                // BlockModelGenerator 생성
-                if (_blockModelGenerator == null)
-                {
-                    _blockModelGenerator = gameObject.AddComponent<BlockModelGenerator>();
-                }
-
+                // 머리 모델은 텍스처 자르기 비활성화 (64x64 텍스처 사용)
                 _blockModelGenerator.disableTextureCropping = true;
+                _blockModelGenerator.centerPivot = true; // 중심 피봇 사용
+                _blockModelGenerator.topPivot = true; // Y축은 상단
 
                 string modelPath = GetModelPath(headType);
                 if (string.IsNullOrEmpty(modelPath))
@@ -186,7 +220,6 @@ namespace BDObjectSystem.Display
                     return;
                 }
 
-                // 모델 생성
                 var applies = new List<BlockModelGenerator.ApplySpec>
                 {
                     new() { Model = modelPath, X = 0, Y = 0, UvLock = false }
@@ -225,13 +258,14 @@ namespace BDObjectSystem.Display
         [ContextMenu("Save Player Texture")]
         public void SavePlayerTexture()
         {
-            if (_meshRenderer == null || _meshRenderer.sharedMaterial == null)
+            var meshRenderer = GetComponent<MeshRenderer>();
+            if (meshRenderer == null || meshRenderer.sharedMaterial == null)
             {
                 CustomLog.LogError("No material found.");
                 return;
             }
 
-            var texture = _meshRenderer.sharedMaterial.mainTexture as Texture2D;
+            var texture = meshRenderer.sharedMaterial.mainTexture as Texture2D;
             if (texture == null)
             {
                 CustomLog.LogError("Main texture is null.");

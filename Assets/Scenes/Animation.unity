@@ -4531,8 +4531,13 @@ MonoBehaviour:
   rotateSensitivity: 1
   panSensitivity: 1
   zoomSensitivity: 1
+  smoothing: 0.8
+  enableInertia: 1
+  inertiaDamping: 0.9
+  zoomToPivot: 1
+  zoomAcceleration: 1.5
   pitchClamp: {x: -89, y: 89}
-  distanceClamp: {x: 2, y: 50}
+  distanceClamp: {x: 2, y: 500}
   inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!1 &340435792
 GameObject:

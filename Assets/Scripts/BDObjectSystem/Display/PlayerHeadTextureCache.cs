@@ -131,7 +131,7 @@ namespace BDObjectSystem.Display
             }
             catch (Exception e)
             {
-                CustomLog.LogError($"An error occurred during texture download: {e.Message}");
+                CustomLog.LogError($"An error occurred during texture download: {e}");
             }
             finally
             {
