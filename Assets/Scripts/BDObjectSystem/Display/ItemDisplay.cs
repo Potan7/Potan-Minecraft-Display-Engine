@@ -202,7 +202,7 @@ namespace BDObjectSystem.Display
             }
 
             itemModel = Instantiate(GameManager.GetManager<BdObjectManager>().itemPrefab, transform);
-            itemModel.Init(texture, texture2);
+            itemModel.Init(modelLocation, texture, texture2);
         }
 
         private static void SetTint(Texture2D texture, JObject tint)

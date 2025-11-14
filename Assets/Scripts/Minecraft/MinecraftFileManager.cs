@@ -33,14 +33,18 @@ namespace Minecraft
 
         //public Dictionary<string, string> jsonFiles = new Dictionary<string, string>();
         private readonly ConcurrentDictionary<string, string> _jsonFiles = new();
-        
+        private readonly ConcurrentDictionary<string, JObject> _jsonCache = new();
+        private readonly ConcurrentDictionary<string, Texture2D> _textureCache = new();
+        private readonly ConcurrentDictionary<string, MinecraftModelData> _modelCache = new();
+
+
         // PreviewImgGenerator가 모델 목록에 접근할 수 있도록 public 프로퍼티를 추가합니다.
         public IReadOnlyDictionary<string, string> AllJsonFiles => _jsonFiles;
 
-        // readPreReadedFiles�� �ִ� ���ϵ��� �̸� �о��
+        // readPreReadedFiles ִ ϵ ̸ о
         private readonly Dictionary<string, MinecraftModelData> _importantModels = new();
 
-        //readonly string[] readFolder = { "models", "textures", "blockstates", "items" }; // ���� ����
+        //readonly string[] readFolder = { "models", "textures", "blockstates", "items" }; //  
         //readonly string[] readTexturesFolders = 
         //    { "block", "item", "entity/bed", "entity/shulker", "entity/chest", "entity/conduit", 
         //    "entity/creeper", "entity/zombie/zombie", "entity/skeleton/", "entity/piglin", "entity/player/wide/steve", "entity/enderdragon/dragon"}; // textures�� ���� ����
@@ -68,7 +72,7 @@ namespace Minecraft
             "1.21.4"
         };
 
-        private static int currentMinecraftVersionIndex = 0;
+        private static int currentMinecraftVersionIndex;
         public static string MinecraftVersion => SurportedVersions[currentMinecraftVersionIndex];
         public bool IsReadedFiles { get; private set; } = false;
 
@@ -101,11 +105,20 @@ namespace Minecraft
 
         public static JObject GetJsonData(string path)
         {
+            if (Instance._jsonCache.TryGetValue(path, out var cachedJson))
+            {
+                return cachedJson;
+            }
+
             // 침대 모델은 하드코딩된 리소스 사용
             if (path.Contains("bed") && !path.Contains("items"))
             {
                 var bed = Resources.Load<TextAsset>("hardcoded/" + path.Replace(".json", ""));
-                return bed != null ? JObject.Parse(bed.text) : null;
+                if (bed == null) return null;
+
+                var parsedBed = JObject.Parse(bed.text);
+                Instance._jsonCache[path] = parsedBed;
+                return parsedBed;
             }
 
             if (!Instance._jsonFiles.TryGetValue(path, out var file))
@@ -116,7 +129,9 @@ namespace Minecraft
                 return null;
             }
 
-            return JObject.Parse(file);
+            var parsedJson = JObject.Parse(file);
+            Instance._jsonCache[path] = parsedJson;
+            return parsedJson;
         }
 
         /// <summary>
@@ -128,7 +143,7 @@ namespace Minecraft
         public static MinecraftModelData GetModelData(string path)
         {
             // 1. 중요 모델 캐시 확인 (가장 빠름)
-            if (Instance._importantModels.TryGetValue(path, out var cachedData))
+            if (Instance._modelCache.TryGetValue(path, out var cachedData))
             {
                 return cachedData;
             }
@@ -143,7 +158,9 @@ namespace Minecraft
                     var hardcodedAsset = Resources.Load<TextAsset>("hardcoded/" + path.Replace(".json", ""));
                     if (hardcodedAsset != null)
                     {
-                        return JsonConvert.DeserializeObject<MinecraftModelData>(hardcodedAsset.text);
+                        var modelData = JsonConvert.DeserializeObject<MinecraftModelData>(hardcodedAsset.text);
+                        Instance._modelCache[path] = modelData;
+                        return modelData;
                     }
                 }
             }
@@ -151,7 +168,9 @@ namespace Minecraft
             // 3. 일반 JSON 파일 확인
             if (Instance._jsonFiles.TryGetValue(path, out var file))
             {
-                return JsonConvert.DeserializeObject<MinecraftModelData>(file);
+                var modelData = JsonConvert.DeserializeObject<MinecraftModelData>(file);
+                Instance._modelCache[path] = modelData;
+                return modelData;
             }
 
 #if UNITY_EDITOR
@@ -160,8 +179,21 @@ namespace Minecraft
             return null;
         }
 
-        public static Texture2D GetTextureFile(string path)
+        public static Texture2D GetTextureFile(string path, bool makeReadable = false)
         {
+            // 아이템 텍스처는 동적 메시 생성을 위해 기본적으로 Readable 상태가 되어야 함
+            if (path.StartsWith("item/"))
+            {
+                makeReadable = true;
+            }
+
+            if (Instance._textureCache.TryGetValue(path, out var cachedTexture))
+            {
+                // 캐시된 텍스처가 요청된 Readable 상태와 다른 경우, 재생성해야 할 수 있으나
+                // 우선은 캐시된 것을 그대로 반환. 아이템 텍스처는 항상 Readable로 캐시될 것임.
+                return cachedTexture;
+            }
+
             if (!Instance._textureFiles.TryGetValue(path, out var fileData))
             {
 #if UNITY_EDITOR
@@ -170,7 +202,8 @@ namespace Minecraft
                 return null;
             }
 
-            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false)
+            // 생성자의 마지막 파라미터를 true로 설정하여 Linear 색 공간임을 명시합니다.
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false, true)
             {
                 filterMode = FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp
@@ -185,15 +218,17 @@ namespace Minecraft
                 return null;
             }
 
-            texture.Apply(false, true); // makeNoLongerReadable = true로 메모리 최적화
+            // makeReadable이 true이면, CPU 메모리 복사본을 유지 (makeNoLongerReadable = false)
+            texture.Apply(false, !makeReadable);
+            Instance._textureCache[path] = texture;
 
             return texture;
         }
 
         public static string RemoveNamespace(string path, string namespacePrefix = "minecraft:")
         {
-            return path.StartsWith(namespacePrefix) 
-                ? path.Substring(namespacePrefix.Length) 
+            return path.StartsWith(namespacePrefix)
+                ? path.Substring(namespacePrefix.Length)
                 : path;
         }
 
@@ -209,7 +244,7 @@ namespace Minecraft
                 "textures/entity/chest", "textures/entity/conduit", "textures/entity/creeper",
                 "textures/entity/zombie/zombie", "textures/entity/skeleton/", "textures/entity/piglin",
                 "textures/entity/player/wide/steve", "textures/entity/enderdragon/dragon",
-                "textures/entity/shield", "textures/entity/conduit/base", 
+                "textures/entity/shield", "textures/entity/conduit/base",
                 "textures/entity/decorated_pot/decorated_pot", "textures/entity/banner_base"
             };
 
@@ -313,14 +348,15 @@ namespace Minecraft
         private void CachingImportantModels()
         {
             ReadOnlySpan<string> cachedFiles =
-                new[] { "block", "cube", "cube_all", "cube_all_inner_faces", "cube_column" }; 
+                new[] { "block", "cube", "cube_all", "cube_all_inner_faces", "cube_column" };
 
             foreach (var read in cachedFiles)
             {
                 var readPath = $"models/{read}.json";
                 if (_jsonFiles.TryGetValue(readPath, out var file))
                 {
-                    _importantModels.Add(read, GetModelData(readPath));
+                    var modelData = GetModelData(readPath);
+                    _modelCache.TryAdd(read, modelData);
                 }
             }
         }

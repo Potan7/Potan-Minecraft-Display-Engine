@@ -48,8 +48,8 @@ namespace BDObjectSystem.Display
             public bool TopPivot; // 추가
 
             public bool Equals(MeshCacheKey other) =>
-                ModelPath == other.ModelPath && 
-                RotationX == other.RotationX && 
+                ModelPath == other.ModelPath &&
+                RotationX == other.RotationX &&
                 RotationY == other.RotationY &&
                 CenterPivot == other.CenterPivot &&
                 TopPivot == other.TopPivot;
@@ -171,8 +171,8 @@ namespace BDObjectSystem.Display
                 if (data == null)
                     return false;
 
-                data = data.UnpackParent();
                 isSimple = ModelGeneratorHelper.IsSimpleCubeModel(data);
+                data = data.UnpackParent();
                 s_isSimpleCube[fullPath] = isSimple;
             }
 
@@ -279,7 +279,7 @@ namespace BDObjectSystem.Display
                 {
                     var min = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
                     var max = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
-                    
+
                     foreach (var v in meshData.Vertices)
                     {
                         min.x = Mathf.Min(min.x, v.x);
@@ -289,7 +289,7 @@ namespace BDObjectSystem.Display
                         max.y = Mathf.Max(max.y, v.y);
                         max.z = Mathf.Max(max.z, v.z);
                     }
-                    
+
                     Vector3 pivot;
                     if (topPivot)
                     {
@@ -301,7 +301,7 @@ namespace BDObjectSystem.Display
                         // 아이템: 완전한 중심
                         pivot = (min + max) * 0.5f;
                     }
-                    
+
                     for (int i = 0; i < meshData.Vertices.Count; i++)
                     {
                         meshData.Vertices[i] -= pivot;

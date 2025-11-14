@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using Animation.AnimFrame;
 using BDObjectSystem;
@@ -39,6 +40,10 @@ namespace Animation.UI
         private float _continuousTickMoveTimer = 0f; // 시간 누적을 위한 변수
 
         public RectTransform specificScrollViewRect; // 스크롤뷰
+
+        // StringBuilder를 재사용 (GC 할당 방지)
+        private readonly StringBuilder _stringBuilder = new StringBuilder(16);
+
         #endregion
 
         #region Unity Methods
@@ -62,16 +67,15 @@ namespace Animation.UI
                     animPanel, Input.mousePosition, null
                 );
 
-            // 마우스가 패널 안에 있으면 카메라 이동 불가능
+            // Boxing 방지: HasFlag 대신 비트 연산 사용
+            var hasAnimUIPanel = (UIManager.CurrentUIStatus & UIManager.UIStatus.OnAnimUIPanel) != 0;
 
-            if (!isMouseEnter && UIManager.CurrentUIStatus.HasFlag(UIManager.UIStatus.OnAnimUIPanel))
+            if (!isMouseEnter && hasAnimUIPanel)
             {
-                // UIManager.CurrentUIStatus &= ~UIManager.UIStatus.OnAnimUIPanel;
                 UIManager.SetUIStatus(UIManager.UIStatus.OnAnimUIPanel, false);
             }
-            else if (isMouseEnter && !UIManager.CurrentUIStatus.HasFlag(UIManager.UIStatus.OnAnimUIPanel))
+            else if (isMouseEnter && !hasAnimUIPanel)
             {
-                // UIManager.CurrentUIStatus |= UIManager.UIStatus.OnAnimUIPanel;
                 UIManager.SetUIStatus(UIManager.UIStatus.OnAnimUIPanel, true);
             }
 
@@ -152,29 +156,51 @@ namespace Animation.UI
             }
 
         }
+
+        void OnDestroy()
+        {
+            AnimManager.TickChanged -= AnimManager_TickChanged;
+        }
         #endregion
 
         #region Unity Events
 
+        private void AnimManager_TickChanged(float obj)
+        {
+            // StringBuilder 사용으로 Boxing 및 GC 할당 방지
+            _stringBuilder.Clear();
+            _stringBuilder.AppendFormat("{0:F2}", obj);
+            tickField.text = _stringBuilder.ToString();
+        }
+
         public void OnTickFieldEndEdit(string value)
         {
             if (int.TryParse(value, out var t))
+            {
                 _manager.Tick = t;
+            }
             else
-                tickField.text = _manager.Tick.ToString();
+            {
+                // Boxing 방지
+                _stringBuilder.Clear();
+                _stringBuilder.Append(_manager.Tick);
+                tickField.text = _stringBuilder.ToString();
+            }
         }
 
         public void OnTickSpeedFieldEndEdit(string value)
         {
             if (float.TryParse(value, out var t))
+            {
                 _manager.TickSpeed = t;
+            }
             else
-                tickSpeedField.text = _manager.TickSpeed.ToString();
-        }
-
-        private void AnimManager_TickChanged(float obj)
-        {
-            tickField.text = obj.ToString("F2");
+            {
+                // Boxing 방지
+                _stringBuilder.Clear();
+                _stringBuilder.Append(_manager.TickSpeed);
+                tickSpeedField.text = _stringBuilder.ToString();
+            }
         }
 
         public void Stop()

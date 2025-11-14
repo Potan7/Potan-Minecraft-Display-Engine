@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine.Serialization;
@@ -11,24 +10,21 @@ namespace Minecraft
     {
         public enum FaceDirection
         {
-            [UsedImplicitly] Up = 0,
-            [UsedImplicitly] North = 5,
-            [UsedImplicitly] West = 4,
-            [UsedImplicitly] Down = 3,
-            [UsedImplicitly] East = 2,
-            [UsedImplicitly] South = 1
+            Up = 0,
+            North = 5,
+            West = 4,
+            Down = 3,
+            East = 2,
+            South = 1
         }
-        
+
         public string Parent;
-        
+
         //public string gui_light;
         //public JObject display;
         public JObject Textures;
         public List<JObject> Elements;
 
-        //public JArray texture_size;
-
-        // ReSharper disable Unity.PerformanceAnalysis
         public MinecraftModelData UnpackParent()
         {
 
@@ -46,7 +42,6 @@ namespace Minecraft
             Parent = null;
             return this;
         }
-
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this, Formatting.Indented);

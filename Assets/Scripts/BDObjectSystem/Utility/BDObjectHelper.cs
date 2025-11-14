@@ -254,6 +254,7 @@ namespace BDObjectSystem.Utility
             else
             {
                 // 자식이 있으면 모든 자식에 대해 재귀
+                if (node.Children == null) return;
                 foreach (var child in node.Children)
                 {
                     TraverseAndCollectLeaf(child, worldMatrix, result);

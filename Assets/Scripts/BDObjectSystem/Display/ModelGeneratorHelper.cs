@@ -12,7 +12,7 @@ namespace BDObjectSystem.Display
     public static class ModelGeneratorHelper
     {
         #region BlockState Parsing
-        
+
         /// <summary>
         /// BlockState JSON에서 적용할 모델 스펙들을 수집합니다.
         /// </summary>
@@ -170,13 +170,13 @@ namespace BDObjectSystem.Display
         /// 큐브의 정점들을 회전 및 스케일 변환합니다.
         /// </summary>
         public static void CalculateTransformedVertices(
-            Span<Vector3> cubeVerts, 
-            Vector3 from, 
-            Vector3 to, 
-            Vector3 origin, 
-            Quaternion elementRotation, 
-            Quaternion modelRotation, 
-            float rescaleFactor, 
+            Span<Vector3> cubeVerts,
+            Vector3 from,
+            Vector3 to,
+            Vector3 origin,
+            Quaternion elementRotation,
+            Quaternion modelRotation,
+            float rescaleFactor,
             char axisChar)
         {
             cubeVerts[0] = new Vector3(from.x, from.y, from.z);
@@ -248,9 +248,9 @@ namespace BDObjectSystem.Display
                 // UV가 명시되어 있으면 사용 (픽셀 단위 -> 정규화)
                 var (divisorU, divisorV) = DetermineTextureDivisor(a);
 
-                u1 = a[0].Value<float>() / divisorU; 
+                u1 = a[0].Value<float>() / divisorU;
                 v1 = 1f - a[3].Value<float>() / divisorV;  // V축 반전 (bottom)
-                u2 = a[2].Value<float>() / divisorU; 
+                u2 = a[2].Value<float>() / divisorU;
                 v2 = 1f - a[1].Value<float>() / divisorV;  // V축 반전 (top)
             }
             else
@@ -268,7 +268,7 @@ namespace BDObjectSystem.Display
             var uv3 = new Vector2(u1, v2); // 좌상
 
             ReadOnlySpan<Vector2> quad = stackalloc Vector2[] { uv0, uv1, uv2, uv3 };
-            
+
             // 회전은 시계 방향으로 적용 (마인크래프트 기준)
             int steps = (rot / 90) % 4;
 
@@ -279,9 +279,9 @@ namespace BDObjectSystem.Display
             }
 
             // GetFaceVertices의 정점 순서에 맞게 UV를 추가
-            uvs.Add(quad[(4 - steps) % 4]); 
+            uvs.Add(quad[(4 - steps) % 4]);
             uvs.Add(quad[(5 - steps) % 4]);
-            uvs.Add(quad[(6 - steps) % 4]); 
+            uvs.Add(quad[(6 - steps) % 4]);
             uvs.Add(quad[(7 - steps) % 4]);
         }
 
@@ -296,7 +296,7 @@ namespace BDObjectSystem.Display
 
             // U축: 16을 넘으면 64, 아니면 16
             float divisorU = maxU > 16f ? 64f : 16f;
-            
+
             // V축: 16을 넘으면 U축과 동일하게 처리 (64x64, 64x32 모두 64 사용)
             float divisorV = maxV > 16f ? 64f : 16f;
 
@@ -313,17 +313,17 @@ namespace BDObjectSystem.Display
             return faceName switch
             {
                 // Y축 면들 (up, down) - Z축 기준
-                "up"    => (from.x + 0.5f, from.z + 0.5f, to.x + 0.5f, to.z + 0.5f),
-                "down"  => (from.x + 0.5f, from.z + 0.5f, to.x + 0.5f, to.z + 0.5f),
-                
+                "up" => (from.x + 0.5f, from.z + 0.5f, to.x + 0.5f, to.z + 0.5f),
+                "down" => (from.x + 0.5f, from.z + 0.5f, to.x + 0.5f, to.z + 0.5f),
+
                 // Z축 면들 (north, south) - X, Y 기준
                 "north" => (from.x + 0.5f, from.y + 0.5f, to.x + 0.5f, to.y + 0.5f),
                 "south" => (from.x + 0.5f, from.y + 0.5f, to.x + 0.5f, to.y + 0.5f),
-                
+
                 // X축 면들 (west, east) - Z, Y 기준
-                "west"  => (from.z + 0.5f, from.y + 0.5f, to.z + 0.5f, to.y + 0.5f),
-                "east"  => (from.z + 0.5f, from.y + 0.5f, to.z + 0.5f, to.y + 0.5f),
-                
+                "west" => (from.z + 0.5f, from.y + 0.5f, to.z + 0.5f, to.y + 0.5f),
+                "east" => (from.z + 0.5f, from.y + 0.5f, to.z + 0.5f, to.y + 0.5f),
+
                 _ => (0, 0, 1, 1)
             };
         }
