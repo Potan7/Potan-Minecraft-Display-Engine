@@ -105,13 +105,30 @@ namespace BDObjectSystem.Display
             _meshRenderer = GetComponent<MeshRenderer>();
         }
 
-        #region Building from BlockState
+        #region Building
         public void BuildFromBlockState(string mName, string state, Vector3Int? pickSeed = null)
         {
             modelName = mName;
             var blockState = MinecraftFileManager.GetJsonData("blockstates/" + mName + ".json");
             var applies = ModelGeneratorHelper.CollectApplies(blockState, state, pickSeed ?? Vector3Int.zero);
             GenerateMeshFromApplies(applies);
+        }
+
+        public void BuildDirect(string modelPath)
+        {
+            modelName = MinecraftFileManager.RemoveNamespace(modelPath);
+
+            // 가상의 ApplySpec 생성 (회전 없음, 기본 설정)
+            var apply = new ApplySpec
+            {
+                Model = modelName,
+                X = 0,
+                Y = 0,
+                UvLock = false
+            };
+
+            // 기존 메시 생성 파이프라인 재사용 (캐싱, 재질 할당 등 자동 처리)
+            GenerateMeshFromApplies(new List<ApplySpec> { apply });
         }
         #endregion
 
@@ -131,7 +148,7 @@ namespace BDObjectSystem.Display
 
             if (applies.Count == 0)
             {
-                CustomLog.LogWarning($"No applies found for {modelName}. Creating empty mesh.");
+                // CustomLog.LogWarning($"No applies found for {modelName}. Creating empty mesh.");
                 return;
             }
 

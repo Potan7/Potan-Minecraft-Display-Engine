@@ -240,12 +240,7 @@ namespace Minecraft
             // 읽을 텍스처 폴더들
             string[] readTexturesFolders = new[]
             {
-                "textures/block", "textures/item", "textures/entity/bed", "textures/entity/shulker",
-                "textures/entity/chest", "textures/entity/conduit", "textures/entity/creeper",
-                "textures/entity/zombie/zombie", "textures/entity/skeleton/", "textures/entity/piglin",
-                "textures/entity/player/wide/steve", "textures/entity/enderdragon/dragon",
-                "textures/entity/shield", "textures/entity/conduit/base",
-                "textures/entity/decorated_pot/decorated_pot", "textures/entity/banner_base"
+                "textures/block", "textures/item", "textures/entity"
             };
 
             // 읽을 JSON 폴더들 (더 구체적으로 명시)

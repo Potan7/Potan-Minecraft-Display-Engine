@@ -225,7 +225,7 @@ namespace BDObjectSystem.Display
                     new() { Model = modelPath, X = 0, Y = 0, UvLock = false }
                 };
 
-                Debug.Log($"Generating head mesh for {headType} using model {modelPath}.");
+                // Debug.Log($"Generating head mesh for {headType} using model {modelPath}.");
                 _blockModelGenerator.GenerateMeshFromApplies(applies);
             }
             catch (Exception e)
