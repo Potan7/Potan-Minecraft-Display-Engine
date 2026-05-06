@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Text;
@@ -187,7 +187,7 @@ namespace BDObjectSystem.Display
                 var jsonDataBytes = Convert.FromBase64String(base64);
                 var jsonString = Encoding.UTF8.GetString(jsonDataBytes);
                 var jsonObject = JObject.Parse(jsonString);
-                return jsonObject["textures"]?["SKIN"]?["url"]?.ToString().Replace("http://", "https://");
+                return jsonObject["textures"]?["SKIN"]?["url"]?.ToString().Replace("http", "https");
             }
             catch (Exception)
             {
