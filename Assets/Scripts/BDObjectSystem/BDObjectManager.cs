@@ -90,10 +90,6 @@ namespace BDObjectSystem
 
             BdObjectContainer rootContainer = null;
 
-            // (가능하면) 물리 동기화 끄기
-            bool prevSync = Physics.autoSyncTransforms;
-            Physics.autoSyncTransforms = false;
-
             try
             {
                 while (work.Count > 0)
@@ -155,8 +151,7 @@ namespace BDObjectSystem
             finally
             {
                 // 필요 시 한 번만 동기화
-                Physics.autoSyncTransforms = prevSync;
-                if (prevSync == false) Physics.SyncTransforms();
+                Physics.SyncTransforms();
             }
         }
         #endregion

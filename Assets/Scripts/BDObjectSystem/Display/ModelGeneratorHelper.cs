@@ -210,12 +210,12 @@ namespace BDObjectSystem.Display
         public static (Vector3, Vector3, Vector3, Vector3) GetFaceVertices(string faceName, Span<Vector3> verts) => faceName switch
         {
             // 모든 면을 반시계 방향으로 통일 (normal 방향에서 봤을 때)
-            "down" => (verts[0], verts[1], verts[5], verts[4]),  // -Y 면
-            "up" => (verts[3], verts[2], verts[6], verts[7]),    // +Y 면
-            "north" => (verts[0], verts[1], verts[2], verts[3]), // -Z 면
-            "south" => (verts[5], verts[4], verts[7], verts[6]), // +Z 면
+            "down" => (verts[4], verts[5], verts[1], verts[0]),  // -Y 면
+            "up" => (verts[7], verts[6], verts[2], verts[3]),    // +Y 면
+            "north" => (verts[1], verts[0], verts[3], verts[2]), // -Z 면
+            "south" => (verts[4], verts[5], verts[6], verts[7]), // +Z 면
             "west" => (verts[0], verts[4], verts[7], verts[3]),  // -X 면
-            "east" => (verts[1], verts[2], verts[6], verts[5]),  // +X 면
+            "east" => (verts[5], verts[1], verts[2], verts[6]),  // +X 면
             _ => (Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero)
         };
 
@@ -272,17 +272,11 @@ namespace BDObjectSystem.Display
             // 회전은 시계 방향으로 적용 (마인크래프트 기준)
             int steps = (rot / 90) % 4;
 
-            // north 면만 UV를 반시계 방향으로 90도 회전 (시계 방향 270도와 동일)
-            if (faceName == "east")
-            {
-                steps = (steps + 3) % 4;  // 270도 추가 회전 = 반시계 90도
-            }
-
             // GetFaceVertices의 정점 순서에 맞게 UV를 추가
-            uvs.Add(quad[(4 - steps) % 4]);
-            uvs.Add(quad[(5 - steps) % 4]);
-            uvs.Add(quad[(6 - steps) % 4]);
-            uvs.Add(quad[(7 - steps) % 4]);
+            uvs.Add(quad[(steps) % 4]);
+            uvs.Add(quad[(steps + 1) % 4]);
+            uvs.Add(quad[(steps + 2) % 4]);
+            uvs.Add(quad[(steps + 3) % 4]);
         }
 
         /// <summary>
@@ -313,16 +307,16 @@ namespace BDObjectSystem.Display
             return faceName switch
             {
                 // Y축 면들 (up, down) - Z축 기준
-                "up" => (from.x + 0.5f, from.z + 0.5f, to.x + 0.5f, to.z + 0.5f),
-                "down" => (from.x + 0.5f, from.z + 0.5f, to.x + 0.5f, to.z + 0.5f),
+                "up" => (from.x + 0.5f, to.z + 0.5f, to.x + 0.5f, from.z + 0.5f),
+                "down" => (from.x + 0.5f, to.z + 0.5f, to.x + 0.5f, from.z + 0.5f),
 
                 // Z축 면들 (north, south) - X, Y 기준
-                "north" => (from.x + 0.5f, from.y + 0.5f, to.x + 0.5f, to.y + 0.5f),
+                "north" => (to.x + 0.5f, from.y + 0.5f, from.x + 0.5f, to.y + 0.5f),
                 "south" => (from.x + 0.5f, from.y + 0.5f, to.x + 0.5f, to.y + 0.5f),
 
                 // X축 면들 (west, east) - Z, Y 기준
                 "west" => (from.z + 0.5f, from.y + 0.5f, to.z + 0.5f, to.y + 0.5f),
-                "east" => (from.z + 0.5f, from.y + 0.5f, to.z + 0.5f, to.y + 0.5f),
+                "east" => (to.z + 0.5f, from.y + 0.5f, from.z + 0.5f, to.y + 0.5f),
 
                 _ => (0, 0, 1, 1)
             };
