@@ -5,8 +5,9 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using Cysharp.Threading.Tasks;
-using DG.Tweening;
 using FileSystem;
+using LitMotion;
+using LitMotion.Extensions;
 using Newtonsoft.Json;
 using SFB;
 using TMPro;
@@ -126,10 +127,9 @@ namespace BDObjectSystem
 
         public RectTransform panel;
 
-        Tween PanelActiveTween;
-        Tween PanelHideTween;
-
         public RectTransform tagAdderPanel;
+
+        float panelHiddenY;
 
 
         void Start()
@@ -139,19 +139,17 @@ namespace BDObjectSystem
             addTypeToggles[0].onValueChanged.AddListener((_) => { AddType = ADDTYPE.TAG; });
             addTypeToggles[1].onValueChanged.AddListener((_) => { AddType = ADDTYPE.UUID; });
 
-            
+
 
             IsReplacingTagToggle.onValueChanged.AddListener((isOn) =>
             {
                 IsReplacingTag = isOn;
             });
 
-            panel.localPosition = new Vector3(panel.localPosition.x, -panel.rect.height * 2f, panel.localPosition.z);
+            panelHiddenY = -panel.rect.height * 2f;
+            panel.localPosition = new Vector3(panel.localPosition.x, panelHiddenY, panel.localPosition.z);
 
-            PanelActiveTween = panel.DOLocalMoveY(0, 0.5f).SetEase(Ease.OutBack).SetAutoKill(false).Pause();
-            PanelHideTween = panel.DOLocalMoveY(-panel.rect.height * 2f, 0.5f).SetEase(Ease.InQuad).SetAutoKill(false).
-                OnComplete(() => tagAdderPanel.gameObject.SetActive(false)).Pause();
-            // gameObject.SetActive(false);
+            tagAdderPanel.gameObject.SetActive(false);
         }
 
         public void OnAddFileButton()
@@ -181,12 +179,17 @@ namespace BDObjectSystem
             if (active)
             {
                 tagAdderPanel.gameObject.SetActive(true);
-                
-                PanelActiveTween.Restart();
+
+                LMotion.Create(panelHiddenY, 0, 0.5f)
+                    .WithEase(Ease.OutBack)
+                    .BindToAnchoredPositionY(panel);
             }
             else
             {
-                PanelHideTween.Restart();
+                LMotion.Create(panel.anchoredPosition.y, panelHiddenY, 0.5f)
+                    .WithEase(Ease.InQuad)
+                    .WithOnComplete(() => tagAdderPanel.gameObject.SetActive(false))
+                    .BindToAnchoredPositionY(panel);
             }
 
             IsReplacingTagToggle.isOn = IsReplacingTag;
@@ -225,6 +228,11 @@ namespace BDObjectSystem
             {
                 // 1. File Load
                 var bdobject = await FileProcessingHelper.ProcessFileAsync(filePath);
+                if (bdobject == null)
+                {
+                    CustomLog.LogError("파일을 로드하지 못했습니다.");
+                    return;
+                }
                 await ApplyTagOrUUID(bdobject);
             }
             catch (Exception e)

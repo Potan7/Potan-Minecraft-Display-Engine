@@ -1,6 +1,5 @@
 {
-    "dotnet.defaultSolution": "Pangch_animation.sln",
-    "dotnet.dotnetPath": "C:/Program Files/dotnet/dotnet.exe",
+    "dotnet.defaultSolution": "Pangch_animation.slnx",
     "dotrush.roslyn.dotnetSdkDirectory": "C:/Program Files/dotnet/sdk/10.0.102",
     "dotrush.msbuildProperties": {
         "DefineConstants": "UNITY_EDITOR"

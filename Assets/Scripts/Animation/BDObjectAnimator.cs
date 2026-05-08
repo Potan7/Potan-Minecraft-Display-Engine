@@ -120,7 +120,7 @@ namespace Animation
                     if (modelRef.BdObjectID == aRef.ID)
                     {
                         // aFrame, bFrame 각각에서 해당 ID의 행렬을 가져와 보간
-                        Matrix4x4 aMatrix = aFrame.GetMatrix(aRef.ID);  
+                        Matrix4x4 aMatrix = aFrame.GetMatrix(aRef.ID);
                         Matrix4x4 bMatrix = bRef.Transforms.GetMatrix();
 
                         Matrix4x4 lerpedMatrix = InterpolateMatrixTRS(aMatrix, bMatrix, ratio);

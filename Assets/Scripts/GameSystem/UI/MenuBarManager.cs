@@ -1,13 +1,14 @@
 using System;
-using UnityEngine;
-using FileSystem;
-using TMPro;
 using System.Collections;
-using UnityEngine.UI;
+using FileSystem;
+using FileSystem.Export;
+using LitMotion;
+using LitMotion.Extensions;
+using TMPro;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
-using DG.Tweening;
-using FileSystem.Export;
+using UnityEngine.UI;
 
 namespace GameSystem
 {
@@ -96,12 +97,17 @@ namespace GameSystem
 
         public void OnBacktoMainMenuButton()
         {
-            GameManager.GetManager<UIManager>().canvasGroup.DOFade(0f, 0.5f).SetEase(Ease.InQuart).OnComplete(() =>
-            {
-                GameManager.GetManager<UIManager>().canvasGroup.interactable = false;
-                SceneManager.LoadScene("Mainmenu");
-            });
-            
+            var canvasGroup = GameManager.GetManager<UIManager>().canvasGroup;
+
+            LMotion.Create(1f, 0f, 0.5f)
+                .WithEase(Ease.InQuart)
+                .WithOnComplete(() =>
+                {
+                    canvasGroup.interactable = false;
+                    SceneManager.LoadScene("Mainmenu");
+                })
+                .BindToAlpha(canvasGroup);
+
         }
         #endregion
 
@@ -132,7 +138,7 @@ namespace GameSystem
             // UIManager.CurrentUIStatus &= ~UIManager.UIStatus.OnMenuBarPanel;
             UIManager.SetUIStatus(UIManager.UIStatus.OnMenuBarPanel, false);
         }
-        
+
 
         #endregion
     }

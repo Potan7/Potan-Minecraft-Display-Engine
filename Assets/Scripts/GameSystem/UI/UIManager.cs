@@ -7,7 +7,8 @@ using System;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
 using Mainmenu;
-using DG.Tweening;
+using LitMotion;
+using LitMotion.Extensions;
 
 namespace GameSystem
 {
@@ -42,7 +43,7 @@ namespace GameSystem
             GameManager.SetPlayerInput(checkPanelStatus);
 
             GameManager.GetManager<BdEngineStyleCameraMovement>().enableCameraMovement = (CurrentUIStatus == UIStatus.None);
-            
+
         }
 
         const string DefaultLoadingText = "Loading...";
@@ -68,10 +69,13 @@ namespace GameSystem
                 canvasGroup.alpha = 0f;
                 canvasGroup.interactable = false;
 
-                canvasGroup.DOFade(1f, 0.5f).SetEase(Ease.InQuart).OnComplete(() =>
-                {
-                    canvasGroup.interactable = true;
-                });
+                LMotion.Create(0f, 1f, 0.5f)
+                    .WithEase(Ease.InQuart)
+                    .WithOnComplete(() =>
+                    {
+                        canvasGroup.interactable = true;
+                    })
+                    .BindToAlpha(canvasGroup);
             }
         }
 
@@ -130,7 +134,7 @@ namespace GameSystem
         void OnDestroy()
         {
             CurrentUIStatus = UIStatus.None;
-            
+
         }
     }
 }

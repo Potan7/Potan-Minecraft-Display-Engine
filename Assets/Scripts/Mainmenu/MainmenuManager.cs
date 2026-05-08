@@ -4,12 +4,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
-using DG.Tweening;
 using Minecraft;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using LitMotion;
+using LitMotion.Extensions;
 
 namespace Mainmenu
 {
@@ -28,7 +29,7 @@ namespace Mainmenu
 
         public TextMeshProUGUI supportVersionText;
 
-        const string backgroundColor = "303030";
+        const string backgroundColor = "#303030";
         // public RectTransform previewPanel;
 
         public static bool isFirstVisiting = false;
@@ -150,16 +151,29 @@ namespace Mainmenu
 
             loadScene.allowSceneActivation = false;
             menu.interactable = false;
-            menu.transform.DOScale(0f, 1f).SetEase(Ease.InOutBack);
-            menu.DOFade(0f, 1f).SetEase(Ease.InOutBack);
 
-            if (ColorUtility.TryParseHtmlString("#" + backgroundColor, out Color color))
-            {
-                var cam = Camera.main;
-                cam.DOColor(color, 1f).SetEase(Ease.InQuad).OnComplete(() =>
+            LMotion.Create(1f, 0f, 0.5f)
+                .WithEase(Ease.InOutBack)
+                .WithOnComplete(() =>
                 {
                     loadScene.allowSceneActivation = true;
+                })
+                .Bind(menu, (value, m) =>
+                {
+                    m.alpha = value;
+                    m.transform.localScale = Vector3.one * value;
                 });
+
+            if (ColorUtility.TryParseHtmlString(backgroundColor, out Color color))
+            {
+                var cam = Camera.main;
+                LMotion.Create(cam.backgroundColor, color, 0.5f)
+                    .WithEase(Ease.InQuad)
+                    .WithOnComplete(() =>
+                    {
+                        loadScene.allowSceneActivation = true;
+                    })
+                .Bind(cam, (value, c) => c.backgroundColor = value);
             }
         }
 
@@ -169,16 +183,29 @@ namespace Mainmenu
 
             loadScene.allowSceneActivation = false;
             menu.interactable = false;
-            menu.transform.DOScale(0f, 1f).SetEase(Ease.InOutBack);
-            menu.DOFade(0f, 1f).SetEase(Ease.InOutBack);
 
-            if (ColorUtility.TryParseHtmlString("#" + backgroundColor, out Color color))
-            {
-                var cam = Camera.main;
-                cam.DOColor(color, 1f).SetEase(Ease.InQuad).OnComplete(() =>
+            LMotion.Create(1f, 0f, 0.5f)
+                .WithEase(Ease.InOutBack)
+                .WithOnComplete(() =>
                 {
                     loadScene.allowSceneActivation = true;
+                })
+                .Bind(menu, (value, m) =>
+                {
+                    m.alpha = value;
+                    m.transform.localScale = Vector3.one * value;
                 });
+
+            if (ColorUtility.TryParseHtmlString(backgroundColor, out Color color))
+            {
+                var cam = Camera.main;
+                LMotion.Create(cam.backgroundColor, color, 0.5f)
+                    .WithEase(Ease.InQuad)
+                    .WithOnComplete(() =>
+                    {
+                        loadScene.allowSceneActivation = true;
+                    })
+                .Bind(cam, (value, c) => c.backgroundColor = value);
             }
         }
 

@@ -27,19 +27,89 @@ namespace FileSystem
         {
             return await UniTask.RunOnThreadPool(() =>
             {
-                // 1) base64 → gzip 바이트
-                string base64Text = File.ReadAllText(filePath);
-                byte[] gzipData = Convert.FromBase64String(base64Text);
+                byte[] rawData = File.ReadAllBytes(filePath);
+                if (rawData.Length < 2) return null;
 
-                // 2) gzip 해제 → JSON 문자열
-                string jsonData = DecompressGzip(gzipData);
+                byte[] gzipData;
+
+                if (rawData[0] == 0x1F && rawData[1] == 0x8B)
+                {
+                    // 신버전: 직접 GZip
+                    gzipData = rawData;
+                }
+                else
+                {
+                    // 구버전: Base64 → GZip
+                    try
+                    {
+                        string base64Text = Encoding.UTF8.GetString(rawData).Trim();
+                        gzipData = Convert.FromBase64String(base64Text);
+                    }
+                    catch (Exception)
+                    {
+                        Debug.LogError($"[FileProcessingHelper] Base64 디코딩 실패: {filePath}");
+                        return null;
+                    }
+                }
+
+                // 2) GZip 해제
+                byte[] decompressed;
+                try
+                {
+                    decompressed = DecompressGzipToBytes(gzipData);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[FileProcessingHelper] GZip 해제 실패 ({filePath}): {e.Message}");
+                    return null;
+                }
+
+                // 3) PRJ2 컨테이너 처리 (신버전 대응)
+                string jsonData;
+                if (decompressed.Length >= 13 && 
+                    decompressed[0] == 'P' && decompressed[1] == 'R' && decompressed[2] == 'J' && decompressed[3] == '2')
+                {
+                    // PRJ2 포맷: [Magic(4)][Ver(2)][Unused(3)][FileNameLen(2)][FileName(N)][DataLen(4)][Data(M)]
+                    // 현재 관찰된 바에 따르면 scene.json 하나만 포함된 경우가 많음.
+                    // 0..3: PRJ2
+                    // 4..5: Version (01 01)
+                    // 6..8: Unused (00 00 00)
+                    // 9..10: FileName Length (Little Endian)
+                    int fileNameLen = BitConverter.ToInt16(decompressed, 9);
+                    
+                    // 11..11+N-1: FileName
+                    int dataLenPos = 11 + fileNameLen;
+
+                    if (fileNameLen < 0 || decompressed.Length < dataLenPos + 4)
+                    {
+                        Debug.LogError($"[FileProcessingHelper] PRJ2 데이터가 너무 짧음 (DataLen 위치 부족): {filePath} (Buffer: {decompressed.Length}, FileNameLen: {fileNameLen})");
+                        return null;
+                    }
+
+                    // dataLenPos..dataLenPos+3: Data Length (Little Endian)
+                    int dataLen = BitConverter.ToInt32(decompressed, dataLenPos);
+                    int dataStartPos = dataLenPos + 4;
+
+                    if (dataLen < 0 || decompressed.Length < dataStartPos + dataLen)
+                    {
+                        Debug.LogError($"[FileProcessingHelper] PRJ2 데이터 길이 오류: {filePath} (DataLen: {dataLen}, DataStart: {dataStartPos}, Buffer: {decompressed.Length})");
+                        return null;
+                    }
+
+                    jsonData = Encoding.UTF8.GetString(decompressed, dataStartPos, dataLen);
+                }
+                else
+                {
+                    // 일반 JSON (구버전)
+                    jsonData = Encoding.UTF8.GetString(decompressed);
+                }
 
                 if (logJSON)
                 {
                     CustomLog.UnityLog($"[FileProcessingHelper] JSON Data: {jsonData}", false);
                 }
 
-                // 3) JSON → BdObject 배열 → 첫 번째를 루트로
+                // 4) JSON → BdObject 배열 → 첫 번째를 루트로
                 var bdObjectData = JsonConvert.DeserializeObject<BdObjectData[]>(jsonData);
                 if (bdObjectData == null || bdObjectData.Length == 0)
                 {
@@ -92,6 +162,15 @@ namespace FileSystem
             using var gzipStream = new GZipStream(compressedStream, CompressionMode.Decompress);
             using var reader = new StreamReader(gzipStream);
             return reader.ReadToEnd();
+        }
+
+        private static byte[] DecompressGzipToBytes(byte[] gzipData)
+        {
+            using var compressedStream = new MemoryStream(gzipData);
+            using var gzipStream = new GZipStream(compressedStream, CompressionMode.Decompress);
+            using var resultStream = new MemoryStream();
+            gzipStream.CopyTo(resultStream);
+            return resultStream.ToArray();
         }
         public static byte[] CompressGzip(string jsonString)
         {

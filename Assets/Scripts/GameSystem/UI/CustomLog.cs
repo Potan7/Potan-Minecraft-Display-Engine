@@ -3,34 +3,31 @@ using GameSystem;
 
 public static class CustomLog
 {
-    //[System.Diagnostics.Conditional("UNITY_EDITOR")]
-    // ReSharper disable Unity.PerformanceAnalysis
-    public static void Log(object message)
-    {
+        public static void Log(object message)
+        {
 #if DEBUG
-        Debug.Log(message);
+                Debug.Log(message);
 #endif
-        LogConsole.instance.Log(message);
-    }
+                LogConsole.instance.Log(message);
+        }
 
-    //[System.Diagnostics.Conditional("UNITY_EDITOR")]
-    // ReSharper disable Unity.PerformanceAnalysis
-    public static void LogError(object message)
-    {
+        public static void LogError(object message)
+        {
 #if DEBUG
-        Debug.LogError(message);
+                Debug.LogError(message);
 #endif
-        LogConsole.instance.Log(message, Color.red);
-    }
+                LogConsole.instance.Log(message, Color.red);
+        }
 
-    public static void LogWarning(object message)
-    {
+        public static void LogWarning(object message)
+        {
 #if DEBUG
-        Debug.LogWarning(message);
+                Debug.LogWarning(message);
 #endif
-        LogConsole.instance.Log(message, Color.yellow);
-    }
+                LogConsole.instance.Log(message, Color.yellow);
+        }
 
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
         public static void UnityLog(object message, bool isError = true)
         {
 #if DEBUG

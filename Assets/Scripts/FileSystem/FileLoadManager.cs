@@ -149,9 +149,12 @@ namespace FileSystem
             // BDObject 읽은 뒤 BDObjectManager에 추가, AnimObject 추가 
             var mainBdObject = await FileProcessingHelper.ProcessFileAsync(filePaths[0], true);
 
+            // CustomLog.Log($"첫 파일 처리 완료: {filePaths[0]} (BDObject Name: {mainBdObject?.Data.name})");
+
             bool isCorrectTag = BdObjectHelper.HasVaildID(mainBdObject);
             if (!isCorrectTag)
             {
+                // CustomLog.LogWarning($"첫 파일에 유효한 태그가 없습니다: {filePaths[0]} (BDObject Name: {mainBdObject?.Data.name})");
                 var tagObject = await AskAndApplyTagUUIDAdder(filePaths[0]);
 
                 if (tagObject != null)
@@ -326,7 +329,7 @@ namespace FileSystem
                 CustomLog.Log("올바르지 않은 파일입니다. 프레임 임포트를 중단합니다.");
                 return;
             }
-            
+
             // 태그 유효성 검사
             // bool isCorrectTag = BdObjectHelper.HasVaildID(bdObject);
             // if (!isCorrectTag)
@@ -358,10 +361,10 @@ namespace FileSystem
         async UniTask<BdObject> AskAndApplyTagUUIDAdder(string path)
         {
             CursorManager.SetCursor(CursorManager.CursorType.Default);
-            // 1) CompletionSource 생성
+            // CompletionSource 생성
             var tcs = new UniTaskCompletionSource<BdObject>();
 
-            // 2) 이벤트 핸들러 정의 (로컬 함수로 캡쳐)
+            // 이벤트 핸들러 정의 (로컬 함수로 캡쳐)
             void Handler(BdObject obj)
             {
                 // 결과 세팅
@@ -370,10 +373,10 @@ namespace FileSystem
                 tagUUIDAdder.OnBDObjectEdited -= Handler;
             }
 
-            // 3) 편집 완료 이벤트 구독
+            // 편집 완료 이벤트 구독
             tagUUIDAdder.OnBDObjectEdited += Handler;
 
-            // 4) 패널 띄우기
+            // 패널 띄우기
             tagUUIDAdder.SetFilePath(path);
             tagUUIDAdder.SetPanelActive(true);
 
