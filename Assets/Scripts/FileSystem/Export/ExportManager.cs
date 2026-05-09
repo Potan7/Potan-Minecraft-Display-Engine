@@ -461,7 +461,7 @@ namespace FileSystem.Export
             }
             else
             {
-                if (MinecraftFileManager.MinecraftVersion == "1.21.4")
+                if (MinecraftFileManager.Instance.CurrentMinecraftVersionNumber == MinecraftFileManager.Instance.VersionToNumber(1, 21, 4))
                 {
                     return $"start_interpolation:0,interpolation_duration:{interpolation},transformation:[{joined}]";
                 }

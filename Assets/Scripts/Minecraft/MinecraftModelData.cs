@@ -36,8 +36,8 @@ namespace Minecraft
                 MinecraftFileManager.GetModelData("models/" + MinecraftFileManager.RemoveNamespace(Parent) + ".json")
                 .UnpackParent();
 
-            MergeJObject(ref Textures, parentData.Textures);
-            MergeList(ref Elements, parentData.Elements);
+            MergeJObject(Textures, parentData.Textures);
+            MergeList(Elements, parentData.Elements);
 
             Parent = null;
             return this;
@@ -47,7 +47,7 @@ namespace Minecraft
             return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
 
-        private static void MergeJObject(ref JObject target, JObject source)
+        private static void MergeJObject(JObject target, JObject source)
         {
             if (source == null) return;
 
@@ -64,7 +64,7 @@ namespace Minecraft
             }
         }
 
-        private static void MergeList(ref List<JObject> target, List<JObject> source)
+        private static void MergeList(List<JObject> target, List<JObject> source)
         {
             if (source == null) return;
 

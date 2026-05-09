@@ -61,26 +61,64 @@ namespace Minecraft
         // public static string MinecraftPath = ".minecraft/versions";
         // private const string MinecraftVersion = "1.21.4";
 
-        public static readonly List<string> SurportedVersions = new List<string>
-        {
-            "1.21.10",
-            "1.21.9",
-            "1.21.8",
-            "1.21.7",
-            "1.21.6",
-            "1.21.5",
-            "1.21.4"
-        };
-
-        private static int currentMinecraftVersionIndex;
-        public static string MinecraftVersion => SurportedVersions[currentMinecraftVersionIndex];
         public bool IsReadedFiles { get; private set; } = false;
+
+        public SurportedVersionsSO surportedVersions;
+        public Version CurrentMinecraftVersion;
+        public int CurrentMinecraftVersionNumber;
+        public int VersionToNumber(int major, int minor, int build)
+        {
+            return major * 10000 + minor * 100 + build;
+        }
+
+        public MinecraftFileManager()
+        {
+            surportedVersions = Resources.Load<SurportedVersionsSO>("SurportedVersions");
+            if (surportedVersions == null)
+            {
+                CustomLog.LogError("Failed to load SurportedVersionsSO from Resources.");
+                return;
+            }
+
+            surportedVersions.StartVersion = Version.Parse(surportedVersions.surportedVersionStart);
+            surportedVersions.EndVersion = Version.Parse(surportedVersions.surportedVersionEnd);
+        }
+
+        public bool IsVersionSupported(ReadOnlySpan<char> version)
+        {
+            if (Version.TryParse(version, out var parsedVersion))
+            {
+                // StartVersion보다 작으면 지원하지 않음
+                int result = parsedVersion.CompareTo(surportedVersions.StartVersion);
+                if (result < 0) return false; // parsedVersion < StartVersion
+
+                // EndVersion보다 크면 지원하지 않음
+                result = parsedVersion.CompareTo(surportedVersions.EndVersion);
+                if (result > 0) return false; // parsedVersion > EndVersion
+
+                return true;
+            }
+            else
+            {
+                // 버전 문자열이 유효하지 않으면 지원하지 않음
+                CustomLog.LogError("Invalid version format: " + version.ToString());
+                return false;
+            }
+        }
+
 
         // 시작하면 마크 파일 읽음 
         public async UniTask<(bool success, string error)> ReadMinecraftFile(string path, string version)
         {
             // filePath = path;
-            currentMinecraftVersionIndex = SurportedVersions.IndexOf(version);
+            // currentMinecraftVersionIndex = SurportedVersions.IndexOf(version);
+
+            if (!IsVersionSupported(version))
+            {
+                CustomLog.UnityLog("Unsupported Minecraft version: " + version);
+                return (false, "Unsupported Minecraft version");
+            }
+
             try
             {
                 await ReadJarFile(path, "assets/minecraft");
@@ -91,11 +129,8 @@ namespace Minecraft
                 return (false, "Error reading Minecraft file");
             }
 
-            if (currentMinecraftVersionIndex < 0)
-            {
-                CustomLog.UnityLog("Unsupported Minecraft version: " + version);
-                return (false, "Unsupported Minecraft version");
-            }
+            CurrentMinecraftVersion = Version.Parse(version);
+            CurrentMinecraftVersionNumber = VersionToNumber(CurrentMinecraftVersion.Major, CurrentMinecraftVersion.Minor, CurrentMinecraftVersion.Build);
             IsReadedFiles = true;
 
             return (true, string.Empty);
