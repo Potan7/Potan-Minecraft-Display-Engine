@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using BDObjectSystem.Utility;
 
 namespace BDObjectSystem
@@ -9,6 +8,14 @@ namespace BDObjectSystem
     /// </summary>
     public class BdObject
     {
+        public enum DisplayType
+        {
+            None,
+            BlockDisplay,
+            ItemDisplay,
+            TextDisplay
+        }
+
         public BdObjectData Data { get; } // 원본 데이터
 
         public float[] Transforms => Data.transforms;
@@ -28,6 +35,16 @@ namespace BDObjectSystem
         public string ID => GetID();
 
         public bool IsDisplay => Data.isBlockDisplay || Data.isItemDisplay || Data.isTextDisplay;
+        public DisplayType Type
+        {
+            get
+            {
+                if (Data.isBlockDisplay) return DisplayType.BlockDisplay;
+                if (Data.isItemDisplay) return DisplayType.ItemDisplay;
+                if (Data.isTextDisplay) return DisplayType.TextDisplay;
+                return DisplayType.None; // 기본값은 None으로 설정
+            }
+        }
         public bool IsHeadDisplay { get; private set; }
 
         private bool _isNameParsed = false;
@@ -46,9 +63,13 @@ namespace BDObjectSystem
             Parent = parent;
 
             // 자식 객체들도 재귀적으로 생성
-            if (data.children != null)
+            if (data.children != null && data.children.Length > 0)
             {
-                Children = data.children.Select(childData => new BdObject(childData, this)).ToArray();
+                Children = new BdObject[data.children.Length];
+                for (int i = 0; i < data.children.Length; i++)
+                {
+                    Children[i] = new BdObject(data.children[i], this);
+                }
             }
 
             // 역직렬화 시점에 수행하던 초기화 로직
@@ -119,8 +140,17 @@ namespace BDObjectSystem
             }
             else
             {
-                var childIds = Children.Select(child => child.GetID()).ToList();
-                childIds.Sort();
+                // LINQ 제거: List 대신 배열 직접 사용 및 수동 정렬
+                var childIds = new string[Children.Length];
+                for (int i = 0; i < Children.Length; i++)
+                {
+                    childIds[i] = Children[i].GetID();
+                }
+
+                // 버블 정렬 또는 Array.Sort 사용
+                System.Array.Sort(childIds, System.StringComparer.Ordinal);
+
+                // string.Join도 배열 직접 사용
                 _id = $"[{string.Join(",", childIds)}]";
             }
             return _id;
@@ -132,7 +162,7 @@ namespace BDObjectSystem
                    Data.isItemDisplay ? "item_display" :
                    Data.isTextDisplay ? "text_display" : null;
         }
-        
+
         /// <summary>
         /// 이 BdObject의 깊은 복사본을 생성합니다.
         /// 복제된 객체는 원본과 상태를 공유하지 않으며, Parent 속성은 null로 초기화됩니다.

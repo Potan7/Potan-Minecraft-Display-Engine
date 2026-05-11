@@ -139,13 +139,13 @@ namespace GameSystem
             tickUnit = PlayerPrefs.GetInt("tickUnit", tickUnit);
             GameManager.GetManager<AnimManager>().TickUnit = 1.0f / tickUnit;
 
-            cameraMovement.rotateSpeed = PlayerPrefs.GetFloat("cameraSpeed", cameraMovement.rotateSpeed);
-            cameraMovement.panSpeed = PlayerPrefs.GetFloat("cameraMoveSpeed", cameraMovement.panSpeed);
-            cameraMovement.zoomSpeed = PlayerPrefs.GetFloat("cameraZoomSpeed", cameraMovement.zoomSpeed);
+            cameraMovement.rotateSensitivity = PlayerPrefs.GetFloat("cameraSpeed", cameraMovement.rotateSensitivity);
+            cameraMovement.panSensitivity = PlayerPrefs.GetFloat("cameraMoveSpeed", cameraMovement.panSensitivity);
+            cameraMovement.zoomSensitivity = PlayerPrefs.GetFloat("cameraZoomSpeed", cameraMovement.zoomSensitivity);
 
-            sliders[(int)SliderType.CameraSpeed].value = cameraMovement.rotateSpeed;
-            sliders[(int)SliderType.CameraMoveSpeed].value = cameraMovement.panSpeed;
-            sliders[(int)SliderType.CameraZoomSpeed].value = cameraMovement.zoomSpeed;
+            sliders[(int)SliderType.CameraSpeed].value = cameraMovement.rotateSensitivity;
+            sliders[(int)SliderType.CameraMoveSpeed].value = cameraMovement.panSensitivity;
+            sliders[(int)SliderType.CameraZoomSpeed].value = cameraMovement.zoomSensitivity;
 
             // inputFields에도 불러온 값 반영 (인덱스 수정 필요)
             inputFields[(int)SettingInputFieldType.DefaultTickInterval].text = defaultTickInterval.ToString();
@@ -239,15 +239,15 @@ namespace GameSystem
             switch (type)
             {
                 case SliderType.CameraSpeed:
-                    cameraMovement.rotateSpeed = value;
+                    cameraMovement.rotateSensitivity = value;
                     PlayerPrefs.SetFloat("cameraSpeed", value);
                     break;
                 case SliderType.CameraMoveSpeed:
-                    cameraMovement.panSpeed = value;
+                    cameraMovement.panSensitivity = value;
                     PlayerPrefs.SetFloat("cameraMoveSpeed", value);
                     break;
                 case SliderType.CameraZoomSpeed:
-                    cameraMovement.zoomSpeed = value;
+                    cameraMovement.zoomSensitivity = value;
                     PlayerPrefs.SetFloat("cameraZoomSpeed", value);
                     break;
             }

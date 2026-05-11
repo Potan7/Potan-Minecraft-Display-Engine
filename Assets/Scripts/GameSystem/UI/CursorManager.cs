@@ -51,12 +51,12 @@ public class CursorManager : MonoBehaviour
     void LoadTextures()
     {
         // "cursor"라는 스프라이트 시트에서 슬라이스된 스프라이트들을 로드
-        Sprite[] cursorSprites = Resources.LoadAll<Sprite>("cursor");
+        Sprite[] cursorSprites = Resources.LoadAll<Sprite>("UI/cursor");
         defaultCursorTexture = ConvertSpriteToTexture2D(cursorSprites[0]);
         dragCursorTexture = ConvertSpriteToTexture2D(cursorSprites[1]);
 
         // "loading"이라는 스프라이트 시트에서 로딩 애니메이션 프레임들을 로드
-        Sprite[] loadingSprites = Resources.LoadAll<Sprite>("loading");
+        Sprite[] loadingSprites = Resources.LoadAll<Sprite>("UI/loading");
         loadingCursorAnimationFrames = new Texture2D[loadingSprites.Length];
         for (int i = 0; i < loadingSprites.Length; i++)
         {
@@ -72,7 +72,7 @@ public class CursorManager : MonoBehaviour
 
         // [수정] 새로운 텍스처를 생성할 때, 압축되지 않은 RGBA32 형식으로 명시적으로 지정합니다.
         Texture2D newTexture = new Texture2D((int)sprite.rect.width, (int)sprite.rect.height, TextureFormat.RGBA32, false);
-        
+
         Color[] pixels = sprite.texture.GetPixels((int)sprite.rect.x,
                                                   (int)sprite.rect.y,
                                                   (int)sprite.rect.width,
@@ -120,7 +120,7 @@ public class CursorManager : MonoBehaviour
                 SetLoadingCursorAsync(loadingCancellationTokenSource.Token).Forget();
                 break;
             default:
-                Debug.LogError($"'{cursorType}' 타입의 커서 텍스처를 찾을 수 없습니다.");
+                // Debug.LogError($"'{cursorType}' 타입의 커서 텍스처를 찾을 수 없습니다.");
                 Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
                 break;
         }
@@ -144,7 +144,7 @@ public class CursorManager : MonoBehaviour
                     cancellationToken.ThrowIfCancellationRequested();
 
                     Cursor.SetCursor(frame, Vector2.zero, CursorMode.Auto);
-                    
+
                     // [수정] Delay에 CancellationToken을 전달하여 즉시 취소될 수 있도록 합니다.
                     await UniTask.Delay(TimeSpan.FromSeconds(loadingFrameRate), cancellationToken: cancellationToken);
                 }

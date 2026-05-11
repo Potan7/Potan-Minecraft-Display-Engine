@@ -1,18 +1,18 @@
 using System;
-using System.Collections;
-using System.Text;
+using System.Collections.Generic;
+using FileSystem;
 using GameSystem;
 using Minecraft;
-using Newtonsoft.Json.Linq;
 using UnityEngine;
-using UnityEngine.Networking;
-using BDObjectSystem;
-using FileSystem;
-using Cysharp.Threading.Tasks;
 
 namespace BDObjectSystem.Display
 {
-    public class HeadGenerator : BlockModelGenerator
+    /// <summary>
+    /// 머리 블록 생성기
+    /// - 모든 머리: BlockModelGenerator 활용 (model.json 파일 기반)
+    /// - 커스텀 플레이어 머리: 텍스처만 다운로드하여 적용
+    /// </summary>
+    public class HeadGenerator : MonoBehaviour
     {
         public enum HeadType
         {
@@ -29,26 +29,36 @@ namespace BDObjectSystem.Display
         private const string DefaultTexturePath = "entity/";
 
         public HeadType headType;
-        public Texture2D headTexture;
         public string downloadUrl;
 
         private Action<Texture2D> _textureReadyCallback;
+        private BlockModelGenerator _blockModelGenerator;
+
+        void Awake()
+        {
+            _blockModelGenerator = GetComponent<BlockModelGenerator>();
+            if (_blockModelGenerator == null)
+            {
+                CustomLog.LogError("BlockModelGenerator component is missing! Please add it to the prefab.");
+            }
+        }
 
         void OnDestroy()
         {
             if (_textureReadyCallback != null)
             {
-                var data = transform.parent.parent.GetComponent<BdObjectContainer>().BdObject;
-                string base64Texture = data.GetHeadTexture();
-                PlayerHeadTextureCache.RemoveCallback(base64Texture, _textureReadyCallback);
+                var data = transform.parent?.parent?.GetComponent<BdObjectContainer>()?.BdObject;
+                if (data != null)
+                {
+                    string base64Texture = data.GetHeadTexture();
+                    PlayerHeadTextureCache.RemoveCallback(base64Texture, _textureReadyCallback);
+                }
                 _textureReadyCallback = null;
             }
         }
 
         public void GenerateHead(string name)
         {
-            modelName = "head";
-
             headType = name switch
             {
                 "player" => HeadType.Player,
@@ -61,127 +71,212 @@ namespace BDObjectSystem.Display
                 _ => HeadType.None
             };
 
+            // Awake보다 빨리 호출될 수 있으므로 여기서도 컴포넌트 가져오기
+            if (_blockModelGenerator == null)
+            {
+                _blockModelGenerator = GetComponent<BlockModelGenerator>();
+            }
+
             if (headType == HeadType.None)
             {
                 CustomLog.LogError("Head Type Error.");
                 return;
             }
 
-            GenerateHeadCoroutine();
+            if (headType == HeadType.Player)
+            {
+                GeneratePlayerHead();
+            }
+            else
+            {
+                GenerateNormalHead();
+            }
         }
 
-        private void GenerateHeadCoroutine()
+        #region Player Head (Custom Skin)
+        private void GeneratePlayerHead()
         {
             GameManager.GetManager<FileLoadManager>().WorkingGenerators.Add(this);
 
             try
             {
-                if (headType == HeadType.Player)
+                // 메시 자체는 먼저 생성하되 텍스쳐 할당은 나중에 하도록 설정
+                _blockModelGenerator.disableTextureCropping = true;
+                _blockModelGenerator.centerPivot = true; // 중심 피봇 사용
+                _blockModelGenerator.topPivot = true; // Y축은 상단
+
+                string modelPath = "item/player_head";
+                var applies = new List<BlockModelGenerator.ApplySpec>
                 {
-                    GetPlayerHeadTexture();
-                    // 콜백이 호출될 때까지 기다려야 하므로, 여기서는 바로 반환합니다.
-                    // 텍스처가 준비되면 OnPlayerHeadTextureReady에서 나머지 로직이 처리됩니다.
+                    new() { Model = modelPath, X = 0, Y = 0, UvLock = false }
+                };
+
+                // Debug.Log($"Generating player head mesh using model {modelPath} (no material assignment).");
+                // assignMaterials = false -> 메시만 생성하고 텍스처는 적용하지 않음
+                _blockModelGenerator.GenerateMeshFromApplies(applies, assignMaterials: false);
+
+                // 스킨 텍스처 다운로드
+                var data = transform.parent?.parent?.GetComponent<BdObjectContainer>()?.BdObject;
+                if (data == null)
+                {
+                    CustomLog.LogError("BdObjectContainer not found!");
+                    ApplyDefaultPlayerTexture();
                     return;
                 }
-                else
-                {
-                    headTexture = headType switch
-                    {
-                        HeadType.Piglin => MinecraftFileManager.GetTextureFile(DefaultTexturePath + "piglin/piglin.png"),
-                        HeadType.Dragon => MinecraftFileManager.GetTextureFile(DefaultTexturePath + "enderdragon/dragon.png"),
-                        HeadType.Zombie => MinecraftFileManager.GetTextureFile(DefaultTexturePath + "zombie/zombie.png"),
-                        HeadType.Skull => MinecraftFileManager.GetTextureFile(DefaultTexturePath + "skeleton/skeleton.png"),
-                        HeadType.Witherskull => MinecraftFileManager.GetTextureFile(DefaultTexturePath + "skeleton/wither_skeleton.png"),
-                        HeadType.Creeper => MinecraftFileManager.GetTextureFile(DefaultTexturePath + "creeper/creeper.png"),
-                        _ => MinecraftFileManager.GetTextureFile(DefaultTexturePath + "player/wide/steve.png")
-                    };
-                }
 
-                FinishModelGeneration();
+                string base64Texture = data.GetHeadTexture();
+                downloadUrl = PlayerHeadTextureCache.GetUrlFromBase64(base64Texture);
+
+                _textureReadyCallback = OnPlayerHeadTextureReady;
+                PlayerHeadTextureCache.GetPlayerTexture(base64Texture, _textureReadyCallback);
             }
             catch (Exception e)
             {
-                if (this != null && gameObject != null) // 오브젝트가 파괴되지 않았을 때만 로그를 남깁니다.
-                {
-                    CustomLog.UnityLog(e);
-                    headTexture = MinecraftFileManager.GetTextureFile(DefaultTexturePath + "player/wide/steve.png");
-                    FinishModelGeneration();
-                }
+                CustomLog.UnityLog(e);
+                GameManager.GetManager<FileLoadManager>().WorkingGenerators.Remove(this);
             }
-            finally
-            {
-                if (this != null && GameManager.Instance != null) // 게임이 종료중이 아닐 때
-                    GameManager.GetManager<FileLoadManager>().WorkingGenerators.Remove(this);
-            }
-        }
-
-        private void GetPlayerHeadTexture()
-        {
-            var data = transform.parent.parent.GetComponent<BdObjectContainer>().BdObject;
-            string base64Texture = data.GetHeadTexture();
-            this.downloadUrl = PlayerHeadTextureCache.GetUrlFromBase64(base64Texture);
-
-            _textureReadyCallback = OnPlayerHeadTextureReady;
-            PlayerHeadTextureCache.GetPlayerTexture(base64Texture, _textureReadyCallback);
         }
 
         private void OnPlayerHeadTextureReady(Texture2D texture)
         {
-            if (this == null)
+            if (this == null) return;
+
+            // Debug.Log("Player head texture downloaded: " + downloadUrl);
+
+            _textureReadyCallback = null;
+
+            try
             {
-                return; // 오브젝트가 파괴된 경우 중단
+                ApplyPlayerTexture(texture);
             }
-
-            headTexture = texture;
-            _textureReadyCallback = null; // 콜백 사용 완료 후 참조 제거
-            FinishModelGeneration();
-        }
-
-        private void FinishModelGeneration()
-        {
-            switch (headType)
+            catch (Exception e)
             {
-                case HeadType.Player:
-                    SetModel("item/player_head");
-                    break;
-                case HeadType.Zombie:
-                    SetModel("item/zombie_head");
-                    break;
-                case HeadType.Witherskull:
-                case HeadType.Skull:
-                case HeadType.Creeper:
-                    SetModel("item/creeper_head");
-                    break;
-                case HeadType.Piglin:
-                    SetModel("item/piglin_head");
-                    break;
-                case HeadType.Dragon:
-                    SetModel("item/dragon_head");
-                    break;
-                case HeadType.None:
-                default:
-                    throw new ArgumentOutOfRangeException();
+                CustomLog.UnityLog(e);
+                ApplyDefaultPlayerTexture();
+            }
+            finally
+            {
+                if (this != null && GameManager.Instance != null)
+                    GameManager.GetManager<FileLoadManager>().WorkingGenerators.Remove(this);
             }
         }
 
-        protected override Texture2D CreateTexture(string path)
+        private void ApplyPlayerTexture(Texture2D texture)
         {
-            return headTexture;
-        }
-
-        [ContextMenu("Save Texture")]
-        public void SaveTexture()
-        {
-            if (headTexture == null)
+            if (texture == null)
             {
-                CustomLog.LogError("Head Texture is null.");
+                ApplyDefaultPlayerTexture();
                 return;
             }
 
-            var path = Application.dataPath + "/../" + "HeadTexture.png";
-            var bytes = headTexture.EncodeToPNG();
-            System.IO.File.WriteAllBytes(path, bytes);
-            CustomLog.Log("Head Texture saved to: " + path);
+            var meshRenderer = GetComponent<MeshRenderer>();
+            if (meshRenderer == null || meshRenderer.sharedMaterial == null)
+            {
+                CustomLog.LogError("MeshRenderer or material not found!");
+                return;
+            }
+
+            var bdManager = GameManager.GetManager<BdObjectManager>();
+
+            // 서브머티리얼 개수에 맞춰 새 재질 생성 후 텍스처 적용
+            var existingMats = meshRenderer.sharedMaterials;
+            int matCount = existingMats != null && existingMats.Length > 0 ? existingMats.Length : 1;
+            var newMats = new Material[matCount];
+            for (int i = 0; i < matCount; i++)
+            {
+                var mat = new Material(bdManager.bdobjBlockMaterial)
+                {
+                    mainTexture = texture
+                };
+                newMats[i] = mat;
+            }
+
+            meshRenderer.sharedMaterials = newMats;
         }
+
+        private void ApplyDefaultPlayerTexture()
+        {
+            var defaultTexture = MinecraftFileManager.GetTextureFile(DefaultTexturePath + "player/wide/steve.png");
+            ApplyPlayerTexture(defaultTexture);
+        }
+        #endregion
+
+        #region Normal Head (Model.json based)
+        private void GenerateNormalHead()
+        {
+            GameManager.GetManager<FileLoadManager>().WorkingGenerators.Add(this);
+
+            try
+            {
+                // 머리 모델은 텍스처 자르기 비활성화 (64x64 텍스처 사용)
+                _blockModelGenerator.disableTextureCropping = true;
+                _blockModelGenerator.centerPivot = true; // 중심 피봇 사용
+                _blockModelGenerator.topPivot = true; // Y축은 상단
+
+                string modelPath = GetModelPath(headType);
+                if (string.IsNullOrEmpty(modelPath))
+                {
+                    CustomLog.LogError($"No model path for {headType}");
+                    return;
+                }
+
+                var applies = new List<BlockModelGenerator.ApplySpec>
+                {
+                    new() { Model = modelPath, X = 0, Y = 0, UvLock = false }
+                };
+
+                // Debug.Log($"Generating head mesh for {headType} using model {modelPath}.");
+                _blockModelGenerator.GenerateMeshFromApplies(applies);
+            }
+            catch (Exception e)
+            {
+                CustomLog.UnityLog(e);
+            }
+            finally
+            {
+                if (this != null && GameManager.Instance != null)
+                    GameManager.GetManager<FileLoadManager>().WorkingGenerators.Remove(this);
+            }
+        }
+
+        private string GetModelPath(HeadType type)
+        {
+            return type switch
+            {
+                HeadType.Zombie => "item/zombie_head",
+                HeadType.Skull => "item/skeleton_skull",
+                HeadType.Witherskull => "item/wither_skeleton_skull",
+                HeadType.Creeper => "item/creeper_head",
+                HeadType.Piglin => "item/piglin_head",
+                HeadType.Dragon => "item/dragon_head",
+                _ => ""
+            };
+        }
+        #endregion
+
+        #region Debug
+        [ContextMenu("Save Player Texture")]
+        public void SavePlayerTexture()
+        {
+            var meshRenderer = GetComponent<MeshRenderer>();
+            if (meshRenderer == null || meshRenderer.sharedMaterial == null)
+            {
+                CustomLog.LogError("No material found.");
+                return;
+            }
+
+            var texture = meshRenderer.sharedMaterial.mainTexture as Texture2D;
+            if (texture == null)
+            {
+                CustomLog.LogError("Main texture is null.");
+                return;
+            }
+
+            var path = Application.dataPath + "/../" + "PlayerHeadTexture.png";
+            var bytes = texture.EncodeToPNG();
+            System.IO.File.WriteAllBytes(path, bytes);
+            CustomLog.Log("Player head texture saved to: " + path);
+        }
+        #endregion
     }
 }

@@ -1,0 +1,63 @@
+/* --- Variables --- */
+:root {
+    --color-panel-bg: rgb(82, 82, 82);
+    --color-container-bg: rgb(135, 135, 135);
+    --color-text-header: rgb(230, 230, 230);
+    --font-size-header: 14px;
+}
+
+/* --- Layout --- */
+.root {
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+}
+
+.left-panel,
+.right-panel {
+    width: 200px;
+    flex-shrink: 0;
+    background-color: var(--color-panel-bg);
+    padding: 5px;
+}
+
+.content {
+    flex-grow: 1;
+    height: 100%;
+}
+
+/* --- Right Panel Sections --- */
+.section {
+    margin-bottom: 5px;
+}
+
+/* Make InspectorSection fill the remaining vertical space */
+#InspectorSection {
+    flex-grow: 1; /* Moved from UXML inline style */
+}
+
+.section-header {
+    font-size: var(--font-size-header);
+    -unity-font-style: bold;
+    color: var(--color-text-header);
+    margin: 0 0 2px 2px;
+}
+
+.right-panel-container {
+    background-color: var(--color-container-bg);
+}
+
+#HierarchyView {
+    min-height: 150px;
+    max-height: 300px;
+    flex-shrink: 0; /* Moved from UXML inline style */
+}
+
+#InspectorScrollView {
+    flex-grow: 1; /* Moved from UXML inline style */
+}
+
+/* --- Controls --- */
+.left-panel > Button {
+    margin-bottom: 5px;
+}

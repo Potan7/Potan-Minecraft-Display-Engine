@@ -158,8 +158,7 @@ namespace Animation.AnimFrame
                         int currentMouseTick = currentLine.Tick;
                         int tickDelta = currentMouseTick - _dragInitialMouseTick;
 
-                        // Create a temporary list of frames to iterate over to avoid issues if a frame becomes invalid during SetTick
-                        List<Frame> framesToDrag = _dragInitialFrameTicks.Keys.ToList();
+                        var framesToDrag = _dragInitialFrameTicks.Keys;
 
                         foreach (var frameToDrag in framesToDrag)
                         {

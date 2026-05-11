@@ -29,45 +29,96 @@ namespace Minecraft
         //Dictionary<string, byte[]> textureFiles = new Dictionary<string, byte[]>();
         private readonly ConcurrentDictionary<string, byte[]> _textureFiles = new();
         //HashSet<string> isTextureAnimated = new HashSet<string>();
-        private readonly ConcurrentBag<string> _isTextureAnimated = new();
+        // private readonly ConcurrentBag<string> _isTextureAnimated = new();
 
         //public Dictionary<string, string> jsonFiles = new Dictionary<string, string>();
         private readonly ConcurrentDictionary<string, string> _jsonFiles = new();
+        private readonly ConcurrentDictionary<string, JObject> _jsonCache = new();
+        private readonly ConcurrentDictionary<string, Texture2D> _textureCache = new();
+        private readonly ConcurrentDictionary<string, MinecraftModelData> _modelCache = new();
 
-        // readPreReadedFiles�� �ִ� ���ϵ��� �̸� �о��
+
+        // PreviewImgGenerator가 모델 목록에 접근할 수 있도록 public 프로퍼티를 추가합니다.
+        public IReadOnlyDictionary<string, string> AllJsonFiles => _jsonFiles;
+
+        // readPreReadedFiles ִ ϵ ̸ о
         private readonly Dictionary<string, MinecraftModelData> _importantModels = new();
 
-        //readonly string[] readFolder = { "models", "textures", "blockstates", "items" }; // ���� ����
+        //readonly string[] readFolder = { "models", "textures", "blockstates", "items" }; //  
         //readonly string[] readTexturesFolders = 
         //    { "block", "item", "entity/bed", "entity/shulker", "entity/chest", "entity/conduit", 
         //    "entity/creeper", "entity/zombie/zombie", "entity/skeleton/", "entity/piglin", "entity/player/wide/steve", "entity/enderdragon/dragon"}; // textures�� ���� ����
         //readonly string[] readPreReadedFiles =
         //    {"block", "cube", "cube_all", "cube_all_inner_faces", "cube_column"};   // �̸� �ε��� ����
 
-        private readonly string[] _hardcodeNames = { "head", "bed", "shulker_box", "chest", "conduit", "shield", "decorated_pot", "banner" };
+        private readonly string[] _hardcodeNames = {
+            "trident", "bed", "shulker_box", "chest", "conduit", "shield", "decorated_pot", "banner",
+            "zombie_head", "skeleton_skull", "wither_skeleton_skull", "creeper_head", "piglin_head", "dragon_head", "player_head", "head"
+            };
 
         // private readonly string _appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
         // public static string MinecraftPath = ".minecraft/versions";
         // private const string MinecraftVersion = "1.21.4";
 
-        public static readonly List<string> SurportedVersions = new List<string>
-        {
-            "1.21.7",
-            "1.21.6",
-            "1.21.5",
-            "1.21.4"
-        };
-
-        private static int currentMinecraftVersionIndex = 0;
-        public static string MinecraftVersion => SurportedVersions[currentMinecraftVersionIndex];
         public bool IsReadedFiles { get; private set; } = false;
+
+        public SurportedVersionsSO surportedVersions;
+        public Version CurrentMinecraftVersion;
+        public int CurrentMinecraftVersionNumber;
+        public int VersionToNumber(int major, int minor, int build)
+        {
+            return major * 10000 + minor * 100 + build;
+        }
+
+        public MinecraftFileManager()
+        {
+            surportedVersions = Resources.Load<SurportedVersionsSO>("SurportedVersions");
+            if (surportedVersions == null)
+            {
+                CustomLog.LogError("Failed to load SurportedVersionsSO from Resources.");
+                return;
+            }
+
+            surportedVersions.StartVersion = Version.Parse(surportedVersions.surportedVersionStart);
+            surportedVersions.EndVersion = Version.Parse(surportedVersions.surportedVersionEnd);
+        }
+
+        public bool IsVersionSupported(ReadOnlySpan<char> version)
+        {
+            if (Version.TryParse(version, out var parsedVersion))
+            {
+                // StartVersion보다 작으면 지원하지 않음
+                int result = parsedVersion.CompareTo(surportedVersions.StartVersion);
+                if (result < 0) return false; // parsedVersion < StartVersion
+
+                // EndVersion보다 크면 지원하지 않음
+                result = parsedVersion.CompareTo(surportedVersions.EndVersion);
+                if (result > 0) return false; // parsedVersion > EndVersion
+
+                return true;
+            }
+            else
+            {
+                // 버전 문자열이 유효하지 않으면 지원하지 않음
+                CustomLog.LogError("Invalid version format: " + version.ToString());
+                return false;
+            }
+        }
+
 
         // 시작하면 마크 파일 읽음 
         public async UniTask<(bool success, string error)> ReadMinecraftFile(string path, string version)
         {
             // filePath = path;
-            currentMinecraftVersionIndex = SurportedVersions.IndexOf(version);
+            // currentMinecraftVersionIndex = SurportedVersions.IndexOf(version);
+
+            if (!IsVersionSupported(version))
+            {
+                CustomLog.UnityLog("Unsupported Minecraft version: " + version);
+                return (false, "Unsupported Minecraft version");
+            }
+
             try
             {
                 await ReadJarFile(path, "assets/minecraft");
@@ -78,12 +129,10 @@ namespace Minecraft
                 return (false, "Error reading Minecraft file");
             }
 
-            if (currentMinecraftVersionIndex < 0)
-            {
-                CustomLog.UnityLog("Unsupported Minecraft version: " + version);
-                return (false, "Unsupported Minecraft version");
-            }
+            CurrentMinecraftVersion = Version.Parse(version);
+            CurrentMinecraftVersionNumber = VersionToNumber(CurrentMinecraftVersion.Major, CurrentMinecraftVersion.Minor, CurrentMinecraftVersion.Build);
             IsReadedFiles = true;
+
             return (true, string.Empty);
         }
 
@@ -91,24 +140,33 @@ namespace Minecraft
 
         public static JObject GetJsonData(string path)
         {
-            //Debug.Log(path);
+            if (Instance._jsonCache.TryGetValue(path, out var cachedJson))
+            {
+                return cachedJson;
+            }
+
+            // 침대 모델은 하드코딩된 리소스 사용
             if (path.Contains("bed") && !path.Contains("items"))
             {
-                //CustomLog.Log("Bed: " + path);
                 var bed = Resources.Load<TextAsset>("hardcoded/" + path.Replace(".json", ""));
-                return JObject.Parse(bed.text);
+                if (bed == null) return null;
+
+                var parsedBed = JObject.Parse(bed.text);
+                Instance._jsonCache[path] = parsedBed;
+                return parsedBed;
             }
-            //Debug.Log(_instance._jsonFiles.ContainsKey(path));
-            #if UNITY_EDITOR
-            var data = Instance._jsonFiles.TryGetValue(path, out var file) ? JObject.Parse(file) : null;
-            if (data == null)
+
+            if (!Instance._jsonFiles.TryGetValue(path, out var file))
             {
+#if UNITY_EDITOR
                 CustomLog.LogError("JSON not found: " + path);
+#endif
+                return null;
             }
-            return data;
-            #else
-            return Instance._jsonFiles.TryGetValue(path, out var file) ? JObject.Parse(file) : null;
-            #endif
+
+            var parsedJson = JObject.Parse(file);
+            Instance._jsonCache[path] = parsedJson;
+            return parsedJson;
         }
 
         /// <summary>
@@ -119,74 +177,112 @@ namespace Minecraft
         /// <returns></returns>
         public static MinecraftModelData GetModelData(string path)
         {
-            //CustomLog.Log("Get Model Data: " + path);
-
-            if (Instance._importantModels.TryGetValue(path, out var data))
+            // 1. 중요 모델 캐시 확인 (가장 빠름)
+            if (Instance._modelCache.TryGetValue(path, out var cachedData))
             {
-                return data;
+                return cachedData;
             }
 
-            foreach (var t in Instance._hardcodeNames)
+            // 2. 하드코딩된 모델 확인
+            var hardcodeNamesSpan = Instance._hardcodeNames.AsSpan();
+            for (int i = 0; i < hardcodeNamesSpan.Length; i++)
             {
-                if (path.Contains(t))
+                if (path.Contains(hardcodeNamesSpan[i]))
                 {
-                    return JsonConvert.DeserializeObject<MinecraftModelData>(Resources.Load<TextAsset>("hardcoded/" + path.Replace(".json", "")).text);
+                    // UnityEngine.Debug.Log("Loading hardcoded model: " + path);
+                    var hardcodedAsset = Resources.Load<TextAsset>("hardcoded/" + path.Replace(".json", ""));
+                    if (hardcodedAsset != null)
+                    {
+                        var modelData = JsonConvert.DeserializeObject<MinecraftModelData>(hardcodedAsset.text);
+                        Instance._modelCache[path] = modelData;
+                        return modelData;
+                    }
                 }
             }
 
+            // 3. 일반 JSON 파일 확인
             if (Instance._jsonFiles.TryGetValue(path, out var file))
             {
-                return JsonConvert.DeserializeObject<MinecraftModelData>(file);
+                var modelData = JsonConvert.DeserializeObject<MinecraftModelData>(file);
+                Instance._modelCache[path] = modelData;
+                return modelData;
             }
 
+#if UNITY_EDITOR
             CustomLog.LogError("Model not found: " + path);
+#endif
             return null;
         }
 
-        public static Texture2D GetTextureFile(string path)
+        public static Texture2D GetTextureFile(string path, bool makeReadable = false)
         {
-            if (Instance._textureFiles.TryGetValue(path, out var file))
+            // 아이템 텍스처는 동적 메시 생성을 위해 기본적으로 Readable 상태가 되어야 함
+            if (path.StartsWith("item/"))
             {
-                var texture = new Texture2D(2, 2)
-                {
-                    filterMode = FilterMode.Point,
-                    wrapMode = TextureWrapMode.Clamp
-                };
-                //texture.alphaIsTransparency = true;
-                texture.Apply();
-
-                texture.LoadImage(file);
-
-                return texture;
+                makeReadable = true;
             }
-            CustomLog.LogError("Texture not found: " + path);
-            return null;
+
+            if (Instance._textureCache.TryGetValue(path, out var cachedTexture))
+            {
+                // 캐시된 텍스처가 요청된 Readable 상태와 다른 경우, 재생성해야 할 수 있으나
+                // 우선은 캐시된 것을 그대로 반환. 아이템 텍스처는 항상 Readable로 캐시될 것임.
+                return cachedTexture;
+            }
+
+            if (!Instance._textureFiles.TryGetValue(path, out var fileData))
+            {
+#if UNITY_EDITOR
+                CustomLog.LogError("Texture not found: " + path);
+#endif
+                return null;
+            }
+
+            // 생성자의 마지막 파라미터를 true로 설정하여 Linear 색 공간임을 명시합니다.
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false, true)
+            {
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
+
+            if (!texture.LoadImage(fileData))
+            {
+#if UNITY_EDITOR
+                CustomLog.LogError("Failed to load texture: " + path);
+#endif
+                UnityEngine.Object.Destroy(texture);
+                return null;
+            }
+
+            // makeReadable이 true이면, CPU 메모리 복사본을 유지 (makeNoLongerReadable = false)
+            texture.Apply(false, !makeReadable);
+            Instance._textureCache[path] = texture;
+
+            return texture;
         }
 
-        public static bool IsTextureAnimated(string path)
+        public static string RemoveNamespace(string path, string namespacePrefix = "minecraft:")
         {
-            //CustomLog.Log(path);
-            return Instance._isTextureAnimated.Contains(path + ".mcmeta");
+            return path.StartsWith(namespacePrefix)
+                ? path.Substring(namespacePrefix.Length)
+                : path;
         }
 
-        public static string RemoveNamespace(string path) => path.Replace("minecraft:", "");
         #endregion
 
         #region Read Minecraft JAR file
         private async UniTask ReadJarFile(string path, string targetFolder)
         {
-            // 1회용으로 읽을 폴더들
-            string[] readTexturesFolders =
+            // 읽을 텍스처 폴더들
+            string[] readTexturesFolders = new[]
             {
-                "textures/block", "textures/item", "textures/entity/bed", "textures/entity/shulker",
-                "textures/entity/chest", "textures/entity/conduit", "textures/entity/creeper",
-                "textures/entity/zombie/zombie", "textures/entity/skeleton/", "textures/entity/piglin",
-                "textures/entity/player/wide/steve", "textures/entity/enderdragon/dragon",
-                "textures/entity/shield", "textures/entity/conduit/base", "textures/entity/decorated_pot/decorated_pot",
-                "textures/entity/banner_base"
+                "textures/block", "textures/item", "textures/entity"
             };
 
-            string[] readFolder = { "models", "textures", "blockstates", "items" };
+            // 읽을 JSON 폴더들 (더 구체적으로 명시)
+            string[] readJsonFolders = new[]
+            {
+                "models/block", "models/item", "blockstates", "items"
+            };
 
             if (!File.Exists(path))
             {
@@ -195,142 +291,104 @@ namespace Minecraft
 
             using (var jarArchive = ZipFile.OpenRead(path))
             {
-                var tasks = new List<UniTask>(); // Store tasks for async processing
+                var tasks = new List<UniTask>();
 
                 foreach (var entry in jarArchive.Entries)
                 {
-                    // assets/minecraft/... ���� ���� targetFolder�� �����ϴ��� Ȯ��
+                    // targetFolder로 시작하지 않거나 파일 이름이 없으면 건너뛰기
                     if (!entry.FullName.StartsWith(targetFolder) || string.IsNullOrEmpty(entry.Name))
                         continue;
 
-                    // �ֻ��� ���� ����
-                    var folderName = GetTopLevelFolder(entry.FullName, targetFolder);
+                    var relativePath = entry.FullName[(targetFolder.Length + 1)..];
+                    bool shouldRead = false;
+                    bool isTexture = false;
 
-                    var isTextureFolder = false;
-                    var isJsonFolder = false;
-
-                    if (folderName == "textures" && IsReadFolder(entry.FullName, readTexturesFolders))
+                    // 텍스처 파일 체크
+                    if (entry.FullName.EndsWith(".png"))
                     {
-                        if (entry.FullName.EndsWith(".png") || entry.FullName.EndsWith(".mcmeta"))
-                            isTextureFolder = true;
+                        for (var i = 0; i < readTexturesFolders.Length; i++)
+                        {
+                            if (relativePath.StartsWith(readTexturesFolders[i]))
+                            {
+                                shouldRead = true;
+                                isTexture = true;
+                                break;
+                            }
+                        }
                     }
-                    else if (readFolder.Contains(folderName))
+                    // JSON 파일 체크
+                    else if (entry.FullName.EndsWith(".json"))
                     {
-                        if (entry.FullName.EndsWith(".json"))
-                            isJsonFolder = true;
+                        for (var i = 0; i < readJsonFolders.Length; i++)
+                        {
+                            if (relativePath.StartsWith(readJsonFolders[i]))
+                            {
+                                shouldRead = true;
+                                isTexture = false;
+                                break;
+                            }
+                        }
                     }
 
-                    if (!isTextureFolder && !isJsonFolder)
-                    {
+                    if (!shouldRead)
                         continue;
-                    }
 
-
-
+                    // 파일 데이터 읽기
                     byte[] fileData;
-                    using (var stream = entry.Open()) // Read the file data first
+                    using (var stream = entry.Open())
                     using (var memoryStream = new MemoryStream())
                     {
                         stream.CopyTo(memoryStream);
                         fileData = memoryStream.ToArray();
                     }
 
-                    // Process each file asynchronously
+                    // 비동기 처리
+                    var localRelativePath = relativePath;
+                    var localIsTexture = isTexture;
+
                     tasks.Add(UniTask.RunOnThreadPool(() =>
                     {
-                        if (isTextureFolder)
+                        if (localIsTexture)
                         {
-                            if (entry.FullName.EndsWith(".png"))
+                            // 텍스처는 byte[] 그대로 저장
+                            if (localRelativePath.StartsWith("textures/"))
                             {
-                                SavePNGData(entry.FullName, fileData);
+                                localRelativePath = localRelativePath["textures/".Length..];
                             }
-                            else if (entry.FullName.EndsWith(".mcmeta"))
-                            {
-                                _isTextureAnimated.Add(entry.FullName.Replace("assets/minecraft/textures/", ""));
-                                //lock (isTextureAnimated)
-                                //{
-                                //    isTextureAnimated.Add(entry.FullName.Replace("assets/minecraft/", ""));
-                                //}
-                            }
+                            _textureFiles[localRelativePath] = fileData;
                         }
-                        else if (isJsonFolder)
+                        else
                         {
-                            SaveJsonData(entry.FullName, fileData);
+                            // JSON은 바로 string으로 변환하여 저장
+                            var json = System.Text.Encoding.UTF8.GetString(fileData);
+                            _jsonFiles[localRelativePath] = json;
                         }
                     }));
                 }
 
-                await UniTask.WhenAll(tasks); // Wait for all async tasks to finish
-                
+                await UniTask.WhenAll(tasks);
             }
+
+            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
+            await UniTask.DelayFrame(1);
 
             CachingImportantModels();
         }
 
         private void CachingImportantModels()
         {
-            string[] cachedFiles =
-                { "block", "cube", "cube_all", "cube_all_inner_faces", "cube_column" }; 
+            ReadOnlySpan<string> cachedFiles =
+                new[] { "block", "cube", "cube_all", "cube_all_inner_faces", "cube_column" };
 
             foreach (var read in cachedFiles)
             {
                 var readPath = $"models/{read}.json";
                 if (_jsonFiles.TryGetValue(readPath, out var file))
                 {
-                    _importantModels.Add(read, GetModelData(file));
+                    var modelData = GetModelData(readPath);
+                    _modelCache.TryAdd(read, modelData);
                 }
             }
-        }
-
-        // �ֻ��� ���� �̸� ����
-        private string GetTopLevelFolder(string fullPath, string targetFolder)
-        {
-            var relativePath = fullPath[(targetFolder.Length + 1)..]; // targetFolder ���� ���
-            var firstSlashIndex = relativePath.IndexOf('/');
-            return firstSlashIndex > -1 ? relativePath[..firstSlashIndex] : relativePath;
-        }
-
-        // �־��� ���� ��ΰ� ���� ���ϴ� textures ��� �� �ϳ����� Ȯ��
-        private bool IsReadFolder(string fullPath, string[] readTexturesFolders)
-        {
-            foreach (var texture in readTexturesFolders)
-            {
-                if (fullPath.Contains(texture))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // JSON ����
-        private void SaveJsonData(string path, byte[] fileData)
-        {
-            path = path.Replace("assets/minecraft/", "");
-
-            using var memoryStream = new MemoryStream(fileData);
-            using var reader = new StreamReader(memoryStream);
-            var json = reader.ReadToEnd();
-            
-            _jsonFiles[path] = json;
-            //lock (jsonFiles)
-            //{
-            //    jsonFiles[path] = json;
-            //}
-        }
-
-        // �ؽ������� ����Ʈ �ڵ�� �����ϱ�
-        private void SavePNGData(string path, byte[] fileData)
-        {
-            path = path.Replace("assets/minecraft/textures/", "");
-            _textureFiles[path] = fileData;
-
-            //lock (textureFiles) // Lock because textureFiles is a shared resource
-            //{
-            //    textureFiles.Add(path, fileData);
-            //}
-
-            // CustomLog.Log("PNG: " + path);
         }
         #endregion
     }

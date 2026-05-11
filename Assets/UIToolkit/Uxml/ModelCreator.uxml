@@ -1,0 +1,21 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UIToolkit/Uss/ModelCreator.uss?fileID=7433441132597879392&amp;guid=98f9dec8e0358bf41b0fd44f747bb98b&amp;type=3#ModelCreator" />
+    <ui:VisualElement name="Container" picking-mode="Ignore" class="root">
+        <ui:VisualElement name="LeftPanel" class="left-panel">
+            <ui:Button text="Create Cube" name="CreateCube" />
+        </ui:VisualElement>
+        <ui:VisualElement name="Content" picking-mode="Ignore" class="content" />
+        <ui:VisualElement name="RightPanel" class="right-panel">
+            <ui:VisualElement name="HierarchySection" class="section">
+                <ui:Label text="Hierarchy" class="section-header" />
+                <ui:TreeView name="HierarchyView" class="right-panel-container" />
+            </ui:VisualElement>
+            <ui:VisualElement name="InspectorSection" class="section">
+                <ui:Label text="Inspector" class="section-header" />
+                <ui:ScrollView name="InspectorScrollView" class="right-panel-container">
+                    <ui:VisualElement name="InspectorContent" />
+                </ui:ScrollView>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

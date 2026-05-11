@@ -12,10 +12,11 @@ using System.Text;
 using BDObjectSystem;
 using Minecraft;
 using System.Text.RegularExpressions;
-using DG.Tweening;
 using UnityEngine.UI;
 using SFB;
 using BDObjectSystem.Utility;
+using LitMotion;
+using LitMotion.Extensions;
 
 namespace FileSystem.Export
 {
@@ -28,10 +29,6 @@ namespace FileSystem.Export
 
         public TextMeshProUGUI exportPathText;
         public string currentPath;
-
-        Sequence exportPanelShowSequence;
-        Sequence exportPanelHideSequence;
-
         public static readonly Regex FNumberRegex = new Regex(@"f(\d+)", RegexOptions.IgnoreCase);
         public static readonly Regex UuidExtractedFormatRegex = new Regex(@"^(-?\d+),(-?\d+),(-?\d+),(-?\d+)$", RegexOptions.Compiled);
         public static readonly Regex TagZeroEndRegex = new Regex(@".*\D0$", RegexOptions.Compiled);
@@ -54,22 +51,6 @@ namespace FileSystem.Export
             exportPanelCanvasGroup.transform.localScale = Vector3.zero;
             exportPanelCanvasGroup.interactable = false;
             exportPanel.SetActive(false); // 처음에는 비활성화
-
-            exportPanelShowSequence = DOTween.Sequence().SetAutoKill(false)
-                .Append(exportPanelCanvasGroup.DOFade(1f, 0.2f))
-                .Join(exportPanelCanvasGroup.transform.DOScale(Vector3.one, 0.2f))
-                .OnComplete(() => exportPanelCanvasGroup.interactable = true)
-                .Pause();
-
-            exportPanelHideSequence = DOTween.Sequence().SetAutoKill(false)
-                .OnStart(() =>
-                {
-                    exportPanelCanvasGroup.interactable = false;
-                })
-                .Append(exportPanelCanvasGroup.DOFade(0f, 0.2f))
-                .Join(exportPanelCanvasGroup.transform.DOScale(Vector3.zero, 0.2f))
-                .OnComplete(() => exportPanel.SetActive(false)).Pause();
-
         }
 
         public void SetPathText(string path)
@@ -87,15 +68,20 @@ namespace FileSystem.Export
             {
                 exportPanel.SetActive(true);
 
-                // await UniTask.Yield();
-
-                exportPanelShowSequence.Restart();
+                LSequence.Create()
+                    .Append(LMotion.Create(0f, 1f, 0.2f).BindToAlpha(exportPanelCanvasGroup))
+                    .Join(LMotion.Create(Vector3.zero, Vector3.one, 0.2f).WithOnComplete(() => exportPanelCanvasGroup.interactable = true).BindToLocalScale(exportPanelCanvasGroup.transform))
+                    .Run();
                 // UIManager.CurrentUIStatus |= UIManager.UIStatus.OnExportPanel;
                 UIManager.SetUIStatus(UIManager.UIStatus.OnExportPanel, true);
             }
             else
             {
-                exportPanelHideSequence.Restart();
+                exportPanelCanvasGroup.interactable = false;
+                LSequence.Create()
+                    .Append(LMotion.Create(1f, 0f, 0.2f).BindToAlpha(exportPanelCanvasGroup))
+                    .Join(LMotion.Create(Vector3.one, Vector3.zero, 0.2f).WithOnComplete(() => exportPanel.SetActive(false)).BindToLocalScale(exportPanelCanvasGroup.transform))
+                    .Run();
                 // UIManager.CurrentUIStatus &= ~UIManager.UIStatus.OnExportPanel;
                 UIManager.SetUIStatus(UIManager.UIStatus.OnExportPanel, false);
             }
@@ -130,12 +116,6 @@ namespace FileSystem.Export
             {
                 SetExportPanel(false);
             }
-        }
-
-        void OnDestroy()
-        {
-            exportPanelShowSequence?.Kill();
-            exportPanelHideSequence?.Kill();
         }
         #endregion
 
@@ -405,12 +385,12 @@ namespace FileSystem.Export
                 ns += "/";
 
             for (int i = 0; i < commandsByTick.Count; i++)
-                {
-                    int scoreVal = exportSetting.startTick + commandsByTick.Keys[i];
-                    scoreLines.Add(
-                        $"execute if score {exportSetting.fakePlayer} {exportSetting.scoreboardName} matches {scoreVal} run function {ns}f{i + 1}"
-                    );
-                }
+            {
+                int scoreVal = exportSetting.startTick + commandsByTick.Keys[i];
+                scoreLines.Add(
+                    $"execute if score {exportSetting.fakePlayer} {exportSetting.scoreboardName} matches {scoreVal} run function {ns}f{i + 1}"
+                );
+            }
 
             var addtionalCommands = exportSetting.commandLineManager.commandLines;
             if (addtionalCommands.Count > 0)
@@ -481,7 +461,7 @@ namespace FileSystem.Export
             }
             else
             {
-                if (MinecraftFileManager.MinecraftVersion == "1.21.4")
+                if (MinecraftFileManager.Instance.CurrentMinecraftVersionNumber == MinecraftFileManager.Instance.VersionToNumber(1, 21, 4))
                 {
                     return $"start_interpolation:0,interpolation_duration:{interpolation},transformation:[{joined}]";
                 }

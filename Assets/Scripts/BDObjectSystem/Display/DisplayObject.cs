@@ -36,6 +36,8 @@ namespace BDObjectSystem.Display
             {
                 if (path[0] == '#')
                 {
+                    // Debug.Log(textures.ToString());
+                    // Debug.Log(path);
                     path = textures[path[1..]].ToString();
                     continue;
                 }
@@ -45,7 +47,7 @@ namespace BDObjectSystem.Display
         }
     }
 
-    public abstract class ModelDisPlayObject : DisplayObject
+    public abstract class ModelDisplayObject : DisplayObject
     {
         public MinecraftModelData ModelData;
 

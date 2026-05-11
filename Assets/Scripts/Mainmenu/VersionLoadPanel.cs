@@ -23,6 +23,8 @@ namespace Mainmenu
         void Start()
         {
             manager = GetComponent<MainmenuManager>();
+
+            versionLoadPanel.SetActive(false);
         }
 
         public void OnPanelButton()
@@ -42,14 +44,19 @@ namespace Mainmenu
             //     "Select Minecraft Jar File",
             //     "Select").ToUniTask();
 
-            var paths = StandaloneFileBrowser.OpenFilePanel("Select Minecraft Jar File", 
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
+            var paths = StandaloneFileBrowser.OpenFilePanel("Select Minecraft Jar File",
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "jar", false);
 
             if (paths.Length > 0)
             {
-                inputField.text = paths[0];
+                SetPath(paths[0]);
             }
+        }
+
+        public void SetPath(string path)
+        {
+            inputField.text = path;
         }
 
         public void OnHelpButton()

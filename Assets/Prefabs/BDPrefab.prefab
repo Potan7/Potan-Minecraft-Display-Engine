@@ -16,7 +16,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7162899910538907881
 Transform:
   m_ObjectHideFlags: 0
@@ -44,18 +44,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b9b2caf91de801429792dcd3117b422, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BDObject:
-    name: 
-    nbt: 
-    isBlockDisplay: 0
-    isItemDisplay: 0
-    isTextDisplay: 0
-    transforms: []
-    uuid: 
-    tags: []
-    children: []
+  bdObjectID: 
   displayObj: {fileID: 0}
   children: []
+  parent: {fileID: 0}
   transformation:
     e00: 0
     e01: 0
@@ -73,3 +65,21 @@ MonoBehaviour:
     e31: 0
     e32: 0
     e33: 0
+  parentMatrix:
+    e00: 0
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  IsParentNull: 0

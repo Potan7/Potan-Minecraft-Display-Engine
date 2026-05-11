@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace BDObjectSystem.Display
 {
-    public class ItemDisplay : ModelDisPlayObject
+    public class ItemDisplay : ModelDisplayObject
     {
         public ItemModelGenerator itemModel;
         private JObject _currentItemState;
@@ -24,6 +24,12 @@ namespace BDObjectSystem.Display
                 return;
             }
             _currentItemState = itemState.GetValue("model") as JObject;
+
+            if (mName.Contains("trident"))
+            {
+                GenerateUsingDirectModel("item/trident");
+                return;
+            }
 
             CheckModelType(_currentItemState);
         }
@@ -80,14 +86,29 @@ namespace BDObjectSystem.Display
         private void GenerateUsingBlockModel(string model, Color co)
         {
             var bd = Instantiate(GameManager.GetManager<BdObjectManager>().blockPrefab, transform);
-            bd.modelName = model;
+            var modelPath = MinecraftFileManager.RemoveNamespace(model);
+            bd.modelName = modelPath;
             bd.color = co;
-            bd.SetModel(model);
+            bd.centerPivot = true;
+            // bd.BuildFromBlockState(modelPath, "");
+            bd.BuildDirect(modelPath);
         }
 
         private void GenerateUsingBlockModel(string model)
         {
             GenerateUsingBlockModel(model, Color.white);
+        }
+
+        private void GenerateUsingDirectModel(string model, Color? co = null)
+        {
+            var bd = Instantiate(GameManager.GetManager<BdObjectManager>().blockPrefab, transform);
+            var modelPath = MinecraftFileManager.RemoveNamespace(model);
+
+            bd.modelName = modelPath;
+            if (co.HasValue) bd.color = co.Value;
+
+            // BlockState 대신 직접 모델 빌드 호출
+            bd.BuildDirect(modelPath);
         }
 
         private void TypeSelect(JObject itemState)
@@ -158,11 +179,16 @@ namespace BDObjectSystem.Display
                     break;
                 case "minecraft:shield":
                     //CustomLog.Log("Shield: " + baseModel);
-                    GenerateUsingBlockModel(baseModel);
+                    // GenerateUsingBlockModel(baseModel);
+                    GenerateUsingDirectModel(baseModel);
                     break;
                 case "minecraft:player_head":
                     var playerHead = Instantiate(GameManager.GetManager<BdObjectManager>().headPrefab, transform);
                     playerHead.GenerateHead("player");
+                    break;
+                case "minecraft:trident":
+                    // SetItemModel(baseModel);
+                    GenerateUsingDirectModel(baseModel);
                     break;
 
             }
@@ -173,11 +199,12 @@ namespace BDObjectSystem.Display
         {
             // �ҷ��� ���� �������� �����ϱ�
             modelLocation = MinecraftFileManager.RemoveNamespace(modelLocation);
+            // Debug.Log("Item Model: " + modelLocation);
 
             ModelData = MinecraftFileManager.GetModelData("models/" + modelLocation + ".json").UnpackParent();
 
             //CustomLog.Log("Model Data: " + modelData);
-            var layer0 = GetTexturePath(ModelData.Textures["layer0"].ToString(), ModelData.Textures);
+            var layer0 = GetTexturePath(ModelData.Textures["layer0"]?.ToString(), ModelData.Textures);
             var texture = MinecraftFileManager.GetTextureFile(layer0);
             Texture2D texture2 = null;
 
@@ -198,7 +225,7 @@ namespace BDObjectSystem.Display
             }
 
             itemModel = Instantiate(GameManager.GetManager<BdObjectManager>().itemPrefab, transform);
-            itemModel.Init(texture, texture2);
+            itemModel.Init(modelLocation, texture, texture2);
         }
 
         private static void SetTint(Texture2D texture, JObject tint)

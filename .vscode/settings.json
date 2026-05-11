@@ -1,4 +1,13 @@
 {
+    "dotnet.defaultSolution": "Pangch_animation.slnx",
+    "dotrush.roslyn.dotnetSdkDirectory": "C:/Program Files/dotnet/sdk/10.0.102",
+    "dotrush.msbuildProperties": {
+        "DefineConstants": "UNITY_EDITOR"
+    },
+    "dotrush.roslyn.projectOrSolutionFiles": [
+        "D:/Unity/Projects/Pangch_animation/Pangch_animation.sln"
+    ],
+    "dotrush.roslyn.restoreProjectsBeforeLoading": false,
     "files.exclude": {
         "**/.DS_Store": true,
         "**/.git": true,
@@ -55,6 +64,5 @@
         "UserSettings/": true,
         "temp/": true,
         "Temp/": true
-    },
-    "dotnet.defaultSolution": "Pangch_animation.sln"
+    }
 }

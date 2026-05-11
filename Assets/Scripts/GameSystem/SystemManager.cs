@@ -28,12 +28,12 @@ namespace GameSystem
 
         private FileLoadManager fileLoadManager;
 
-        protected override void Awake()
-        {
-            base.Awake();
+        // protected override void Awake()
+        // {
+        //     base.Awake();
 
-            // QualitySettings.vSyncCount = 1;
-        }
+        //     // QualitySettings.vSyncCount = 1;
+        // }
 
         private void Start()
         {
